@@ -9,15 +9,22 @@ import { Label } from '@/components/ui/label'
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setError(null)
     const supabase = createClient()
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/atualizar-senha`,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/atualizar-senha`,
     })
+    if (error) {
+      setError('Não foi possível enviar o e-mail. Tente novamente.')
+      setLoading(false)
+      return
+    }
     setSent(true)
     setLoading(false)
   }
@@ -58,6 +65,7 @@ export default function ForgotPasswordPage() {
               placeholder="seu@email.com"
             />
           </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Enviando...' : 'Enviar link de redefinição'}
           </Button>
