@@ -66,7 +66,12 @@ export async function middleware(request: NextRequest) {
     const slug = tenantSlug ?? '__custom__'
     const url = request.nextUrl.clone()
     url.pathname = `/${slug}${pathname}`
-    response = NextResponse.rewrite(url)
+    const rewriteResponse = NextResponse.rewrite(url)
+    // Copy Supabase session cookies to the rewrite response
+    response.cookies.getAll().forEach(({ name, value, ...rest }) => {
+      rewriteResponse.cookies.set({ name, value, ...rest })
+    })
+    response = rewriteResponse
   }
 
   // Pass tenant info to layouts via headers
