@@ -7,6 +7,8 @@ jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: jest.fn() }))
 jest.mock('bcryptjs', () => ({ hash: jest.fn().mockResolvedValue('hashed'), compare: jest.fn() }))
 
 import { POST, GET } from '@/app/api/events/route'
+import { DELETE } from '@/app/api/events/[id]/route'
+import { POST as publishEvent } from '@/app/api/events/[id]/publish/route'
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -198,5 +200,58 @@ describe('POST /api/events', () => {
     expect(res.status).toBe(201)
     expect(hash).toHaveBeenCalledWith('secret123', 10)
     expect(body.password_hash).toBeUndefined()
+  })
+})
+
+// ─── DELETE /api/events/[id] ─────────────────────────────────────────────────
+
+describe('DELETE /api/events/[id]', () => {
+  it('returns 403 when event is published', async () => {
+    setupAuthMocks({ event: { ...mockEvent, status: 'published' } })
+
+    const req = new NextRequest('http://localhost/api/events/event-1', {
+      method: 'DELETE',
+    })
+    const res = await DELETE(req, { params: Promise.resolve({ id: 'event-1' }) })
+
+    expect(res.status).toBe(403)
+  })
+})
+
+// ─── POST /api/events/[id]/publish ────────────────────────────────────────────
+
+describe('POST /api/events/[id]/publish', () => {
+  it('returns 422 when event has no ready photos', async () => {
+    // Override: events chain returns draft event; photos chain returns no ready photos
+    ;(createAdminClient as jest.Mock).mockReturnValue({
+      from: jest.fn().mockImplementation((table: string) => {
+        if (table === 'users') {
+          return createMockChain({
+            single: { data: { tenant_id: 'tenant-1', role: 'photographer' }, error: null },
+          })
+        }
+        if (table === 'events') {
+          return createMockChain({
+            single: { data: { ...mockEvent, status: 'draft' }, error: null },
+          })
+        }
+        if (table === 'photos') {
+          return createMockChain({
+            range: { data: [], count: 0, error: null },
+          })
+        }
+        return createMockChain({})
+      }),
+    })
+    ;(createClient as jest.Mock).mockResolvedValue({
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+    })
+
+    const req = new NextRequest('http://localhost/api/events/event-1/publish', {
+      method: 'POST',
+    })
+    const res = await publishEvent(req, { params: Promise.resolve({ id: 'event-1' }) })
+
+    expect(res.status).toBe(422)
   })
 })
