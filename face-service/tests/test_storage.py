@@ -1,18 +1,13 @@
+# face-service/tests/test_storage.py
 import pytest
 import httpx
 from unittest.mock import AsyncMock, patch, MagicMock
 
 
 @pytest.mark.asyncio
-async def test_download_photo_returns_bytes(monkeypatch):
+async def test_download_photo_returns_bytes():
     """download_photo retorna bytes da foto quando Supabase responde 200."""
-    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-key")
-    monkeypatch.setenv("DATABASE_URL", "postgresql://test")
-
     from app import storage
-    import importlib
-    importlib.reload(storage)  # recarrega com as novas env vars
 
     mock_response = MagicMock()
     mock_response.content = b"fake_image_bytes"
@@ -23,7 +18,11 @@ async def test_download_photo_returns_bytes(monkeypatch):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("app.storage.httpx.AsyncClient", return_value=mock_client):
+    with patch("app.storage.httpx.AsyncClient", return_value=mock_client), \
+         patch("app.storage.settings") as mock_settings:
+        mock_settings.SUPABASE_URL = "https://test.supabase.co"
+        mock_settings.SUPABASE_SERVICE_ROLE_KEY = "test-key"
+
         result = await storage.download_photo("tenant-1/event-1/photo-1.jpg")
 
     assert result == b"fake_image_bytes"
@@ -33,15 +32,9 @@ async def test_download_photo_returns_bytes(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_download_photo_raises_on_http_error(monkeypatch):
+async def test_download_photo_raises_on_http_error():
     """download_photo levanta HTTPStatusError em resposta de erro do Supabase."""
-    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-key")
-    monkeypatch.setenv("DATABASE_URL", "postgresql://test")
-
     from app import storage
-    import importlib
-    importlib.reload(storage)
 
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
@@ -53,6 +46,8 @@ async def test_download_photo_raises_on_http_error(monkeypatch):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("app.storage.httpx.AsyncClient", return_value=mock_client):
+    with patch("app.storage.httpx.AsyncClient", return_value=mock_client), \
+         patch("app.storage.settings"):
+
         with pytest.raises(httpx.HTTPStatusError):
             await storage.download_photo("tenant-1/event-1/missing.jpg")
