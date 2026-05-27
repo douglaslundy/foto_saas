@@ -21,17 +21,29 @@ async def process_face_indexing_job(job, token):
 
     print(f"[face-worker] Processing photo {photo_id} (event={event_id})")
 
-    image_bytes = await download_photo(storage_path)
+    try:
+        image_bytes = await download_photo(storage_path)
+    except Exception as exc:
+        print(f"[face-worker] ✗ photo {photo_id}: download failed — {exc}")
+        raise
 
-    loop = asyncio.get_running_loop()
-    faces = await loop.run_in_executor(None, detect_faces, image_bytes)
+    try:
+        loop = asyncio.get_running_loop()
+        faces = await loop.run_in_executor(None, detect_faces, image_bytes)
+    except Exception as exc:
+        print(f"[face-worker] ✗ photo {photo_id}: face detection failed — {exc}")
+        raise
 
     expires_at: datetime | None = None
     if settings.FACE_RETENTION_DAYS > 0:
         expires_at = datetime.now(timezone.utc) + timedelta(days=settings.FACE_RETENTION_DAYS)
 
-    pool = await get_pool()
-    count = await insert_face_embeddings(pool, photo_id, event_id, tenant_id, faces, expires_at)
+    try:
+        pool = await get_pool()
+        count = await insert_face_embeddings(pool, photo_id, event_id, tenant_id, faces, expires_at)
+    except Exception as exc:
+        print(f"[face-worker] ✗ photo {photo_id}: DB insert failed — {exc}")
+        raise
 
     print(f"[face-worker] ✓ photo {photo_id}: {count} faces indexed")
     return {"faces_indexed": count}
