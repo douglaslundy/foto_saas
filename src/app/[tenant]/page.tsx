@@ -1,10 +1,53 @@
-export default function TenantHomePage() {
+import { headers } from 'next/headers'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound } from 'next/navigation'
+import { EventsSearchGrid } from './_components/events-search-grid'
+
+type Props = { params: Promise<{ tenant: string }> }
+
+export default async function TenantHomePage({ params }: Props) {
+  const { tenant: slug } = await params
+  const headersList = await headers()
+  const customDomain = headersList.get('x-custom-domain')
+
+  const adminClient = createAdminClient()
+
+  // Resolve tenant
+  const query = adminClient.from('tenants').select('id, name, slug, status')
+  const { data: tenant } = customDomain
+    ? // @ts-expect-error: tenant type not properly inferred
+      await query.eq('custom_domain', customDomain).single()
+    : // @ts-expect-error: tenant type not properly inferred
+      await query.eq('slug', slug).single()
+
+  // @ts-expect-error: tenant type not properly inferred
+  if (!tenant || tenant.status !== 'active') notFound()
+
+  const tenantData = tenant as { id: string; slug: string }
+
+  // Fetch published events
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: events } = (await (adminClient as any)
+    .from('events')
+    .select('id, title, slug, type, event_date, created_at')
+    .eq('tenant_id', tenantData.id)
+    .eq('status', 'published')
+    .order('event_date', { ascending: false })
+    .range(0, 49)) as {
+    data: {
+      id: string
+      title: string
+      slug: string
+      type: 'event' | 'session'
+      event_date: string | null
+      created_at: string
+    }[] | null
+  }
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Eventos e Ensaios</h1>
-      <p className="text-muted-foreground">
-        Listagem de eventos e ensaios será implementada no Plano 4.
-      </p>
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Eventos e Ensaios</h1>
+      <EventsSearchGrid events={events ?? []} tenantSlug={tenantData.slug} />
     </div>
   )
 }
