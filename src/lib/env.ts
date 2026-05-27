@@ -19,4 +19,10 @@ export const env = {
   // MercadoPago
   MERCADOPAGO_ACCESS_TOKEN: process.env.MERCADOPAGO_ACCESS_TOKEN ?? '',
   MERCADOPAGO_WEBHOOK_SECRET: process.env.MERCADOPAGO_WEBHOOK_SECRET ?? '',
+  // SMTP (email notifications)
+  SMTP_HOST: process.env.SMTP_HOST ?? '',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT ?? '587', 10),
+  SMTP_USER: process.env.SMTP_USER ?? '',
+  SMTP_PASS: process.env.SMTP_PASS ?? '',
+  SMTP_FROM: process.env.SMTP_FROM ?? 'noreply@fotosaas.com',
 } as const
