@@ -16,7 +16,7 @@ type EventItem = {
   status: string
 }
 
-export function EventCard({ event }: { event: EventItem }) {
+export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState<'publish' | 'delete' | null>(null)
 
@@ -68,6 +68,13 @@ export function EventCard({ event }: { event: EventItem }) {
         <Button variant="outline" size="sm" asChild>
           <Link href={`/dashboard/eventos/${event.id}/fotos`}>Fotos</Link>
         </Button>
+        {event.status === 'published' && tenantSlug && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/${tenantSlug}/evento/${event.slug}/qr`} target="_blank">
+              QR
+            </Link>
+          </Button>
+        )}
         {event.status === 'draft' && (
           <>
             <Button size="sm" onClick={handlePublish} disabled={loading === 'publish'}>

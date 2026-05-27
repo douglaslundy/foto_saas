@@ -34,6 +34,13 @@ export default async function EventosPage() {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: tenantRow } = (await (adminClient as any)
+    .from('tenants')
+    .select('slug')
+    .eq('id', profile.tenant_id)
+    .single()) as { data: { slug: string } | null }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: events } = (await (adminClient as any)
     .from('events')
     .select('id, title, slug, type, event_date, status')
@@ -60,7 +67,7 @@ export default async function EventosPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} tenantSlug={tenantRow?.slug} />
           ))}
         </div>
       )}
