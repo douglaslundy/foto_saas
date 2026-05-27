@@ -64,6 +64,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .from('events')
     .update({ status: 'published' })
     .eq('id', id)
+    .eq('tenant_id', profile.tenant_id)
     .select()
     .single()) as { data: unknown; error: { message: string } | null }
 
