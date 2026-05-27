@@ -49,6 +49,7 @@ export default async function ClientesPage() {
   // Filter to this tenant and strip join data
   const tenantOrders = (orders ?? [])
     .filter((o) => o.order_items?.some((oi) => oi.events?.tenant_id === profile.tenant_id))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ order_items: _oi, ...rest }) => rest) as {
       id: string
       client_email: string

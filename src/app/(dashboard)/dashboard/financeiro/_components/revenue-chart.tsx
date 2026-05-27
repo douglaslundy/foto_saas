@@ -36,8 +36,10 @@ export function RevenueChart({ data }: RevenueChartProps) {
           }
         />
         <Tooltip
-          formatter={(v: number) =>
-            (v / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          formatter={(v) =>
+            typeof v === 'number'
+              ? (v / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+              : String(v)
           }
         />
         <Line
