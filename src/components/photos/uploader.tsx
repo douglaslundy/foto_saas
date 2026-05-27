@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
@@ -15,6 +15,20 @@ type FileUploadState = {
 type PhotoUploaderProps = {
   eventId: string
   onUploadComplete?: (photoIds: string[]) => void
+}
+
+const statusLabel: Record<FileStatus, string> = {
+  pending: 'Aguardando',
+  uploading: 'Enviando…',
+  done: 'Processando…',
+  error: 'Erro',
+}
+
+const statusColor: Record<FileStatus, string> = {
+  pending: 'text-muted-foreground',
+  uploading: 'text-blue-500',
+  done: 'text-yellow-500',
+  error: 'text-destructive',
 }
 
 export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps) {
@@ -70,27 +84,10 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
     onUploadComplete?.(completedIds)
   }
 
-  const onDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      setIsDragging(false)
-      if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files)
-    },
-    [handleFiles]
-  )
-
-  const statusLabel: Record<FileStatus, string> = {
-    pending: 'Aguardando',
-    uploading: 'Enviando…',
-    done: 'Processando…',
-    error: 'Erro',
-  }
-
-  const statusColor: Record<FileStatus, string> = {
-    pending: 'text-muted-foreground',
-    uploading: 'text-blue-500',
-    done: 'text-yellow-500',
-    error: 'text-destructive',
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files)
   }
 
   const doneCount = uploads.filter((u) => u.status === 'done').length
