@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from datetime import datetime, timedelta, timezone
@@ -28,7 +30,11 @@ async def enroll(request: EnrollRequest):
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Failed to download photo: {exc}")
 
-    faces = detect_faces(image_bytes)
+    try:
+        loop = asyncio.get_running_loop()
+        faces = await loop.run_in_executor(None, detect_faces, image_bytes)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail="Imagem inválida ou formato não suportado.") from exc
 
     expires_at: datetime | None = None
     if settings.FACE_RETENTION_DAYS > 0:

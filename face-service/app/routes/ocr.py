@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import cv2
@@ -27,23 +28,26 @@ async def ocr_bib(image: UploadFile = File(...)):
     if img is None:
         return OcrResponse(detected_numbers=[])
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    data = pytesseract.image_to_data(
-        gray,
-        output_type=pytesseract.Output.DICT,
-        config="--psm 11 -c tessedit_char_whitelist=0123456789",
-    )
+    def _run_ocr(image: np.ndarray) -> list[BibMatch]:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        data = pytesseract.image_to_data(
+            gray,
+            output_type=pytesseract.Output.DICT,
+            config="--psm 11 -c tessedit_char_whitelist=0123456789",
+        )
+        out: list[BibMatch] = []
+        for text, conf_str in zip(data["text"], data["conf"]):
+            text = str(text).strip()
+            if not re.match(r"^\d+$", text):
+                continue
+            try:
+                confidence = float(conf_str) / 100.0
+            except (ValueError, TypeError):
+                continue
+            if confidence >= 0.5:
+                out.append(BibMatch(bib_number=text, confidence=round(confidence, 4)))
+        return out
 
-    results: list[BibMatch] = []
-    for text, conf_str in zip(data["text"], data["conf"]):
-        text = str(text).strip()
-        if not re.match(r"^\d+$", text):
-            continue
-        try:
-            confidence = float(conf_str) / 100.0
-        except (ValueError, TypeError):
-            continue
-        if confidence >= 0.5:
-            results.append(BibMatch(bib_number=text, confidence=round(confidence, 4)))
-
+    loop = asyncio.get_running_loop()
+    results = await loop.run_in_executor(None, _run_ocr, img)
     return OcrResponse(detected_numbers=results)
