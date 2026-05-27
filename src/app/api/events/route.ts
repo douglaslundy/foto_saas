@@ -16,11 +16,16 @@ async function getAuthProfile(
 
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: profile } = (await (adminClient as any)
+  const { data: profile, error: profileError } = (await (adminClient as any)
     .from('users')
     .select('tenant_id, role')
     .eq('id', user.id)
-    .single()) as { data: Profile | null }
+    .single()) as { data: Profile | null; error: { message: string } | null }
+
+  if (profileError) {
+    console.error('[events] Profile fetch error:', profileError)
+    return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
+  }
 
   if (!profile?.tenant_id || !['photographer', 'sub_photographer'].includes(profile.role)) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
@@ -37,8 +42,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
   const status = searchParams.get('status')
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 100)
-  const offset = parseInt(searchParams.get('offset') ?? '0', 10)
+  const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '50', 10) || 50, 1), 100)
+  const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10) || 0, 0)
 
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,6 +103,9 @@ export async function POST(request: NextRequest) {
   }
   if (!['event', 'session'].includes(type)) {
     return NextResponse.json({ error: 'type deve ser event ou session.' }, { status: 400 })
+  }
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    return NextResponse.json({ error: 'Slug inválido. Use apenas letras minúsculas, números e hífens.' }, { status: 400 })
   }
 
   const adminClient = createAdminClient()

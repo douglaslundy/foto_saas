@@ -10,6 +10,7 @@ import { POST, GET } from '@/app/api/events/route'
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { hash } from 'bcryptjs'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ function setupAuthMocks(overrides: {
   duplicateSlug?: unknown
   eventsList?: unknown[]
   eventsCount?: number
+  profileError?: unknown
 } = {}) {
   const authUser = { id: 'user-1' }
   const mockSupabase = {
@@ -67,7 +69,10 @@ function setupAuthMocks(overrides: {
   ;(createClient as jest.Mock).mockResolvedValue(mockSupabase)
 
   const usersChain = createMockChain({
-    single: { data: overrides.profile ?? { tenant_id: 'tenant-1', role: 'photographer' }, error: null },
+    single: {
+      data: overrides.profile ?? { tenant_id: 'tenant-1', role: 'photographer' },
+      error: overrides.profileError ?? null,
+    },
   })
   const eventsChain = createMockChain({
     maybeSingle: { data: overrides.duplicateSlug ?? null, error: null },
@@ -85,13 +90,15 @@ function setupAuthMocks(overrides: {
       return eventsChain
     }),
   })
+
+  return { usersChain, eventsChain }
 }
 
 // ─── GET /api/events ─────────────────────────────────────────────────────────
 
 describe('GET /api/events', () => {
   it('returns only events for the authenticated tenant', async () => {
-    setupAuthMocks({ eventsList: [mockEvent], eventsCount: 1 })
+    const { eventsChain } = setupAuthMocks({ eventsList: [mockEvent], eventsCount: 1 })
 
     const req = new NextRequest('http://localhost/api/events')
     const res = await GET(req)
@@ -101,6 +108,8 @@ describe('GET /api/events', () => {
     expect(body.events).toHaveLength(1)
     expect(body.events[0].id).toBe('event-1')
     expect(body.total).toBe(1)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((eventsChain.eq as any)).toHaveBeenCalledWith('tenant_id', 'tenant-1')
   })
 
   it('returns 401 when not authenticated', async () => {
@@ -112,6 +121,15 @@ describe('GET /api/events', () => {
     const res = await GET(req)
 
     expect(res.status).toBe(401)
+  })
+
+  it('returns 403 when user has role client', async () => {
+    setupAuthMocks({ profile: { tenant_id: 'tenant-1', role: 'client' } })
+
+    const req = new NextRequest('http://localhost/api/events')
+    const res = await GET(req)
+
+    expect(res.status).toBe(403)
   })
 })
 
@@ -159,5 +177,26 @@ describe('POST /api/events', () => {
     const res = await POST(req)
 
     expect(res.status).toBe(409)
+  })
+
+  it('hashes password and does not expose password_hash in response', async () => {
+    setupAuthMocks()
+
+    const req = new NextRequest('http://localhost/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Private Event',
+        slug: 'private-event',
+        type: 'event',
+        password: 'secret123',
+      }),
+    })
+    const res = await POST(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(201)
+    expect(hash).toHaveBeenCalledWith('secret123', 10)
+    expect(body.password_hash).toBeUndefined()
   })
 })
