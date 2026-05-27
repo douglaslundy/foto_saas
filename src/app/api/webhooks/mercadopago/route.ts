@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyMercadoPagoWebhook } from '@/lib/payments/mercadopago'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
+import { sendOrderConfirmation, sendSaleNotification } from '@/lib/notifications/email'
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest) {
               .from('orders')
               .update({ status: 'paid', paid_at: new Date().toISOString() })
               .eq('id', orderId)
+
+            // Send email notifications
+            await sendMPOrderNotifications(adminClient, orderId)
           }
         }
       } catch (err) {
@@ -51,4 +55,55 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendMPOrderNotifications(adminClient: any, orderId: string) {
+  try {
+    const { data: order } = await adminClient
+      .from('orders')
+      .select('client_email, total_cents, order_items(event_id)')
+      .eq('id', orderId)
+      .single()
+
+    if (!order) return
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+
+    await sendOrderConfirmation({
+      to: order.client_email,
+      orderId,
+      totalCents: order.total_cents,
+      downloadUrl: `${appUrl}/pedido/${orderId}`,
+    })
+
+    const eventId = order.order_items?.[0]?.event_id
+    if (!eventId) return
+
+    const { data: event } = await adminClient
+      .from('events')
+      .select('tenant_id')
+      .eq('id', eventId)
+      .single()
+
+    if (!event?.tenant_id) return
+
+    const { data: photographer } = await adminClient
+      .from('users')
+      .select('email')
+      .eq('tenant_id', event.tenant_id)
+      .eq('role', 'photographer')
+      .single()
+
+    if (photographer?.email) {
+      await sendSaleNotification({
+        to: photographer.email,
+        orderId,
+        totalCents: order.total_cents,
+        clientEmail: order.client_email,
+      })
+    }
+  } catch (err) {
+    console.error('[MP webhook] sendMPOrderNotifications failed:', err)
+  }
 }
