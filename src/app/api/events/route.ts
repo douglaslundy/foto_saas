@@ -5,9 +5,7 @@ import { hash } from 'bcryptjs'
 
 type Profile = { tenant_id: string; role: string }
 
-async function getAuthProfile(
-  request: NextRequest
-): Promise<{ user: { id: string }; profile: Profile } | NextResponse> {
+async function getAuthProfile(): Promise<{ user: { id: string }; profile: Profile } | NextResponse> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -35,7 +33,7 @@ async function getAuthProfile(
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await getAuthProfile(request)
+  const auth = await getAuthProfile()
   if (auth instanceof NextResponse) return auth
   const { profile } = auth
 
@@ -74,7 +72,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await getAuthProfile(request)
+  const auth = await getAuthProfile()
   if (auth instanceof NextResponse) return auth
   const { profile } = auth
 

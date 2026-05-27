@@ -18,13 +18,10 @@ export default async function TenantLayout({
   const supabase = createAdminClient()
   const query = supabase.from('tenants').select('id, name, slug, status')
   const { data: tenant } = customDomain
-    ? // @ts-expect-error: tenant type is not properly inferred from placeholder Database type
-      await query.eq('custom_domain', customDomain).single()
-    : // @ts-expect-error: tenant type is not properly inferred from placeholder Database type
-      await query.eq('slug', slug).single()
+    ? await query.eq('custom_domain', customDomain).single()
+    : await query.eq('slug', slug).single()
 
-  // @ts-expect-error: tenant type is not properly inferred from placeholder Database type
-  if (!tenant || tenant.status !== 'active') notFound()
+  if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
   const tenantData = tenant as { name: string }
 

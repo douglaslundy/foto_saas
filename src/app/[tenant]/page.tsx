@@ -15,13 +15,10 @@ export default async function TenantHomePage({ params }: Props) {
   // Resolve tenant
   const query = adminClient.from('tenants').select('id, name, slug, status')
   const { data: tenant } = customDomain
-    ? // @ts-expect-error: tenant type not properly inferred
-      await query.eq('custom_domain', customDomain).single()
-    : // @ts-expect-error: tenant type not properly inferred
-      await query.eq('slug', slug).single()
+    ? await query.eq('custom_domain', customDomain).single()
+    : await query.eq('slug', slug).single()
 
-  // @ts-expect-error: tenant type not properly inferred
-  if (!tenant || tenant.status !== 'active') notFound()
+  if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
   const tenantData = tenant as { id: string; slug: string }
 
