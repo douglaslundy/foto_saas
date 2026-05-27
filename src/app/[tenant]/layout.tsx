@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { CartButton } from '@/components/cart/cart-button'
 
 export default async function TenantLayout({
   children,
@@ -31,6 +32,7 @@ export default async function TenantLayout({
         <span className="font-bold text-xl">{tenantData.name}</span>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <CartButton />
           <Button variant="outline" size="sm">
             Entrar
           </Button>

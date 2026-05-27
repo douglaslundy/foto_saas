@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
+import { ShoppingCart } from 'lucide-react'
 
 export type Photo = {
   id: string
@@ -20,6 +21,23 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds }: PhotoG
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos)
   const [lightbox, setLightbox] = useState<Photo | null>(null)
   const [loading, setLoading] = useState(false)
+  const [addedToCart, setAddedToCart] = useState<Set<string>>(new Set())
+
+  const addToCart = useCallback(async (photoId: string) => {
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId }),
+      })
+      if (res.ok || res.status === 409) {
+        // 409 = already in cart, still mark as added
+        setAddedToCart((prev) => new Set(prev).add(photoId))
+      }
+    } catch (err) {
+      console.error('Failed to add to cart:', err)
+    }
+  }, [])
 
   const displayed = filteredIds != null
     ? photos.filter((p) => filteredIds.includes(p.id))
@@ -50,17 +68,34 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds }: PhotoG
         {displayed.map((photo) => (
           <div
             key={photo.id}
-            className="relative aspect-square bg-muted rounded overflow-hidden"
+            className="group relative aspect-square bg-muted rounded overflow-hidden"
             onClick={() => photo.status === 'ready' && setLightbox(photo)}
           >
             {photo.status === 'ready' && photo.public_storage_path ? (
-              <img
-                src={photo.public_storage_path}
-                alt=""
-                className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                draggable="false"
-                onContextMenu={(e) => e.preventDefault()}
-              />
+              <>
+                <img
+                  src={photo.public_storage_path}
+                  alt=""
+                  className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  draggable="false"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    addToCart(photo.id)
+                  }}
+                  className={`absolute bottom-2 right-2 flex items-center gap-1 text-xs px-2 py-1 rounded transition-opacity ${
+                    addedToCart.has(photo.id)
+                      ? 'bg-green-600 text-white opacity-100'
+                      : 'bg-primary text-primary-foreground opacity-0 group-hover:opacity-100'
+                  }`}
+                  aria-label="Adicionar ao carrinho"
+                >
+                  <ShoppingCart className="h-3 w-3" />
+                  {addedToCart.has(photo.id) ? '✓' : '+'}
+                </button>
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <span className="text-xs text-muted-foreground">Processando…</span>
