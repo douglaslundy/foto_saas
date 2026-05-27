@@ -19,17 +19,19 @@ export default async function TenantDetailPage({ params }: Props) {
   const { id } = await params
   const adminClient = createAdminClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tenantResult, membersResult, eventsResult] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('tenants')
       .select('id, name, slug, status, created_at')
       .eq('id', id)
       .single(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('users')
       .select('id, email, role')
       .eq('tenant_id', id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('events')
       .select('id, title, slug, status, type')

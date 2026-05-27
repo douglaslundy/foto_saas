@@ -3,9 +3,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export default async function AdminDashboardPage() {
   const adminClient = createAdminClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tenantsResult, ordersResult] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any).from('tenants').select('id, status', { count: 'exact' }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any).from('orders').select('total_cents, status', { count: 'exact' }),
   ])
 
