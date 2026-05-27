@@ -21,7 +21,6 @@ export async function createMercadoPagoPix({
   const config = getMPConfig()
   const payment = new Payment(config)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await payment.create({
     body: {
       transaction_amount: amountCents / 100,
@@ -30,6 +29,7 @@ export async function createMercadoPagoPix({
       payer: { email: payerEmail },
       external_reference: orderId,
     },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
