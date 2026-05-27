@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { CartButton } from '@/components/cart/cart-button'
+import { CookieConsent } from '@/components/ui/cookie-consent'
 
 export default async function TenantLayout({
   children,
@@ -39,6 +40,7 @@ export default async function TenantLayout({
         </div>
       </nav>
       <main>{children}</main>
+      <CookieConsent />
     </div>
   )
 }
