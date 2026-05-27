@@ -1,7 +1,6 @@
 # face-service/tests/test_search.py
 import pytest
 import numpy as np
-from io import BytesIO
 from httpx import AsyncClient, ASGITransport
 from unittest.mock import AsyncMock, patch
 from app.models import DetectedFace
@@ -70,7 +69,11 @@ async def test_search_uses_most_prominent_face_when_multiple():
     """POST /search usa a face com maior det_score quando há múltiplas na selfie."""
     from app.main import app
 
-    face_low = make_face_with_embedding(det_score=0.6)
+    face_low = DetectedFace(
+        embedding=np.zeros(512, dtype=np.float32),
+        bounding_box={"x1": 0.0, "y1": 0.0, "x2": 100.0, "y2": 100.0},
+        det_score=0.6,
+    )
     face_high = make_face_with_embedding(det_score=0.97)
 
     captured = {}

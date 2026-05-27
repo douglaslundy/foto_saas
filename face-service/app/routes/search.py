@@ -1,3 +1,6 @@
+import asyncio
+from typing import Annotated
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from app.detector import detect_faces
@@ -22,11 +25,19 @@ async def search(
     selfie: UploadFile = File(...),
     event_id: str = Form(...),
     tenant_id: str = Form(...),
-    threshold: float = Form(default=settings.FACE_SIMILARITY_THRESHOLD),
-    limit: int = Form(default=settings.FACE_SEARCH_LIMIT),
+    threshold: Annotated[float, Form(ge=0.0, le=1.0)] = settings.FACE_SIMILARITY_THRESHOLD,
+    limit: Annotated[int, Form(ge=1, le=500)] = settings.FACE_SEARCH_LIMIT,
 ):
     image_bytes = await selfie.read()
-    faces = detect_faces(image_bytes)
+
+    try:
+        loop = asyncio.get_event_loop()
+        faces = await loop.run_in_executor(None, detect_faces, image_bytes)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422,
+            detail="Imagem inválida ou formato não suportado.",
+        ) from exc
 
     if not faces:
         raise HTTPException(
