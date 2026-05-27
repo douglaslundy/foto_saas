@@ -31,7 +31,7 @@ async def search(
     image_bytes = await selfie.read()
 
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         faces = await loop.run_in_executor(None, detect_faces, image_bytes)
     except Exception as exc:
         raise HTTPException(
