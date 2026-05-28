@@ -138,7 +138,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SUPABASE_URL: http://localhost:8100
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiJ-e3dXSw6ioTTdqpA1uXhBlUCgAK9YVHW_70
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiZXhwIjoyMDk1Mjk0NTczfQ.61KX8NzHzjaTqXo2-31RazxoyYYEQ9RBzsR7To-w1-w
         NEXT_PUBLIC_APP_URL: http://localhost:3001
         NEXT_PUBLIC_ROOT_DOMAIN: localhost:3001
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_fotosaas_placeholder_key_2024
