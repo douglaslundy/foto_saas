@@ -57,7 +57,7 @@ services:
       GOTRUE_API_PORT: 9999
       API_EXTERNAL_URL: http://localhost:8100
       GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
       GOTRUE_SITE_URL: http://localhost:3001
       GOTRUE_URI_ALLOW_LIST: "http://localhost:3001,http://localhost:8100"
       GOTRUE_DISABLE_SIGNUP: "false"
@@ -88,7 +88,7 @@ services:
       fotosaas-db:
         condition: service_healthy
     environment:
-      PGRST_DB_URI: postgres://authenticator:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      PGRST_DB_URI: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
@@ -112,7 +112,7 @@ services:
       SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
       POSTGREST_URL: http://fotosaas-rest:3000
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
-      DATABASE_URL: postgres://supabase_storage_admin:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      DATABASE_URL: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
       FILE_SIZE_LIMIT: 52428800
       STORAGE_BACKEND: file
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
@@ -192,7 +192,9 @@ services:
       - "8126:8025"   # Web UI → http://localhost:8126
 
   # ── Serviço de reconhecimento facial (Python) ─────────────
+  # Inicie separadamente: docker compose --profile full up fotosaas-face --build
   fotosaas-face:
+    profiles: ["full"]
     build:
       context: ./face-service
       dockerfile: Dockerfile

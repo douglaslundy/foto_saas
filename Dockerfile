@@ -43,6 +43,8 @@ COPY --from=builder /app/public       ./public
 COPY --from=builder /app/.next        ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+# Garante que o diretório public existe mesmo se estiver vazio
+RUN mkdir -p ./public
 
 USER nextjs
 EXPOSE 3001
