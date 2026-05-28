@@ -19,28 +19,22 @@ services:
 
   # ── PostgreSQL (Supabase) ──────────────────────────────────
   fotosaas-db:
-    image: supabase/postgres:15.1.0.117
+    image: pgvector/pgvector:pg15
     container_name: fotosaas-db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h /var/run/postgresql"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
       interval: 5s
       timeout: 5s
       retries: 20
     environment:
-      POSTGRES_HOST: /var/run/postgresql
-      PGPORT: 5432
-      POSTGRES_PORT: 5432
       POSTGRES_PASSWORD: fotosaas_dev_pass_2024
-      PGPASSWORD: fotosaas_dev_pass_2024
       POSTGRES_DB: postgres
-      PGDATABASE: postgres
-      JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
-      JWT_EXP: 3600
+      POSTGRES_USER: postgres
     volumes:
       - fotosaas-db-data:/var/lib/postgresql/data
-      - ./docker/db/00-schema.sql:/docker-entrypoint-initdb.d/migrations/00-schema.sql:ro
-      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/migrations/01-seed.sql:ro
+      - ./docker/db/00-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - ./docker/db/00-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     ports:
       - "5434:5432"
 
@@ -57,7 +51,7 @@ services:
       GOTRUE_API_PORT: 9999
       API_EXTERNAL_URL: http://localhost:8100
       GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
       GOTRUE_SITE_URL: http://localhost:3001
       GOTRUE_URI_ALLOW_LIST: "http://localhost:3001,http://localhost:8100"
       GOTRUE_DISABLE_SIGNUP: "false"
@@ -88,7 +82,7 @@ services:
       fotosaas-db:
         condition: service_healthy
     environment:
-      PGRST_DB_URI: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      PGRST_DB_URI: postgres://authenticator:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
@@ -108,8 +102,8 @@ services:
       fotosaas-rest:
         condition: service_started
     environment:
-      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiJ-e3dXSw6ioTTdqpA1uXhBlUCgAK9YVHW_70
-      SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
+      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiZXhwIjoyMDk1Mjk0NTczfQ.61KX8NzHzjaTqXo2-31RazxoyYYEQ9RBzsR7To-w1-w
+      SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJleHAiOjIwOTUyOTQ1NzN9.GS8UzQUhYj8k4aF3HtnaO6h-aNNb8y7DB5HfwRrVy_Y
       POSTGREST_URL: http://fotosaas-rest:3000
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters
       DATABASE_URL: postgres://postgres:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
@@ -157,7 +151,7 @@ services:
       - "localhost:host-gateway"
     environment:
       # Server-side only (não embutidos no bundle)
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJleHAiOjIwOTUyOTQ1NzN9.GS8UzQUhYj8k4aF3HtnaO6h-aNNb8y7DB5HfwRrVy_Y
       STRIPE_SECRET_KEY: sk_test_fotosaas_placeholder_key_2024
       STRIPE_WEBHOOK_SECRET: whsec_fotosaas_local_webhook_secret_2024
       MERCADOPAGO_ACCESS_TOKEN: TEST-fotosaas-mercadopago-token-2024

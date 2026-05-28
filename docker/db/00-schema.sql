@@ -23,9 +23,10 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 
 -- ----------------------------------------------------------
 -- Perfis de usuário (espelha auth.users com dados extras)
+-- Nota: FK para auth.users removida — auth schema criado pelo GoTrue depois do initdb
 -- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.users (
-  id         UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id         UUID        PRIMARY KEY,
   tenant_id  UUID        REFERENCES public.tenants(id) ON DELETE CASCADE,
   role       TEXT        NOT NULL DEFAULT 'sub_photographer',
   email      TEXT        NOT NULL,
@@ -81,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
 -- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.orders (
   id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_user_id      UUID        REFERENCES auth.users(id),
+  client_user_id      UUID,  -- ref implícita a auth.users (sem FK — GoTrue cria auth depois do initdb)
   client_email        TEXT,
   status              TEXT        NOT NULL DEFAULT 'pending',
   total_cents         INTEGER     NOT NULL DEFAULT 0,
