@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env.local
+.env
+*.log
+docker
+docs
+__tests__
+coverage
+.turbo
+.vercel
