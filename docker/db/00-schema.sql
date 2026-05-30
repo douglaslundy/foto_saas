@@ -61,8 +61,9 @@ CREATE TABLE IF NOT EXISTS public.photos (
   event_id              UUID        NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   tenant_id             UUID        NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   status                TEXT        NOT NULL DEFAULT 'pending',
-  public_storage_path   TEXT,
   original_storage_path TEXT,
+  public_storage_path   TEXT,
+  thumbnail_path        TEXT,
   bib_number            TEXT,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
