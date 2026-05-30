@@ -114,8 +114,9 @@ export async function POST(request: NextRequest) {
   try {
     await uploadOriginal(buffer, storagePath, file.type)
   } catch (err) {
-    console.error('[upload] Storage error:', err)
-    return NextResponse.json({ error: 'Erro ao salvar arquivo.' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[upload] Storage error:', msg)
+    return NextResponse.json({ error: 'Erro ao salvar arquivo.', detail: msg }, { status: 500 })
   }
 
   // 7. Create photo record in DB
