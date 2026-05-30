@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PhotoUploader } from '@/components/photos/uploader'
+import { PhotoGrid } from '@/components/photos/photo-grid'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -13,13 +14,6 @@ type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
-}
-
-const statusLabel: Record<string, string> = {
-  ready: 'Pronta',
-  processing: 'Processando',
-  error: 'Erro',
-  pending: 'Aguardando',
 }
 
 export default async function FotosEventoPage({ params }: Props) {
@@ -115,40 +109,7 @@ export default async function FotosEventoPage({ params }: Props) {
             <Link href={`/dashboard/eventos/${id}/fotos`}>↻ Atualizar</Link>
           </Button>
         </div>
-
-        {photos.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg">
-            Nenhuma foto enviada ainda.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {photos.map((photo) => (
-              <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
-                {photo.thumbnail_path ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`${storageBase}/${photo.thumbnail_path}`}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground text-center px-2">
-                      {statusLabel[photo.status] ?? photo.status}
-                    </span>
-                  </div>
-                )}
-                {photo.status !== 'ready' && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-xs text-white font-medium">
-                      {statusLabel[photo.status] ?? photo.status}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <PhotoGrid photos={photos} storageBase={storageBase} />
       </div>
     </div>
   )

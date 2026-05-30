@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
-type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
+type FileStatus = 'pending' | 'uploading' | 'processing' | 'ready' | 'error'
 
 type FileUploadState = {
   file: File
@@ -20,14 +20,16 @@ type PhotoUploaderProps = {
 const statusLabel: Record<FileStatus, string> = {
   pending: 'Aguardando',
   uploading: 'Enviando…',
-  done: 'Processando…',
+  processing: 'Processando…',
+  ready: 'Concluída ✓',
   error: 'Erro',
 }
 
 const statusColor: Record<FileStatus, string> = {
   pending: 'text-muted-foreground',
   uploading: 'text-blue-500',
-  done: 'text-yellow-500',
+  processing: 'text-yellow-500',
+  ready: 'text-green-600',
   error: 'text-destructive',
 }
 
@@ -38,6 +40,28 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
 
   function setFileStatus(index: number, update: Partial<FileUploadState>) {
     setUploads((prev) => prev.map((u, i) => (i === index ? { ...u, ...update } : u)))
+  }
+
+  async function pollStatus(photoId: string, index: number) {
+    const maxAttempts = 30 // 60 segundos
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise((r) => setTimeout(r, 2000))
+      try {
+        const res = await fetch(`/api/photos/${photoId}`)
+        if (!res.ok) break
+        const { status } = await res.json()
+        if (status === 'ready') {
+          setFileStatus(index, { status: 'ready' })
+          return
+        }
+        if (status === 'error') {
+          setFileStatus(index, { status: 'error', error: 'Erro no processamento' })
+          return
+        }
+      } catch {
+        break
+      }
+    }
   }
 
   async function uploadSingleFile(file: File, index: number): Promise<string | null> {
@@ -54,7 +78,8 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
         return null
       }
       const { photo_id } = await res.json()
-      setFileStatus(index, { status: 'done', photoId: photo_id })
+      setFileStatus(index, { status: 'processing', photoId: photo_id })
+      pollStatus(photo_id, index) // não aguarda — roda em paralelo
       return photo_id as string
     } catch {
       setFileStatus(index, { status: 'error', error: 'Erro de rede' })
@@ -90,7 +115,7 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
     if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files)
   }
 
-  const doneCount = uploads.filter((u) => u.status === 'done').length
+  const doneCount = uploads.filter((u) => u.status === 'ready').length
   const errorCount = uploads.filter((u) => u.status === 'error').length
 
   return (
