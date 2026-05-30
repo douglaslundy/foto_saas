@@ -26,7 +26,15 @@ export default async function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Fotógrafos ({tenants?.length ?? 0})</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Fotógrafos ({tenants?.length ?? 0})</h1>
+        <Link
+          href="/admin/tenants/novo"
+          className="inline-flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          + Novo Fotógrafo
+        </Link>
+      </div>
 
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-sm">

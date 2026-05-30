@@ -5,11 +5,11 @@ export const BUCKETS = {
   PUBLIC: 'photos-public',
 } as const
 
-export async function uploadOriginal(buffer: Buffer, storagePath: string): Promise<void> {
+export async function uploadOriginal(buffer: Buffer, storagePath: string, contentType = 'image/jpeg'): Promise<void> {
   const supabase = createAdminClient()
   const { error } = await supabase.storage
     .from(BUCKETS.ORIGINAL)
-    .upload(storagePath, buffer, { upsert: true })
+    .upload(storagePath, buffer, { upsert: true, contentType })
   if (error) throw new Error(`Storage upload original failed: ${error.message}`)
 }
 

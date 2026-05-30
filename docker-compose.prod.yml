@@ -1,0 +1,234 @@
+# =============================================================
+# FotoSaaS — Docker Compose (produção VPS)
+# =============================================================
+# Iniciar : docker compose -f docker-compose.prod.yml up -d --build
+# Parar   : docker compose -f docker-compose.prod.yml down
+# Logs    : docker compose -f docker-compose.prod.yml logs -f
+# =============================================================
+
+name: fotosaas
+
+services:
+
+  # ── PostgreSQL + pgvector ──────────────────────────────────
+  fotosaas-db:
+    image: pgvector/pgvector:pg15
+    container_name: fotosaas-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+    volumes:
+      - fotosaas-db-data:/var/lib/postgresql/data
+      - ./docker/db/00-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+      - ./docker/db/00-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - fotosaas-net
+
+  # ── Supabase Auth (GoTrue) ─────────────────────────────────
+  fotosaas-auth:
+    image: supabase/gotrue:v2.151.0
+    container_name: fotosaas-auth
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://${SERVER_IP}/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres?search_path=auth&sslmode=disable
+      GOTRUE_SITE_URL: http://${SERVER_IP}
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@fotosaas.local
+      GOTRUE_SMTP_HOST: ""
+      GOTRUE_SMTP_PORT: "587"
+      GOTRUE_SMTP_SENDER_NAME: FotoSaaS
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "false"
+      GOTRUE_PASSWORD_MIN_LENGTH: 6
+      GOTRUE_LOG_LEVEL: error
+    networks:
+      - fotosaas-net
+
+  # ── PostgREST (REST API) ───────────────────────────────────
+  fotosaas-rest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: fotosaas-rest
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:fotosaas_dev_pass_2024@fotosaas-db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: "3600"
+      PGRST_SERVER_PORT: "3000"
+    networks:
+      - fotosaas-net
+
+  # ── Supabase Storage ───────────────────────────────────────
+  fotosaas-storage:
+    image: supabase/storage-api:v1.0.6
+    container_name: fotosaas-storage
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+      fotosaas-rest:
+        condition: service_started
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://fotosaas-rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@fotosaas-db:5432/postgres
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+    volumes:
+      - fotosaas-storage-data:/var/lib/storage
+    networks:
+      - fotosaas-net
+
+  # ── Redis ──────────────────────────────────────────────────
+  fotosaas-redis:
+    image: redis:7-alpine
+    container_name: fotosaas-redis
+    restart: unless-stopped
+    volumes:
+      - fotosaas-redis-data:/data
+    networks:
+      - fotosaas-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Face Recognition Service (Python) ─────────────────────
+  fotosaas-face:
+    build:
+      context: ./face-service
+      dockerfile: Dockerfile
+    container_name: fotosaas-face
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+      fotosaas-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@fotosaas-db:5432/postgres
+      REDIS_URL: redis://fotosaas-redis:6379
+      SUPABASE_URL: http://fotosaas-nginx/
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      FACE_RETENTION_DAYS: "90"
+      FACE_SIMILARITY_THRESHOLD: "0.6"
+      FACE_SEARCH_LIMIT: "100"
+    networks:
+      - fotosaas-net
+
+  # ── Next.js App ────────────────────────────────────────────
+  fotosaas-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: http://${SERVER_IP}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+        NEXT_PUBLIC_APP_URL: http://${SERVER_IP}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${SERVER_IP}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
+    container_name: fotosaas-app
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+      fotosaas-redis:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://${SERVER_IP}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_INTERNAL_URL: http://fotosaas-nginx
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      NEXT_PUBLIC_APP_URL: http://${SERVER_IP}
+      NEXT_PUBLIC_ROOT_DOMAIN: ${SERVER_IP}
+      FACE_RECOGNITION_SERVICE_URL: http://fotosaas-face:8000
+      REDIS_URL: redis://fotosaas-redis:6379
+      NODE_ENV: production
+    networks:
+      - fotosaas-net
+
+  # ── BullMQ Watermark Worker ────────────────────────────────
+  fotosaas-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: fotosaas-worker
+    restart: unless-stopped
+    depends_on:
+      fotosaas-db:
+        condition: service_healthy
+      fotosaas-redis:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://${SERVER_IP}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_INTERNAL_URL: http://fotosaas-nginx
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      FACE_RECOGNITION_SERVICE_URL: http://fotosaas-face:8000
+      REDIS_URL: redis://fotosaas-redis:6379
+      NODE_ENV: production
+    networks:
+      - fotosaas-net
+
+  # ── Nginx (API Gateway + App Proxy) ───────────────────────
+  fotosaas-nginx:
+    image: nginx:alpine
+    container_name: fotosaas-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - fotosaas-app
+      - fotosaas-auth
+      - fotosaas-rest
+      - fotosaas-storage
+    networks:
+      - fotosaas-net
+
+networks:
+  fotosaas-net:
+    driver: bridge
+
+volumes:
+  fotosaas-db-data:
+  fotosaas-storage-data:
+  fotosaas-redis-data:

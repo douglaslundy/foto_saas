@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { CartButton } from '@/components/cart/cart-button'
 import { CookieConsent } from '@/components/ui/cookie-consent'
@@ -34,9 +34,12 @@ export default async function TenantLayout({
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <CartButton />
-          <Button variant="outline" size="sm">
+          <Link
+            href="/login"
+            className="inline-flex items-center px-3 py-1.5 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
             Entrar
-          </Button>
+          </Link>
         </div>
       </nav>
       <main>{children}</main>

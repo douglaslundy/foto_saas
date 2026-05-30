@@ -25,7 +25,7 @@ async function getAuthProfile(): Promise<{ user: { id: string }; profile: Profil
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 
-  if (!profile?.tenant_id || !['photographer', 'sub_photographer'].includes(profile.role)) {
+  if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
 

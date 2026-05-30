@@ -22,7 +22,7 @@ export default async function EditarEventoPage({ params }: Props) {
     .eq('id', user.id)
     .single()) as { data: { tenant_id: string; role: string } | null }
 
-  if (!profile?.tenant_id || !['photographer', 'sub_photographer'].includes(profile.role)) {
+  if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
 

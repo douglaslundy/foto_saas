@@ -61,6 +61,28 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
         </p>
       </CardHeader>
       <CardContent />
+      {tenantSlug && (
+        <div className="px-6 pb-2">
+          <p className="text-xs text-muted-foreground truncate">
+            Link:{' '}
+            {event.status === 'published' ? (
+              <a
+                href={`/${tenantSlug}/evento/${event.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline font-mono"
+              >
+                /{tenantSlug}/evento/{event.slug}
+              </a>
+            ) : (
+              <span className="font-mono text-muted-foreground/60">
+                /{tenantSlug}/evento/{event.slug}{' '}
+                <span className="not-italic">(publicar para ativar)</span>
+              </span>
+            )}
+          </p>
+        </div>
+      )}
       <CardFooter className="pt-0 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" asChild>
           <Link href={`/dashboard/eventos/${event.id}/editar`}>Editar</Link>
@@ -69,11 +91,18 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
           <Link href={`/dashboard/eventos/${event.id}/fotos`}>Fotos</Link>
         </Button>
         {event.status === 'published' && tenantSlug && (
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/${tenantSlug}/evento/${event.slug}/qr`} target="_blank">
-              QR
-            </Link>
-          </Button>
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/${tenantSlug}/evento/${event.slug}`} target="_blank">
+                Ver site
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/${tenantSlug}/evento/${event.slug}/qr`} target="_blank">
+                QR Code
+              </Link>
+            </Button>
+          </>
         )}
         {event.status === 'draft' && (
           <>

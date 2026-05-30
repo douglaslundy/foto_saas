@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
   if (
     !profile?.tenant_id ||
-    !['photographer', 'sub_photographer'].includes(profile.role)
+    !['photographer', 'sub_photographer', 'admin'].includes(profile.role)
   ) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   // 6. Upload to private bucket
   const buffer = Buffer.from(await file.arrayBuffer())
   try {
-    await uploadOriginal(buffer, storagePath)
+    await uploadOriginal(buffer, storagePath, file.type)
   } catch (err) {
     console.error('[upload] Storage error:', err)
     return NextResponse.json({ error: 'Erro ao salvar arquivo.' }, { status: 500 })
@@ -126,7 +126,6 @@ export async function POST(request: NextRequest) {
       id: photoId,
       event_id: eventId,
       tenant_id: profile.tenant_id,
-      uploaded_by_user_id: user.id,
       original_storage_path: storagePath,
       status: 'processing',
     }) as { error: { message: string } | null }

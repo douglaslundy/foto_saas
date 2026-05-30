@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { StatusToggleButton } from './_components/status-toggle-button'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -77,22 +78,7 @@ export default async function TenantDetailPage({ params }: Props) {
 
       {/* Quick actions */}
       <div className="flex gap-3">
-        <form
-          onSubmit={undefined}
-          action={`/api/admin/tenants/${id}/status`}
-          method="post"
-        >
-          <button
-            type="submit"
-            className={`px-4 py-2 rounded text-sm font-medium border ${
-              tenant.status === 'active'
-                ? 'text-red-600 border-red-200 hover:bg-red-50'
-                : 'text-green-600 border-green-200 hover:bg-green-50'
-            }`}
-          >
-            {tenant.status === 'active' ? 'Suspender conta' : 'Reativar conta'}
-          </button>
-        </form>
+        <StatusToggleButton tenantId={tenant.id} currentStatus={tenant.status} />
       </div>
 
       {/* Members */}

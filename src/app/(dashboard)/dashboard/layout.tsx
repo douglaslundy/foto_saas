@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/dashboard/financeiro', label: 'Financeiro' },
   { href: '/dashboard/clientes', label: 'Clientes' },
   { href: '/dashboard/equipe', label: 'Equipe' },
+  { href: '/dashboard/configuracoes', label: 'Configurações' },
 ]
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -23,11 +24,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single()
 
   // @ts-expect-error: profile type is not properly inferred from placeholder Database type
-  if (!profile || !['photographer', 'sub_photographer'].includes(profile.role)) {
+  if (!profile || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
 
-  const profileWithName = profile as { name?: string } | null
+  const profileWithName = profile as { name?: string; role?: string } | null
+  const isAdmin = profileWithName?.role === 'admin'
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b px-6 py-3 flex items-center justify-between">
@@ -45,7 +47,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
             ))}
           </div>
         </div>
-        <span className="text-sm text-muted-foreground">{profileWithName?.name}</span>
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-xs px-2 py-1 rounded bg-destructive/10 text-destructive font-medium hover:bg-destructive/20 transition-colors"
+            >
+              Painel Admin
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">
+            {profileWithName?.name ?? user.email}
+          </span>
+        </div>
       </nav>
       <main className="p-6">{children}</main>
     </div>
