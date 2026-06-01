@@ -22,6 +22,7 @@ interface WatermarkFormProps {
 }
 
 const POSITION_OPTIONS = [
+  { value: 'tiled', label: 'Todas as partes (tiled)' },
   { value: 'top-left', label: 'Superior esquerdo' },
   { value: 'top-center', label: 'Superior centro' },
   { value: 'top-right', label: 'Superior direito' },
@@ -42,7 +43,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
   const [fontSize, setFontSize] = useState(initial?.font_size ?? 24)
   const [color, setColor] = useState(initial?.color ?? '#ffffff')
   const [opacity, setOpacity] = useState(initial?.opacity ?? 0.6)
-  const [position, setPosition] = useState(initial?.position ?? 'bottom-right')
+  const [position, setPosition] = useState(initial?.position ?? 'tiled')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
