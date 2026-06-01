@@ -35,8 +35,13 @@ function photoName(photo: Photo) {
   return parts[parts.length - 1] || photo.id.slice(0, 8)
 }
 
+function getInitialViewMode(): ViewMode {
+  if (typeof window === 'undefined') return 'grid'
+  try { return localStorage.getItem('fotosaas_view_mode') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
+}
+
 export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onReprocess }: PhotoGridProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
@@ -113,8 +118,16 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
           )}
         </div>
         <div className="flex items-center gap-0.5 border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] p-0.5">
-          <button onClick={() => setViewMode('grid')} className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`} title="Grade">⊞</button>
-          <button onClick={() => setViewMode('list')} className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`} title="Lista">☰</button>
+          <button
+            onClick={() => { setViewMode('grid'); try { localStorage.setItem('fotosaas_view_mode', 'grid') } catch {} }}
+            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
+            title="Grade"
+          >⊞</button>
+          <button
+            onClick={() => { setViewMode('list'); try { localStorage.setItem('fotosaas_view_mode', 'list') } catch {} }}
+            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
+            title="Lista"
+          >☰</button>
         </div>
       </div>
 
