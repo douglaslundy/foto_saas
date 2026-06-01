@@ -60,8 +60,9 @@ async function buildTextSvg(
   const opacity = config.opacity
 
   if (tiled) {
-    const patternW = Math.max(text.length * fontSize * 0.6, 80)
-    const patternH = fontSize * 4
+    // patternW * 1.3 and patternH * (6.5/4 ≈ 1.625) → ~40% fewer tiles vs previous
+    const patternW = Math.max(text.length * fontSize * 0.78, 104)
+    const patternH = fontSize * 6.5
     return Buffer.from(
       `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>

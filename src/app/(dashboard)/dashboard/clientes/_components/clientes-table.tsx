@@ -25,10 +25,10 @@ const statusLabel: Record<string, string> = {
 }
 
 const statusClass: Record<string, string> = {
-  paid: 'text-green-600 bg-green-50',
-  pending: 'text-yellow-700 bg-yellow-50',
-  cancelled: 'text-red-600 bg-red-50',
-  refunded: 'text-gray-600 bg-gray-100',
+  paid: 'text-[var(--color-success)] bg-[var(--color-success)]/10',
+  pending: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40',
+  cancelled: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10',
+  refunded: 'text-[var(--color-ink-muted)] bg-[var(--color-surface-alt)]',
 }
 
 export function ClientesTable({ orders }: ClientesTableProps) {

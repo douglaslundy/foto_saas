@@ -25,7 +25,7 @@ const config = {
         foreground: "var(--color-ink)",
         primary: {
           DEFAULT: "var(--color-ink)",
-          foreground: "#ffffff",
+          foreground: "var(--primary-foreground)",
         },
         secondary: {
           DEFAULT: "var(--color-surface-alt)",
