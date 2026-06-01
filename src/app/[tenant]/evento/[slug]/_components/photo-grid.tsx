@@ -44,10 +44,9 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
   const [addedToCart, setAddedToCart] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
 
-  // Multi-select state (only used when isManager)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [deleting, setDeleting] = useState(false)
+  const [bulkWorking, setBulkWorking] = useState(false)
 
   function changeViewMode(mode: ViewMode) {
     setViewMode(mode)
@@ -67,10 +66,39 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
     setSelected(new Set())
   }
 
+  // Bulk add to cart (for clients)
+  async function handleBulkAddToCart() {
+    if (selected.size === 0) return
+    setBulkWorking(true)
+    const ids = Array.from(selected)
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoId: id }),
+          })
+        )
+      )
+      setAddedToCart((prev) => {
+        const next = new Set(prev)
+        ids.forEach((id) => next.add(id))
+        return next
+      })
+      exitSelectMode()
+    } catch {
+      alert('Erro ao adicionar fotos ao carrinho.')
+    } finally {
+      setBulkWorking(false)
+    }
+  }
+
+  // Bulk delete (for photographer/admin)
   async function handleBulkDelete() {
     if (selected.size === 0) return
     if (!confirm(`Excluir ${selected.size} foto(s)? Esta ação não pode ser desfeita.`)) return
-    setDeleting(true)
+    setBulkWorking(true)
     const ids = Array.from(selected)
     try {
       await Promise.all(ids.map((id) => fetch(`/api/photos/${id}`, { method: 'DELETE' })))
@@ -79,7 +107,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
     } catch {
       alert('Erro ao excluir fotos.')
     } finally {
-      setDeleting(false)
+      setBulkWorking(false)
     }
   }
 
@@ -115,70 +143,95 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
     }
   }
 
+  // Ring color differs by role
+  const selectedRing = isManager ? 'ring-2 ring-red-500 ring-offset-1' : 'ring-2 ring-[var(--color-gold,#c8a96e)] ring-offset-1'
+  const checkboxSelected = isManager ? 'bg-red-600 border-red-600' : 'bg-[var(--color-gold,#c8a96e)] border-[var(--color-gold,#c8a96e)]'
+  const selectedRowBg = isManager ? 'border-red-400 bg-red-50' : 'border-[var(--color-gold,#c8a96e)] bg-amber-50'
+
   return (
     <>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          {/* Manager: select mode controls */}
-          {isManager && (
-            selectMode ? (
-              <>
+
+        {/* Left: select controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectMode ? (
+            <>
+              {/* Manager gets Todas/Limpar; client doesn't need them */}
+              {isManager && (
+                <>
+                  <button
+                    onClick={() => setSelected(new Set(displayed.filter(p => p.status === 'ready').map((p) => p.id)))}
+                    disabled={bulkWorking}
+                    className="px-3 py-1.5 rounded border border-[var(--color-border,#e5e5e5)] text-xs font-medium hover:bg-[var(--color-surface-alt,#f5f4f0)] transition-colors disabled:opacity-50"
+                  >
+                    Todas
+                  </button>
+                  <button
+                    onClick={() => setSelected(new Set())}
+                    disabled={bulkWorking}
+                    className="px-3 py-1.5 rounded border border-[var(--color-border,#e5e5e5)] text-xs font-medium hover:bg-[var(--color-surface-alt,#f5f4f0)] transition-colors disabled:opacity-50"
+                  >
+                    Limpar
+                  </button>
+                </>
+              )}
+
+              {selected.size > 0 && (
+                <span className="text-xs text-[var(--color-ink-muted,#6b6b6b)]">
+                  {selected.size} selecionada{selected.size !== 1 ? 's' : ''}
+                </span>
+              )}
+
+              {/* Client: add to cart */}
+              {!isManager && (
                 <button
-                  onClick={() => setSelected(new Set(displayed.map((p) => p.id)))}
-                  disabled={deleting}
-                  className="px-3 py-1.5 rounded border border-[var(--color-border,#e5e5e5)] text-xs font-medium hover:bg-[var(--color-surface-alt,#f5f4f0)] transition-colors disabled:opacity-50"
+                  onClick={handleBulkAddToCart}
+                  disabled={selected.size === 0 || bulkWorking}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-40 transition-colors"
                 >
-                  Todas
+                  <ShoppingCart className="h-3 w-3" />
+                  {bulkWorking ? 'Adicionando…' : `Adicionar (${selected.size})`}
                 </button>
-                <button
-                  onClick={() => setSelected(new Set())}
-                  disabled={deleting}
-                  className="px-3 py-1.5 rounded border border-[var(--color-border,#e5e5e5)] text-xs font-medium hover:bg-[var(--color-surface-alt,#f5f4f0)] transition-colors disabled:opacity-50"
-                >
-                  Limpar
-                </button>
+              )}
+
+              {/* Manager: delete */}
+              {isManager && (
                 <button
                   onClick={handleBulkDelete}
-                  disabled={selected.size === 0 || deleting}
+                  disabled={selected.size === 0 || bulkWorking}
                   className="px-3 py-1.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-40 transition-colors"
                 >
-                  {deleting ? 'Excluindo…' : `Excluir (${selected.size})`}
+                  {bulkWorking ? 'Excluindo…' : `Excluir (${selected.size})`}
                 </button>
-                <button
-                  onClick={exitSelectMode}
-                  disabled={deleting}
-                  className="px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted,#6b6b6b)] hover:text-[var(--color-ink,#1a1a1a)] transition-colors"
-                >
-                  Cancelar
-                </button>
-              </>
-            ) : (
+              )}
+
+              <button
+                onClick={exitSelectMode}
+                disabled={bulkWorking}
+                className="px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted,#6b6b6b)] hover:text-[var(--color-ink,#1a1a1a)] transition-colors"
+              >
+                Cancelar
+              </button>
+            </>
+          ) : (
+            <>
               <button
                 onClick={() => setSelectMode(true)}
                 className="px-3 py-1.5 rounded border border-[var(--color-border,#e5e5e5)] text-xs font-medium hover:bg-[var(--color-surface-alt,#f5f4f0)] transition-colors"
               >
                 Selecionar
               </button>
-            )
-          )}
-
-          {/* Photo count (shown when not in select mode) */}
-          {!selectMode && (
-            <span className="text-xs text-[var(--color-ink-muted,#6b6b6b)]">
-              {displayed.length === 0 && filteredIds != null
-                ? 'Nenhuma foto encontrada'
-                : `${displayed.length} ${displayed.length === 1 ? 'foto' : 'fotos'}`}
-            </span>
-          )}
-          {selectMode && selected.size > 0 && (
-            <span className="text-xs text-[var(--color-ink-muted,#6b6b6b)]">
-              {selected.size} selecionada{selected.size !== 1 ? 's' : ''}
-            </span>
+              <span className="text-xs text-[var(--color-ink-muted,#6b6b6b)]">
+                {displayed.length === 0 && filteredIds != null
+                  ? 'Nenhuma foto encontrada'
+                  : `${displayed.length} ${displayed.length === 1 ? 'foto' : 'fotos'}`}
+              </span>
+            </>
           )}
         </div>
 
-        {/* View toggle */}
+        {/* Right: view toggle */}
         <div className="flex items-center gap-0.5 border border-[var(--color-border,#e5e5e5)] rounded-md p-0.5">
           <button
             onClick={() => changeViewMode('grid')}
@@ -222,7 +275,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
         </p>
       )}
 
-      {/* Grid view */}
+      {/* ── Grid view ── */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
           {displayed.map((photo) => {
@@ -231,11 +284,11 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
               <div
                 key={photo.id}
                 className={`group relative aspect-square bg-muted rounded overflow-hidden transition-all ${
-                  selectMode ? 'cursor-pointer' : ''
-                } ${isSelected ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
+                  selectMode && photo.status === 'ready' ? 'cursor-pointer' : ''
+                } ${isSelected ? selectedRing : ''}`}
                 onClick={() => {
-                  if (selectMode) { toggleSelect(photo.id); return }
-                  if (photo.status === 'ready') setLightbox(photo)
+                  if (selectMode && photo.status === 'ready') { toggleSelect(photo.id); return }
+                  if (!selectMode && photo.status === 'ready') setLightbox(photo)
                 }}
               >
                 {photo.status === 'ready' && photo.public_storage_path ? (
@@ -248,24 +301,19 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
                       onContextMenu={(e) => e.preventDefault()}
                     />
 
-                    {/* Select checkbox overlay */}
+                    {/* Checkbox overlay in select mode */}
                     {selectMode && (
-                      <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center z-10 ${
-                        isSelected
-                          ? 'bg-red-600 border-red-600 text-white'
-                          : 'bg-white/80 border-gray-400'
+                      <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center z-10 pointer-events-none ${
+                        isSelected ? `${checkboxSelected} text-white` : 'bg-white/80 border-gray-400'
                       }`}>
                         {isSelected && <span className="text-[10px] leading-none font-bold">✓</span>}
                       </div>
                     )}
 
-                    {/* Cart button (hidden in select mode) */}
+                    {/* Individual cart button (hidden in select mode) */}
                     {!selectMode && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          addToCart(photo.id)
-                        }}
+                        onClick={(e) => { e.stopPropagation(); addToCart(photo.id) }}
                         className={`absolute bottom-2 right-2 flex items-center gap-1 text-xs px-2 py-1 rounded transition-opacity ${
                           addedToCart.has(photo.id)
                             ? 'bg-green-600 text-white opacity-100'
@@ -289,7 +337,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
         </div>
       )}
 
-      {/* List view */}
+      {/* ── List view ── */}
       {viewMode === 'list' && (
         <div className="flex flex-col gap-1.5">
           {displayed.map((photo, idx) => {
@@ -298,21 +346,23 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
               <div
                 key={photo.id}
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
-                  selectMode ? 'cursor-pointer' : photo.status === 'ready' ? 'cursor-pointer' : ''
+                  selectMode && photo.status === 'ready'
+                    ? 'cursor-pointer'
+                    : photo.status === 'ready' ? 'cursor-pointer' : ''
                 } ${
                   isSelected
-                    ? 'border-red-400 bg-red-50'
+                    ? selectedRowBg
                     : 'border-[var(--color-border,#e5e5e5)] bg-white/60 hover:bg-[var(--color-surface-alt,#f5f4f0)]'
                 }`}
                 onClick={() => {
-                  if (selectMode) { toggleSelect(photo.id); return }
-                  if (photo.status === 'ready') setLightbox(photo)
+                  if (selectMode && photo.status === 'ready') { toggleSelect(photo.id); return }
+                  if (!selectMode && photo.status === 'ready') setLightbox(photo)
                 }}
               >
-                {/* Select checkbox (manager only) */}
+                {/* Checkbox */}
                 {selectMode && (
-                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                    isSelected ? 'bg-red-600 border-red-600 text-white' : 'border-gray-400 bg-white'
+                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center pointer-events-none ${
+                    isSelected ? `${checkboxSelected} text-white` : 'border-gray-400 bg-white'
                   }`}>
                     {isSelected && <span className="text-[10px] leading-none font-bold">✓</span>}
                   </div>
@@ -340,13 +390,10 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
                   Foto {idx + 1}
                 </span>
 
-                {/* Cart button (hidden in select mode) */}
+                {/* Individual cart button (hidden in select mode) */}
                 {photo.status === 'ready' && !selectMode && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      addToCart(photo.id)
-                    }}
+                    onClick={(e) => { e.stopPropagation(); addToCart(photo.id) }}
                     className={`flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors ${
                       addedToCart.has(photo.id)
                         ? 'bg-green-600 text-white'
