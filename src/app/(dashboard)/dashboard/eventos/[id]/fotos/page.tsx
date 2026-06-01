@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { FotosManager } from '@/components/photos/fotos-manager'
 
 type Props = { params: Promise<{ id: string }> }
@@ -34,7 +33,7 @@ export default async function FotosEventoPage({ params }: Props) {
     redirect('/login')
   }
 
-  const [eventResult, tenantResult, photosResult] = await Promise.all([
+  const [eventResult, photosResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('events')
@@ -42,12 +41,6 @@ export default async function FotosEventoPage({ params }: Props) {
       .eq('id', id)
       .eq('tenant_id', profile.tenant_id)
       .single() as Promise<{ data: { id: string; title: string; slug: string; status: string } | null }>,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (adminClient as any)
-      .from('tenants')
-      .select('slug')
-      .eq('id', profile.tenant_id)
-      .single() as Promise<{ data: { slug: string } | null }>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('photos')
@@ -58,44 +51,44 @@ export default async function FotosEventoPage({ params }: Props) {
   ])
 
   const event = eventResult.data
-  const tenant = tenantResult.data
   const photos = photosResult.data ?? []
   if (!event) notFound()
-
-  const publicUrl = tenant?.slug
-    ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${tenant.slug}/evento/${event.slug}`
-    : null
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/dashboard/eventos">← Eventos</Link>
-        </Button>
-        <h1 className="text-xl font-bold">{event.title} — Fotos</h1>
-        <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-          event.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-        }`}>
-          {event.status === 'published' ? 'Publicado' : 'Rascunho'}
-        </span>
-      </div>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-[var(--color-ink-muted)]">
+        <Link
+          href="/dashboard/eventos"
+          className="hover:text-[var(--color-ink)] transition-colors"
+        >
+          Eventos
+        </Link>
+        <span>/</span>
+        <span className="text-[var(--color-ink)]">{event.title}</span>
+        <span>/</span>
+        <span>Fotos</span>
+      </nav>
 
-      {publicUrl && (
-        <div className="border rounded-lg px-4 py-3 bg-muted/40 text-sm flex items-center justify-between gap-4">
-          <div>
-            <p className="font-medium text-sm mb-0.5">Link público do evento</p>
-            <a href={publicUrl} target="_blank" rel="noopener noreferrer"
-              className="font-mono text-xs text-primary underline break-all">
-              {publicUrl}
-            </a>
-          </div>
-          {event.status !== 'published' && (
-            <p className="text-xs text-muted-foreground whitespace-nowrap">(só ativo após publicar)</p>
-          )}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+            {event.title}
+          </h1>
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-gold-light)] text-[var(--color-gold)] border border-[var(--color-gold)]/30">
+            {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
+          </span>
         </div>
-      )}
+        <Link
+          href={`/dashboard/eventos/${id}/editar`}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors"
+        >
+          ← Voltar ao Evento
+        </Link>
+      </div>
 
       <FotosManager eventId={id} initialPhotos={photos} storageBase={storageBase} />
     </div>

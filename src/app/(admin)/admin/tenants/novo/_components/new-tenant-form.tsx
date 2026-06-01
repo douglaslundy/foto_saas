@@ -2,17 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-type UserType = 'photographer' | 'admin'
 
 export function NewTenantForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [userType, setUserType] = useState<UserType>('photographer')
   const [form, setForm] = useState({
     tenantName: '',
     slug: '',
@@ -41,25 +37,14 @@ export function NewTenantForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
-    const payload =
-      userType === 'admin'
-        ? {
-            role: 'admin',
-            name: form.photographerName,
-            email: form.email,
-            password: form.password,
-          }
-        : { ...form }
-
     const res = await fetch('/api/admin/tenants', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(form),
     })
     const data = await res.json()
     if (!res.ok) {
-      setError(data.error ?? 'Erro ao criar usuário.')
+      setError(data.error ?? 'Erro ao criar fotógrafo.')
       setLoading(false)
       return
     }
@@ -68,130 +53,129 @@ export function NewTenantForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border rounded-lg p-6 space-y-4">
-      {/* User type selector */}
-      <div className="space-y-2">
-        <Label>Tipo de usuário</Label>
-        <div className="flex gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="userType"
-              value="photographer"
-              checked={userType === 'photographer'}
-              onChange={() => setUserType('photographer')}
-              className="accent-primary"
-            />
-            <span className="text-sm">Fotógrafo (novo estúdio)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="userType"
-              value="admin"
-              checked={userType === 'admin'}
-              onChange={() => setUserType('admin')}
-              className="accent-primary"
-            />
-            <span className="text-sm">Administrador da plataforma</span>
-          </label>
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+      style={{ boxShadow: 'var(--shadow-sm)' }}
+    >
+      {/* Dados do estúdio */}
+      <div className="px-6 py-4 border-b border-[var(--color-border-strong)] bg-[var(--color-surface-alt)]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">
+          Dados do Estúdio
+        </p>
+      </div>
+      <div className="px-6 py-5 space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="tenantName" className="text-sm font-medium text-[var(--color-ink)]">
+            Nome da empresa / estúdio *
+          </Label>
+          <Input
+            id="tenantName"
+            name="tenantName"
+            value={form.tenantName}
+            onChange={handleChange}
+            placeholder="Ex: Studio Silva Fotografia"
+            required
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="slug" className="text-sm font-medium text-[var(--color-ink)]">
+            Slug (URL pública) *
+          </Label>
+          <Input
+            id="slug"
+            name="slug"
+            value={form.slug}
+            onChange={handleChange}
+            placeholder="studio-silva"
+            required
+          />
+          <p className="text-xs text-[var(--color-ink-muted)]">
+            Usado na URL pública:{' '}
+            <span className="font-mono text-[var(--color-ink-soft)]">
+              {form.slug || 'studio-silva'}.seudominio.com
+            </span>
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="photographerName" className="text-sm font-medium text-[var(--color-ink)]">
+            Nome do fotógrafo responsável
+          </Label>
+          <Input
+            id="photographerName"
+            name="photographerName"
+            value={form.photographerName}
+            onChange={handleChange}
+            placeholder="Ex: João Silva"
+          />
         </div>
       </div>
 
-      {/* Tenant fields — only for photographer */}
-      {userType === 'photographer' && (
-        <>
-          <div className="space-y-1">
-            <Label htmlFor="tenantName">Nome da empresa / estúdio *</Label>
-            <Input
-              id="tenantName"
-              name="tenantName"
-              value={form.tenantName}
-              onChange={handleChange}
-              placeholder="Ex: Studio Silva Fotografia"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="slug">Slug (URL pública) *</Label>
-            <Input
-              id="slug"
-              name="slug"
-              value={form.slug}
-              onChange={handleChange}
-              placeholder="studio-silva"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              Usado na URL pública: <span className="font-mono">studio-silva.seudominio.com</span>
-            </p>
-          </div>
-        </>
-      )}
-
-      {/* Name field label changes by type */}
-      <div className="space-y-1">
-        <Label htmlFor="photographerName">
-          {userType === 'photographer' ? 'Nome do fotógrafo responsável' : 'Nome do administrador *'}
-        </Label>
-        <Input
-          id="photographerName"
-          name="photographerName"
-          value={form.photographerName}
-          onChange={handleChange}
-          placeholder={userType === 'photographer' ? 'Ex: João Silva' : 'Ex: Maria Souza'}
-          required={userType === 'admin'}
-        />
-      </div>
-
-      <div className="border-t pt-4 space-y-1">
-        <p className="text-sm font-medium">Credenciais de acesso</p>
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="email">E-mail de login *</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder={userType === 'photographer' ? 'joao@studiosliva.com' : 'admin@plataforma.com'}
-          required
-        />
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="password">Senha inicial *</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          placeholder="Mínimo 6 caracteres"
-          required
-          minLength={6}
-        />
-        <p className="text-xs text-muted-foreground">
-          O usuário pode alterar a senha após o primeiro acesso em Configurações.
+      {/* Credenciais */}
+      <div className="px-6 py-4 border-t border-b border-[var(--color-border-strong)] bg-[var(--color-surface-alt)]">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">
+          Credenciais de Acesso
         </p>
       </div>
+      <div className="px-6 py-5 space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-medium text-[var(--color-ink)]">
+            E-mail de login *
+          </Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="joao@studiosilva.com"
+            required
+          />
+        </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-sm font-medium text-[var(--color-ink)]">
+            Senha inicial *
+          </Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Mínimo 6 caracteres"
+            required
+            minLength={6}
+          />
+          <p className="text-xs text-[var(--color-ink-muted)]">
+            O fotógrafo pode alterar a senha após o primeiro acesso em Configurações.
+          </p>
+        </div>
+      </div>
 
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading}>
-          {loading
-            ? 'Criando...'
-            : userType === 'admin'
-            ? 'Criar administrador'
-            : 'Criar fotógrafo'}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancelar
-        </Button>
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-[var(--color-border-strong)] bg-[var(--color-surface-alt)] flex items-center gap-3">
+        {error && (
+          <p className="text-sm text-[var(--color-danger)] flex-1">{error}</p>
+        )}
+        <div className="flex items-center gap-3 ml-auto">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 rounded-[var(--radius-sm)] text-sm font-medium border border-[var(--color-border-strong)] text-[var(--color-ink-soft)] hover:bg-[var(--color-surface)] transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
+          >
+            {loading ? 'Criando...' : 'Criar Tenant'}
+          </button>
+        </div>
       </div>
     </form>
   )

@@ -7,6 +7,7 @@ async function getProfile() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (admin as any)
     .from('users').select('tenant_id, role').eq('id', user.id).single()
   if (!profile?.tenant_id) return null
@@ -17,6 +18,7 @@ export async function GET() {
   const profile = await getProfile()
   if (!profile) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (admin as any)
     .from('watermark_configs').select('*').eq('tenant_id', profile.tenant_id).single()
   return NextResponse.json({ config: data ?? null })
@@ -27,6 +29,7 @@ export async function PUT(request: NextRequest) {
   if (!profile) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   const body = await request.json()
   const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (admin as any)
     .from('watermark_configs')
     .upsert({ ...body, tenant_id: profile.tenant_id, updated_at: new Date().toISOString() }, { onConflict: 'tenant_id' })

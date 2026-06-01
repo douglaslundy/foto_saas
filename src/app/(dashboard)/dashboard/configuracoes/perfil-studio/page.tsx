@@ -44,13 +44,36 @@ export default async function PerfilStudioPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Perfil do Estúdio</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gerencie as informações públicas do seu estúdio.
-        </p>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Perfil do Estúdio</h1>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Informações do seu estúdio fotográfico</p>
       </div>
 
-      <div className="border rounded-lg p-6">
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+        {/* Sidebar nav */}
+        <div
+          className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden h-fit"
+          style={{ boxShadow: 'var(--shadow-sm)' }}
+        >
+          {[
+            { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: false },
+            { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: true },
+            { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
+          ].map(item => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3.5 text-sm font-medium border-b border-[var(--color-border)] last:border-0 transition-colors ${
+                item.active
+                  ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)] font-semibold'
+                  : 'hover:bg-[var(--color-surface-alt)] text-[var(--color-ink-soft)]'
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Form card */}
         <PerfilStudioForm initial={tenant} />
       </div>
     </div>

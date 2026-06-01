@@ -49,8 +49,15 @@ export default async function EditarEventoPage({ params }: Props) {
   if (!event) notFound()
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Editar Evento</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+          Editar Evento
+        </h1>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-1">
+          Atualize os dados do evento ou ensaio
+        </p>
+      </div>
       <EventForm
         mode="edit"
         defaultValues={{

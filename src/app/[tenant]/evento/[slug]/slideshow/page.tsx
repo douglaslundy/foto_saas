@@ -40,5 +40,12 @@ export default async function SlideshowPage({ params }: Props) {
     .order('created_at', { ascending: true })
     .limit(200)) as { data: Photo[] | null }
 
-  return <SlideshowPlayer photos={photos ?? []} />
+  return (
+    <SlideshowPlayer
+      photos={photos ?? []}
+      eventTitle={event.title}
+      tenantSlug={tenant}
+      eventSlug={slug}
+    />
+  )
 }

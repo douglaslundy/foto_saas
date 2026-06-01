@@ -3,9 +3,6 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 export function LoginForm() {
   const router = useRouter()
@@ -35,38 +32,68 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">E-mail</Label>
-        <Input
+    <form onSubmit={handleSubmit}>
+      {/* Email field */}
+      <div className="mb-4">
+        <label
+          htmlFor="email"
+          className="block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-2"
+        >
+          E-mail
+        </label>
+        <input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           placeholder="seu@email.com"
+          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.15)]"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
-        <Input
+
+      {/* Password field */}
+      <div className="mb-2">
+        <label
+          htmlFor="password"
+          className="block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-2"
+        >
+          Senha
+        </label>
+        <input
           id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           placeholder="••••••••"
+          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.15)]"
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Entrando...' : 'Entrar'}
-      </Button>
-      <p className="text-sm text-center text-muted-foreground">
-        <a href="/esqueci-minha-senha" className="underline hover:text-foreground">
-          Esqueci minha senha
+
+      {/* Forgot password link */}
+      <div className="flex justify-end mb-6">
+        <a
+          href="/esqueci-minha-senha"
+          className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+        >
+          Esqueceu a senha?
         </a>
-      </p>
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <p className="text-sm text-[var(--color-danger)] mb-4">{error}</p>
+      )}
+
+      {/* Submit button */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full h-[50px] rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Entrando...' : 'Entrar'}
+      </button>
     </form>
   )
 }

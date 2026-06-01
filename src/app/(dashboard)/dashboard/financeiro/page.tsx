@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import { FinanceiroClient } from './_components/financeiro-client'
+import { RevenueChart } from './_components/revenue-chart'
 
 type OrderRow = {
   id: string
@@ -32,6 +32,31 @@ async function getProfile() {
   return profile as { tenant_id: string; role: string }
 }
 
+function getMonthLabel(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+}
+
+function StatCard({ label, value, sub, variant = 'default' }: {
+  label: string; value: string | number; sub?: string; variant?: 'default' | 'dark' | 'gold'
+}) {
+  return (
+    <div className={`relative overflow-hidden rounded-[var(--radius)] p-6 border ${
+      variant === 'dark' ? 'bg-[var(--color-ink)] border-transparent' :
+      variant === 'gold' ? 'bg-[var(--color-gold)] border-transparent' :
+      'bg-[var(--color-card)] border-[var(--color-border-strong)]'
+    }`} style={{ boxShadow: 'var(--shadow-sm)' }}>
+      {variant === 'dark' && (
+        <div className="absolute bottom-0 right-0 w-24 h-24 rounded-full translate-x-8 translate-y-8 border"
+          style={{ background: 'rgba(200,169,110,0.12)', borderColor: 'rgba(200,169,110,0.2)' }} />
+      )}
+      <p className={`text-xs font-semibold uppercase tracking-widest mb-3 ${variant === 'dark' ? 'text-white/60' : 'text-[var(--color-ink-muted)]'}`}>{label}</p>
+      <p className={`font-display text-3xl font-bold leading-none mb-1 ${variant === 'dark' ? 'text-white' : 'text-[var(--color-ink)]'}`}>{value}</p>
+      {sub && <p className={`text-xs mt-2 ${variant === 'dark' ? 'text-white/50' : 'text-[var(--color-ink-muted)]'}`}>{sub}</p>}
+    </div>
+  )
+}
+
 export default async function FinanceiroPage() {
   const profile = await getProfile()
   const adminClient = createAdminClient()
@@ -53,5 +78,114 @@ export default async function FinanceiroPage() {
     o.order_items?.some((oi) => oi.events?.tenant_id === profile.tenant_id)
   )
 
-  return <FinanceiroClient orders={tenantOrders} />
+  const totalRevenueCents = tenantOrders.reduce((sum, o) => sum + o.total_cents, 0)
+  const totalOrders = tenantOrders.length
+  const totalRevenue = totalRevenueCents / 100
+  const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+  // Current month stats
+  const now = new Date()
+  const currentMonthOrders = tenantOrders.filter((o) => {
+    const d = new Date(o.created_at)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  })
+  const monthRevenue = currentMonthOrders.reduce((sum, o) => sum + o.total_cents, 0) / 100
+  const monthOrders = currentMonthOrders.length
+
+  // Revenue by month (last 6 months)
+  const monthMap = new Map<string, number>()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+    monthMap.set(label, 0)
+  }
+
+  tenantOrders.forEach((o) => {
+    const label = getMonthLabel(o.created_at)
+    if (monthMap.has(label)) {
+      monthMap.set(label, (monthMap.get(label) ?? 0) + o.total_cents)
+    }
+  })
+
+  const chartData = Array.from(monthMap.entries()).map(([month, revenue]) => ({ month, revenue }))
+  const recentOrders = tenantOrders.slice(0, 10)
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Financeiro</h1>
+          <p className="text-[var(--color-ink-muted)] text-sm mt-1">Acompanhe sua receita e pedidos</p>
+        </div>
+      </div>
+
+      {/* Stats row — 3 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard label="Receita Total" value={`R$ ${totalRevenue.toFixed(2)}`} sub="todos os tempos" variant="dark" />
+        <StatCard label="Total de Pedidos" value={totalOrders} sub="pedidos realizados" />
+        <StatCard label="Ticket Médio" value={avgTicket > 0 ? `R$ ${avgTicket.toFixed(2)}` : '—'} sub="por pedido" />
+      </div>
+
+      {/* Revenue Chart */}
+      <div className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+        <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+          <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">Receita por Mês</h2>
+        </div>
+        <div className="p-6">
+          <RevenueChart data={chartData} />
+        </div>
+      </div>
+
+      {/* Grid principal 2fr + 1fr */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Pedidos recentes (ocupa 2/3) */}
+        <div className="lg:col-span-2 rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+            <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">Pedidos Recentes</h2>
+          </div>
+          <div className="divide-y divide-[var(--color-border)]">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-[var(--color-surface)] transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-ink)]">{order.client_email}</p>
+                  <p className="text-xs text-[var(--color-ink-muted)]">
+                    {new Date(order.created_at).toLocaleDateString('pt-BR')} · {order.payment_method === 'pix' ? 'PIX' : 'Cartão'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)]">
+                    Pago
+                  </span>
+                  <p className="font-display text-base font-semibold text-[var(--color-ink)]">
+                    R$ {(order.total_cents / 100).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {recentOrders.length === 0 && (
+              <div className="px-6 py-12 text-center text-[var(--color-ink-muted)] text-sm">Nenhum pedido ainda.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Resumo (1/3) */}
+        <div className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+            <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">Este Mês</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-widest">Receita</p>
+              <p className="font-display text-2xl font-bold text-[var(--color-ink)] mt-1">R$ {monthRevenue.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--color-ink-muted)] uppercase tracking-widest">Pedidos</p>
+              <p className="font-display text-2xl font-bold text-[var(--color-ink)] mt-1">{monthOrders}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

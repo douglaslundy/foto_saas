@@ -14,48 +14,63 @@ export default async function ConfiguracoesPage() {
     .eq('id', user.id)
     .single() as { data: { name: string | null; role: string } | null }
 
+  const roleLabel =
+    profile?.role === 'admin'
+      ? 'Administrador da Plataforma'
+      : profile?.role === 'photographer'
+      ? 'Fotógrafo'
+      : profile?.role === 'sub_photographer'
+      ? 'Sub-fotógrafo'
+      : profile?.role ?? '—'
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Gerencie seus dados de acesso e perfil.
-        </p>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Configurações</h1>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Gerencie sua conta e preferências</p>
       </div>
-      <div className="text-sm text-muted-foreground border rounded px-3 py-2 inline-block">
-        Papel no sistema:{' '}
-        <span className="font-medium text-foreground">
-          {profile?.role === 'admin'
-            ? 'Administrador da Plataforma'
-            : profile?.role === 'photographer'
-            ? 'Fotógrafo'
-            : profile?.role === 'sub_photographer'
-            ? 'Sub-fotógrafo'
-            : profile?.role ?? '—'}
-        </span>
-      </div>
-      <SettingsForm
-        userId={user.id}
-        currentName={profile?.name ?? null}
-        email={user.email ?? ''}
-      />
-      <div className="border-t pt-4 space-y-3">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Configurações do Estúdio</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <a
-            href="/dashboard/configuracoes/perfil-studio"
-            className="border rounded-lg p-4 hover:border-primary hover:shadow-sm transition-all space-y-1 block"
+
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+        {/* Sidebar nav */}
+        <div
+          className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden h-fit"
+          style={{ boxShadow: 'var(--shadow-sm)' }}
+        >
+          {[
+            { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: true },
+            { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: false },
+            { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
+          ].map(item => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3.5 text-sm font-medium border-b border-[var(--color-border)] last:border-0 transition-colors ${
+                item.active
+                  ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)] font-semibold'
+                  : 'hover:bg-[var(--color-surface-alt)] text-[var(--color-ink-soft)]'
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="space-y-4">
+          {/* Role badge */}
+          <div
+            className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-5 py-3 flex items-center gap-2"
+            style={{ boxShadow: 'var(--shadow-sm)' }}
           >
-            <h3 className="font-medium">Perfil do Estúdio</h3>
-            <p className="text-sm text-muted-foreground">Nome, bio, cor e domínio personalizado.</p>
-          </a>
-          <a
-            href="/dashboard/configuracoes/watermark"
-            className="border rounded-lg p-4 hover:border-primary hover:shadow-sm transition-all space-y-1 block"
-          >
-            <h3 className="font-medium">Marca d&apos;água</h3>
-            <p className="text-sm text-muted-foreground">Configure a marca d&apos;água aplicada nas fotos.</p>
-          </a>
+            <span className="text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)]">Papel no sistema:</span>
+            <span className="text-sm font-semibold text-[var(--color-ink)]">{roleLabel}</span>
+          </div>
+
+          <SettingsForm
+            userId={user.id}
+            currentName={profile?.name ?? null}
+            email={user.email ?? ''}
+          />
         </div>
       </div>
     </div>

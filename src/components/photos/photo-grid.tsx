@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 
 type Photo = {
   id: string
@@ -22,23 +21,12 @@ interface PhotoGridProps {
 type ViewMode = 'grid' | 'list'
 
 const statusLabel: Record<string, string> = {
-  ready: 'Pronta',
-  processing: 'Processando…',
-  error: 'Erro',
-  pending: 'Aguardando',
-}
-
-const statusClass: Record<string, string> = {
-  ready: 'text-green-600 bg-green-50',
-  processing: 'text-yellow-700 bg-yellow-50',
-  error: 'text-red-600 bg-red-50',
-  pending: 'text-gray-600 bg-gray-100',
+  ready: 'Pronta', processing: 'Processando…', error: 'Erro', pending: 'Aguardando',
 }
 
 function thumbUrl(photo: Photo, storageBase: string) {
   const path = photo.thumbnail_path ?? photo.public_storage_path
-  if (!path) return null
-  return `${storageBase}/${path}`
+  return path ? `${storageBase}/${path}` : null
 }
 
 function photoName(photo: Photo) {
@@ -56,43 +44,20 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
   const [bulkDeleting, setBulkDeleting] = useState(false)
 
   function toggleSelect(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
 
-  function selectAll() {
-    setSelected(new Set(photos.map((p) => p.id)))
-  }
-
-  function clearSelection() {
-    setSelected(new Set())
-  }
-
-  function exitSelectMode() {
-    setSelectMode(false)
-    setSelected(new Set())
-  }
+  function exitSelectMode() { setSelectMode(false); setSelected(new Set()) }
 
   async function handleDelete(photoId: string) {
     if (!confirm('Deletar esta foto? Esta ação não pode ser desfeita.')) return
     setDeleting((prev) => new Set(prev).add(photoId))
     try {
       const res = await fetch(`/api/photos/${photoId}`, { method: 'DELETE' })
-      if (res.ok) {
-        onDelete(photoId)
-      } else {
-        alert('Erro ao deletar foto.')
-      }
+      if (res.ok) onDelete(photoId)
+      else alert('Erro ao deletar foto.')
     } finally {
-      setDeleting((prev) => {
-        const s = new Set(prev)
-        s.delete(photoId)
-        return s
-      })
+      setDeleting((prev) => { const s = new Set(prev); s.delete(photoId); return s })
     }
   }
 
@@ -105,36 +70,29 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
       await Promise.all(ids.map((id) => fetch(`/api/photos/${id}`, { method: 'DELETE' })))
       onBulkDelete(ids)
       exitSelectMode()
-    } catch {
-      alert('Erro ao deletar fotos.')
-    } finally {
-      setBulkDeleting(false)
-    }
+    } catch { alert('Erro ao deletar fotos.') }
+    finally { setBulkDeleting(false) }
   }
 
   async function handleReprocess(photoId: string) {
     setReprocessing((prev) => new Set(prev).add(photoId))
     try {
       const res = await fetch(`/api/photos/${photoId}/reprocess`, { method: 'POST' })
-      if (res.ok) {
-        onReprocess(photoId)
-      } else {
-        alert('Erro ao reprocessar foto.')
-      }
+      if (res.ok) onReprocess(photoId)
+      else alert('Erro ao reprocessar foto.')
     } finally {
-      setReprocessing((prev) => {
-        const s = new Set(prev)
-        s.delete(photoId)
-        return s
-      })
+      setReprocessing((prev) => { const s = new Set(prev); s.delete(photoId); return s })
     }
   }
 
   if (photos.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg">
-        Nenhuma foto enviada ainda.
-      </p>
+      <div className="py-16 text-center">
+        <svg className="mx-auto mb-4 text-[var(--color-ink-muted)]" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+        </svg>
+        <p className="font-display text-lg font-semibold text-[var(--color-ink)]">Nenhuma foto enviada ainda.</p>
+      </div>
     )
   }
 
@@ -145,215 +103,116 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
         <div className="flex items-center gap-2">
           {selectMode ? (
             <>
-              <Button variant="outline" size="sm" onClick={selectAll} disabled={bulkDeleting}>
-                Selecionar todas
-              </Button>
-              <Button variant="outline" size="sm" onClick={clearSelection} disabled={bulkDeleting}>
-                Limpar
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={selected.size === 0 || bulkDeleting}
-                onClick={handleBulkDelete}
-              >
-                {bulkDeleting ? 'Deletando…' : `Deletar selecionadas (${selected.size})`}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={exitSelectMode} disabled={bulkDeleting}>
-                Cancelar
-              </Button>
+              <button onClick={() => setSelected(new Set(photos.map((p) => p.id)))} disabled={bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">Selecionar todas</button>
+              <button onClick={() => setSelected(new Set())} disabled={bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">Limpar</button>
+              <button onClick={handleBulkDelete} disabled={selected.size === 0 || bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-danger)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-40">{bulkDeleting ? 'Deletando…' : `Deletar (${selected.size})`}</button>
+              <button onClick={exitSelectMode} disabled={bulkDeleting} className="px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">Cancelar</button>
             </>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => setSelectMode(true)}>
-              Selecionar
-            </Button>
+            <button onClick={() => setSelectMode(true)} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors">Selecionar</button>
           )}
         </div>
-        <div className="flex items-center gap-1 border rounded-md p-0.5">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`px-2.5 py-1 rounded text-sm transition-colors ${
-              viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-            }`}
-            title="Vista em grade"
-          >
-            ⊞
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-2.5 py-1 rounded text-sm transition-colors ${
-              viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-            }`}
-            title="Vista em lista"
-          >
-            ☰
-          </button>
+        <div className="flex items-center gap-0.5 border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] p-0.5">
+          <button onClick={() => setViewMode('grid')} className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`} title="Grade">⊞</button>
+          <button onClick={() => setViewMode('list')} className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`} title="Lista">☰</button>
         </div>
       </div>
 
-      {/* Grid view */}
+      {/* Grade */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
           {photos.map((photo) => {
             const isDeleting = deleting.has(photo.id)
-            const isReprocessing = reprocessing.has(photo.id)
             const isSelected = selected.has(photo.id)
-            const url = thumbUrl(photo, storageBase)
-
+            const imgSrc = thumbUrl(photo, storageBase)
             return (
-              <div
-                key={photo.id}
-                className={`relative group aspect-square rounded-lg overflow-hidden border bg-muted transition-all ${
-                  selectMode ? 'cursor-pointer' : ''
-                } ${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-                onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
-              >
-                {url ? (
+              <div key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
+                className={`relative group aspect-square rounded-[var(--radius-sm)] overflow-hidden border bg-[var(--color-surface-alt)] transition-all ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'border-[var(--color-gold)] ring-2 ring-[var(--color-gold)] ring-offset-1' : 'border-[var(--color-border)]'}`}>
+                {imgSrc
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground text-center px-2">
-                      {statusLabel[photo.status] ?? photo.status}
-                    </span>
-                  </div>
-                )}
-
-                {photo.status !== 'ready' && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-xs text-white font-medium">
-                      {statusLabel[photo.status] ?? photo.status}
-                    </span>
-                  </div>
-                )}
-
-                {/* Checkbox no modo seleção */}
+                  ? <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center"><span className="text-xs text-[var(--color-ink-muted)] text-center px-2">{photo.status}</span></div>
+                }
                 {selectMode && (
-                  <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'bg-white/80 border-gray-400'
-                  }`}>
-                    {isSelected && <span className="text-xs leading-none">✓</span>}
+                  <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-[var(--color-gold)] border-[var(--color-gold)] text-white' : 'bg-white/80 border-gray-400'}`}>
+                    {isSelected && <span className="text-[10px] leading-none font-bold">✓</span>}
                   </div>
                 )}
-
-                {/* Botão deletar — aparece no hover (fora do select mode) */}
                 {!selectMode && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }}
-                    disabled={isDeleting}
-                    className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                    title="Deletar foto"
-                  >
-                    {isDeleting ? '…' : '×'}
-                  </button>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting}
+                      className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-colors disabled:opacity-50" title="Excluir">
+                      {isDeleting ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /></svg>}
+                    </button>
+                    {photo.status === 'error' && (
+                      <button onClick={(e) => { e.stopPropagation(); handleReprocess(photo.id) }} disabled={reprocessing.has(photo.id)}
+                        className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-50" title="Reprocessar">
+                        <span className="text-sm">↻</span>
+                      </button>
+                    )}
+                  </div>
                 )}
-
-                {/* Botão reprocessar */}
-                {!selectMode && photo.status === 'error' && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleReprocess(photo.id) }}
-                    disabled={isReprocessing}
-                    className="absolute bottom-1.5 left-1.5 bg-black/60 hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 text-xs"
-                    title="Reprocessar foto"
-                  >
-                    {isReprocessing ? '…' : '↻'}
-                  </button>
-                )}
+                {photo.status === 'processing' && <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none"><div className="w-6 h-6 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" /></div>}
+                {photo.status === 'pending' && !imgSrc && <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none"><div className="w-6 h-6 rounded-full border-2 border-white/60 border-t-transparent animate-spin" /></div>}
+                {photo.status === 'error' && <div className="absolute inset-0 bg-[var(--color-danger)]/30 flex items-center justify-center pointer-events-none"><span className="text-white text-lg">⚠</span></div>}
               </div>
             )
           })}
         </div>
       )}
 
-      {/* List view */}
+      {/* Lista */}
       {viewMode === 'list' && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-[var(--color-border-strong)] rounded-[var(--radius)] overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40">
+            <thead className="border-b border-[var(--color-border-strong)] bg-[var(--color-surface-alt)]">
               <tr>
                 {selectMode && <th className="w-10 px-3 py-2" />}
-                <th className="px-3 py-2 text-left font-medium w-12">Foto</th>
-                <th className="px-3 py-2 text-left font-medium">Nome</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-left font-medium">Data</th>
-                <th className="px-3 py-2 text-right font-medium">Ações</th>
+                <th className="px-3 py-2 w-12" />
+                <th className="px-3 py-2 text-left font-medium text-[var(--color-ink-muted)]">Arquivo</th>
+                <th className="px-3 py-2 text-left font-medium text-[var(--color-ink-muted)]">Status</th>
+                <th className="px-3 py-2 text-left font-medium text-[var(--color-ink-muted)]">Data</th>
+                <th className="px-3 py-2 text-right font-medium text-[var(--color-ink-muted)]">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-[var(--color-border)]">
               {photos.map((photo) => {
+                const isSelected = selected.has(photo.id)
                 const isDeleting = deleting.has(photo.id)
                 const isReprocessing = reprocessing.has(photo.id)
-                const isSelected = selected.has(photo.id)
-                const url = thumbUrl(photo, storageBase)
-
+                const imgSrc = thumbUrl(photo, storageBase)
                 return (
-                  <tr
-                    key={photo.id}
-                    className={`hover:bg-muted/30 transition-colors ${
-                      selectMode ? 'cursor-pointer' : ''
-                    } ${isSelected ? 'bg-primary/5' : ''}`}
-                    onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
-                  >
+                  <tr key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
+                    className={`hover:bg-[var(--color-surface-alt)] transition-colors ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'bg-[var(--color-gold-light)]' : ''}`}>
                     {selectMode && (
                       <td className="px-3 py-2">
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          isSelected
-                            ? 'bg-primary border-primary text-primary-foreground'
-                            : 'border-gray-400'
-                        }`}>
-                          {isSelected && <span className="text-[10px] leading-none">✓</span>}
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-[var(--color-gold)] border-[var(--color-gold)] text-white' : 'border-[var(--color-border-strong)]'}`}>
+                          {isSelected && <span className="text-[10px] leading-none font-bold">✓</span>}
                         </div>
                       </td>
                     )}
                     <td className="px-3 py-2">
-                      {url ? (
+                      {imgSrc
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={url}
-                          alt=""
-                          className="w-10 h-10 object-cover rounded border"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-muted rounded border flex items-center justify-center">
-                          <span className="text-[10px] text-muted-foreground">?</span>
-                        </div>
-                      )}
+                        ? <img src={imgSrc} alt="" className="w-10 h-10 object-cover rounded-[var(--radius-sm)] border border-[var(--color-border)]" />
+                        : <div className="w-10 h-10 bg-[var(--color-surface-alt)] rounded-[var(--radius-sm)] border border-[var(--color-border)] flex items-center justify-center"><span className="text-[10px] text-[var(--color-ink-muted)]">?</span></div>
+                      }
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground truncate max-w-[180px]">
-                      {photoName(photo)}
-                    </td>
+                    <td className="px-3 py-2 font-mono text-xs text-[var(--color-ink-muted)] truncate max-w-[180px]">{photoName(photo)}</td>
                     <td className="px-3 py-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusClass[photo.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${photo.status === 'ready' ? 'bg-green-50 text-green-700' : photo.status === 'error' ? 'bg-red-50 text-red-700' : 'bg-[var(--color-gold-light)] text-[var(--color-gold)]'}`}>
                         {statusLabel[photo.status] ?? photo.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                      {new Date(photo.created_at).toLocaleDateString('pt-BR', {
-                        day: '2-digit', month: '2-digit', year: '2-digit',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
+                    <td className="px-3 py-2 text-[var(--color-ink-muted)] text-xs whitespace-nowrap">
+                      {new Date(photo.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="px-3 py-2 text-right">
                       {!selectMode && (
-                        <div className="flex items-center justify-end gap-2">
-                          {photo.status === 'error' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleReprocess(photo.id) }}
-                              disabled={isReprocessing}
-                              className="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                            >
-                              {isReprocessing ? '…' : 'Reprocessar'}
-                            </button>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }}
-                            disabled={isDeleting}
-                            className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                          >
-                            {isDeleting ? 'Deletando…' : 'Deletar'}
-                          </button>
+                        <div className="flex items-center justify-end gap-3">
+                          {photo.status === 'error' && <button onClick={(e) => { e.stopPropagation(); handleReprocess(photo.id) }} disabled={isReprocessing} className="text-xs text-blue-600 hover:underline disabled:opacity-50">{isReprocessing ? '…' : 'Reprocessar'}</button>}
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting} className="text-xs text-[var(--color-danger)] hover:underline disabled:opacity-50">{isDeleting ? '…' : 'Deletar'}</button>
                         </div>
                       )}
                     </td>

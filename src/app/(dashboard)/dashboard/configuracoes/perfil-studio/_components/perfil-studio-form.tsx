@@ -12,6 +12,11 @@ interface PerfilStudioFormProps {
   }
 }
 
+const inputClass =
+  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)]'
+const labelClass =
+  'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
+
 export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
   const [name, setName] = useState(initial.name)
   const [bio, setBio] = useState(initial.bio ?? '')
@@ -47,92 +52,99 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
-      {/* Nome do estúdio */}
-      <div className="space-y-1">
-        <label htmlFor="name" className="block text-sm font-medium">
-          Nome do estúdio <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="name"
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+    <div
+      className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+      style={{ boxShadow: 'var(--shadow-sm)' }}
+    >
+      <div className="px-6 py-5 border-b border-[var(--color-border-strong)]">
+        <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">Dados do Estúdio</h2>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-0.5">Informações públicas do seu estúdio fotográfico</p>
       </div>
 
-      {/* Slug (read-only) */}
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Slug (não editável)
-        </label>
-        <div className="w-full border rounded-md px-3 py-2 text-sm bg-muted text-muted-foreground select-all">
-          {initial.slug}
+      <form onSubmit={handleSubmit}>
+        <div className="p-6 space-y-5">
+          {/* Nome do estúdio */}
+          <div>
+            <label htmlFor="name" className={labelClass}>
+              Nome do estúdio <span className="text-red-400">*</span>
+            </label>
+            <input
+              id="name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nome do seu estúdio"
+              className={inputClass}
+            />
+          </div>
+
+          {/* Slug (read-only) */}
+          <div>
+            <label className={labelClass}>Slug (não editável)</label>
+            <div className="h-11 px-4 flex items-center w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] opacity-60 text-sm font-mono text-[var(--color-ink-soft)] select-all">
+              {initial.slug}
+            </div>
+            <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+              O slug identifica seu estúdio na URL e não pode ser alterado aqui.
+            </p>
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label htmlFor="bio" className={labelClass}>Bio / descrição</label>
+            <textarea
+              id="bio"
+              rows={4}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Conte um pouco sobre seu estúdio..."
+              className="px-4 py-3 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)] resize-y"
+            />
+          </div>
+
+          {/* Cor principal */}
+          <div>
+            <label htmlFor="primary_color" className={labelClass}>Cor principal</label>
+            <div className="flex items-center gap-3">
+              <input
+                id="primary_color"
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="h-11 w-16 cursor-pointer rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] p-1 bg-[var(--color-surface)]"
+              />
+              <span className="text-sm font-mono text-[var(--color-ink-soft)]">{primaryColor}</span>
+            </div>
+          </div>
+
+          {/* Domínio personalizado */}
+          <div>
+            <label htmlFor="custom_domain" className={labelClass}>Domínio personalizado</label>
+            <input
+              id="custom_domain"
+              type="text"
+              value={customDomain}
+              onChange={(e) => setCustomDomain(e.target.value)}
+              placeholder="fotos.meusite.com.br"
+              className={inputClass}
+            />
+            <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+              Configure seu DNS para apontar para o servidor antes de salvar.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          O slug identifica seu estúdio na URL e não pode ser alterado aqui.
-        </p>
-      </div>
 
-      {/* Bio */}
-      <div className="space-y-1">
-        <label htmlFor="bio" className="block text-sm font-medium">
-          Bio / descrição
-        </label>
-        <textarea
-          id="bio"
-          rows={4}
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="Conte um pouco sobre seu estúdio..."
-          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-        />
-      </div>
-
-      {/* Cor principal */}
-      <div className="space-y-1">
-        <label htmlFor="primary_color" className="block text-sm font-medium">
-          Cor principal
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            id="primary_color"
-            type="color"
-            value={primaryColor}
-            onChange={(e) => setPrimaryColor(e.target.value)}
-            className="h-10 w-16 cursor-pointer rounded border p-1"
-          />
-          <span className="text-sm text-muted-foreground font-mono">{primaryColor}</span>
+        <div className="px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface)] flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+          >
+            {loading ? 'Salvando...' : 'Salvar alterações'}
+          </button>
         </div>
-      </div>
-
-      {/* Domínio personalizado */}
-      <div className="space-y-1">
-        <label htmlFor="custom_domain" className="block text-sm font-medium">
-          Domínio personalizado
-        </label>
-        <input
-          id="custom_domain"
-          type="text"
-          value={customDomain}
-          onChange={(e) => setCustomDomain(e.target.value)}
-          placeholder="fotos.meusite.com.br"
-          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p className="text-xs text-muted-foreground">
-          Configure seu DNS para apontar para o servidor antes de salvar.
-        </p>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-md transition-colors"
-      >
-        {loading ? 'Salvando...' : 'Salvar alterações'}
-      </button>
-    </form>
+      </form>
+    </div>
   )
 }
