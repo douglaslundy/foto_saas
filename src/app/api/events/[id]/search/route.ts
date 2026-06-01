@@ -72,6 +72,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     matches?: Array<{ photo_id: string; face_index: number; score: number }>
   }
   // Deduplicate: a photo with multiple faces may appear more than once
-  const photo_ids = [...new Set((faceData.matches ?? []).map((m) => m.photo_id))]
+  const photo_ids = Array.from(new Set((faceData.matches ?? []).map((m) => m.photo_id)))
   return NextResponse.json({ photo_ids, count: photo_ids.length })
 }
