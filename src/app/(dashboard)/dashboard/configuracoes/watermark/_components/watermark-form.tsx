@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface WatermarkConfig {
   id?: string
@@ -44,36 +44,87 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
   const [color, setColor] = useState(initial?.color ?? '#ffffff')
   const [opacity, setOpacity] = useState(initial?.opacity ?? 0.6)
   const [position, setPosition] = useState(initial?.position ?? 'tiled')
+  const [imageSizePercent, setImageSizePercent] = useState(initial?.image_size_percent ?? 20)
+  const [imagePath, setImagePath] = useState(initial?.image_storage_path ?? null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const storageBase = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+    : ''
+
+  const currentImageUrl = imagePreviewUrl ?? (imagePath ? `${storageBase}/${imagePath}` : null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setImagePreviewUrl(url)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setMessage(null)
     try {
-      const payload: Record<string, unknown> = {
-        type,
-        position,
-        opacity,
-      }
-      if (type === 'text') {
-        payload.text_content = textContent
-        payload.font = font
-        payload.font_size = fontSize
-        payload.color = color
-      }
-      const res = await fetch('/api/watermark-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const json = await res.json()
-      if (!res.ok) {
-        alert('Erro ao salvar: ' + (json.error ?? res.statusText))
+      const hasImageFile = fileRef.current?.files?.[0]
+
+      if (type === 'image' && hasImageFile) {
+        // Use FormData when uploading an image file
+        const formData = new FormData()
+        formData.append('type', type)
+        formData.append('position', position)
+        formData.append('opacity', String(opacity))
+        formData.append('image_size_percent', String(imageSizePercent))
+        formData.append('watermark_image', hasImageFile)
+
+        const res = await fetch('/api/watermark-config', {
+          method: 'PUT',
+          body: formData,
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          setMessage({ type: 'error', text: json.error ?? 'Erro ao salvar.' })
+        } else {
+          setImagePath(json.config?.image_storage_path ?? imagePath)
+          setImagePreviewUrl(null)
+          if (fileRef.current) fileRef.current.value = ''
+          setMessage({ type: 'success', text: 'Configuração salva com sucesso!' })
+        }
       } else {
-        alert('Configuração salva com sucesso!')
+        // Use JSON for text type or image type without a new file
+        const payload: Record<string, unknown> = {
+          type,
+          position,
+          opacity,
+        }
+        if (type === 'text') {
+          payload.text_content = textContent
+          payload.font = font
+          payload.font_size = fontSize
+          payload.color = color
+        } else {
+          // image type, no new file — preserve existing path
+          payload.image_size_percent = imageSizePercent
+          if (imagePath) payload.image_storage_path = imagePath
+        }
+
+        const res = await fetch('/api/watermark-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          setMessage({ type: 'error', text: json.error ?? 'Erro ao salvar.' })
+        } else {
+          setMessage({ type: 'success', text: 'Configuração salva com sucesso!' })
+        }
       }
     } catch {
-      alert('Erro inesperado ao salvar configuração.')
+      setMessage({ type: 'error', text: 'Erro inesperado ao salvar configuração.' })
     } finally {
       setLoading(false)
     }
@@ -166,6 +217,55 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
             </>
           )}
 
+          {/* Image upload fields */}
+          {type === 'image' && (
+            <>
+              <div>
+                <label className={labelClass}>Imagem da marca d&apos;água</label>
+                {currentImageUrl && (
+                  <div className="mb-3 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border)] w-32 h-32 bg-[var(--color-surface-alt)] flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentImageUrl}
+                      alt="Watermark preview"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                )}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-[var(--color-ink-muted)] file:mr-4 file:py-2 file:px-4 file:rounded-[var(--radius-sm)] file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-surface-alt)] file:text-[var(--color-ink)] hover:file:bg-[var(--color-border)] transition-all"
+                />
+                <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+                  Recomendado: PNG com fundo transparente. Formatos aceitos: PNG, JPG, WebP.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="image_size_percent" className={labelClass}>
+                  Tamanho da imagem: <span className="text-[var(--color-ink)] font-bold">{imageSizePercent}%</span>
+                </label>
+                <input
+                  id="image_size_percent"
+                  type="range"
+                  min={5}
+                  max={80}
+                  step={5}
+                  value={imageSizePercent}
+                  onChange={e => setImageSizePercent(Number(e.target.value))}
+                  className="w-full accent-[var(--color-gold)] mt-1"
+                />
+                <div className="flex justify-between text-xs text-[var(--color-ink-muted)] mt-1">
+                  <span>5% (pequeno)</span>
+                  <span>80% (grande)</span>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Position */}
           <div>
             <label htmlFor="position" className={labelClass}>Posição</label>
@@ -203,6 +303,19 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
               <span>1 (opaco)</span>
             </div>
           </div>
+
+          {/* Message */}
+          {message && (
+            <div
+              className={`rounded-[var(--radius-sm)] px-4 py-3 text-sm font-medium ${
+                message.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface)] flex justify-end">

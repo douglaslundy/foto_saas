@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { StatusToggleButton } from './_components/status-toggle-button'
 import { DeleteTenantButton } from './_components/delete-tenant-button'
+import { CommissionOverrideSection } from './_components/commission-override-section'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -12,6 +13,7 @@ type Tenant = {
   slug: string
   status: string
   created_at: string
+  commission_override_percent: number | null
 }
 
 type Member = { id: string; email: string; role: string }
@@ -21,11 +23,11 @@ export default async function TenantDetailPage({ params }: Props) {
   const { id } = await params
   const adminClient = createAdminClient()
 
-  const [tenantResult, membersResult, eventsResult] = await Promise.all([
+  const [tenantResult, membersResult, eventsResult, globalSettingResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('tenants')
-      .select('id, name, slug, status, created_at')
+      .select('id, name, slug, status, created_at, commission_override_percent')
       .eq('id', id)
       .single(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +42,12 @@ export default async function TenantDetailPage({ params }: Props) {
       .eq('tenant_id', id)
       .order('created_at', { ascending: false })
       .limit(20),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'global_commission_percent')
+      .single(),
   ])
 
   const tenant = tenantResult.data as Tenant | null
@@ -47,6 +55,7 @@ export default async function TenantDetailPage({ params }: Props) {
 
   const members = (membersResult.data ?? []) as Member[]
   const events = (eventsResult.data ?? []) as Event[]
+  const globalRate = parseInt(globalSettingResult.data?.value ?? '10', 10)
 
   const roleLabel: Record<string, string> = {
     photographer: 'Fotógrafo',
@@ -194,6 +203,13 @@ export default async function TenantDetailPage({ params }: Props) {
           )}
         </div>
       </div>
+      {/* Commission section */}
+      <CommissionOverrideSection
+        tenantId={tenant.id}
+        currentOverride={tenant.commission_override_percent}
+        globalRate={globalRate}
+      />
+
       {/* Danger zone */}
       <div className="border border-destructive/50 rounded-lg p-6 space-y-3">
         <h2 className="text-base font-semibold text-destructive">Zona de perigo</h2>

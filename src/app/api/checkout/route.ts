@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { getOrCreateCartSession } from '@/lib/cart-session'
 import { createStripePaymentIntent } from '@/lib/payments/stripe'
 import { createMercadoPagoPix } from '@/lib/payments/mercadopago'
@@ -11,8 +12,19 @@ type CartItem = {
   price_cents: number
 }
 
+type PackageRow = {
+  name: string
+  min_quantity: number
+  discount_percent: number
+}
+
 export async function POST(request: NextRequest) {
   const { sessionId } = await getOrCreateCartSession()
+
+  // Resolve logged-in user (if any) to attach to the order
+  const serverSupabase = await createClient()
+  const { data: { user: loggedInUser } } = await serverSupabase.auth.getUser()
+  const clientUserId = loggedInUser?.id ?? null
 
   let body: Record<string, unknown>
   try {
@@ -32,7 +44,6 @@ export async function POST(request: NextRequest) {
 
   const adminClient = createAdminClient()
 
-  // Fetch cart items
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: cartItems, error: cartError } = await (adminClient as any)
     .from('cart_items')
@@ -50,16 +61,48 @@ export async function POST(request: NextRequest) {
   }
 
   const items = cartItems as CartItem[]
-  const totalCents = items.reduce((sum: number, i: CartItem) => sum + i.price_cents, 0)
+  const subtotalCents = items.reduce((sum: number, i: CartItem) => sum + i.price_cents, 0)
 
-  // Create order
+  // Determine applicable package discount
+  let discountCents = 0
+  let packageName: string | null = null
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: event } = await (adminClient as any)
+    .from('events')
+    .select('tenant_id')
+    .eq('id', items[0].event_id)
+    .single() as { data: { tenant_id: string } | null }
+
+  if (event?.tenant_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: packages } = await (adminClient as any)
+      .from('photo_packages')
+      .select('name, min_quantity, discount_percent')
+      .eq('tenant_id', event.tenant_id)
+      .eq('active', true)
+      .order('min_quantity', { ascending: false }) as { data: PackageRow[] | null }
+
+    if (packages) {
+      const matched = packages.find((pkg) => items.length >= pkg.min_quantity)
+      if (matched) {
+        discountCents = Math.round(subtotalCents * matched.discount_percent / 100)
+        packageName = matched.name
+      }
+    }
+  }
+
+  const totalCents = subtotalCents - discountCents
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: order, error: orderError } = await (adminClient as any)
     .from('orders')
     .insert({
-      client_user_id: null,
+      client_user_id: clientUserId,
       client_email: email,
       total_cents: totalCents,
+      discount_cents: discountCents,
+      package_applied: packageName,
       status: 'pending',
       payment_method: paymentMethod,
     })
@@ -71,7 +114,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 
-  // Create order items
   const orderItems = items.map((item: CartItem) => ({
     order_id: order.id,
     photo_id: item.photo_id,
@@ -89,7 +131,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 
-  // Process payment
   if (paymentMethod === 'stripe') {
     const { paymentIntentId, clientSecret } = await createStripePaymentIntent({
       amountCents: totalCents,
@@ -97,19 +138,14 @@ export async function POST(request: NextRequest) {
       metadata: { orderId: order.id },
     })
 
-    // Update order with payment intent id
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (adminClient as any)
       .from('orders')
       .update({ payment_provider_id: paymentIntentId })
       .eq('id', order.id)
 
-    return NextResponse.json(
-      { orderId: order.id, paymentMethod: 'stripe', clientSecret },
-      { status: 201 }
-    )
+    return NextResponse.json({ orderId: order.id, paymentMethod: 'stripe', clientSecret }, { status: 201 })
   } else {
-    // PIX via MercadoPago
     const { pixQrCode, pixQrCodeBase64, paymentId } = await createMercadoPagoPix({
       amountCents: totalCents,
       description: `Fotos - Pedido ${order.id}`,
@@ -123,9 +159,6 @@ export async function POST(request: NextRequest) {
       .update({ payment_provider_id: paymentId })
       .eq('id', order.id)
 
-    return NextResponse.json(
-      { orderId: order.id, paymentMethod: 'pix', pixQrCode, pixQrCodeBase64 },
-      { status: 201 }
-    )
+    return NextResponse.json({ orderId: order.id, paymentMethod: 'pix', pixQrCode, pixQrCodeBase64 }, { status: 201 })
   }
 }

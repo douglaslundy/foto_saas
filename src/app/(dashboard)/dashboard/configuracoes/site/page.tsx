@@ -1,51 +1,44 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PerfilStudioForm } from './_components/perfil-studio-form'
+import { redirect } from 'next/navigation'
+import SiteForm from './_components/site-form'
 
-async function getTenantProfile() {
+export const metadata = { title: 'Configurações do Site' }
+
+const NAV_ITEMS = [
+  { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: false },
+  { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: false },
+  { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
+  { href: '/dashboard/configuracoes/site', label: '🌐 Site / Banner', active: true },
+  { href: '/dashboard/configuracoes/pacotes', label: '📦 Pacotes', active: false },
+]
+
+export default async function SitePage() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (admin as any)
     .from('users')
-    .select('tenant_id, role')
+    .select('tenant_id')
     .eq('id', user.id)
     .single()
-
   if (!profile?.tenant_id) redirect('/login')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
     .from('tenants')
-    .select('name, slug, custom_domain, primary_color, bio')
+    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url')
     .eq('id', profile.tenant_id)
     .single()
-
-  if (!tenant) redirect('/login')
-
-  return tenant as {
-    name: string
-    slug: string
-    custom_domain: string | null
-    primary_color: string | null
-    bio: string | null
-  }
-}
-
-export default async function PerfilStudioPage() {
-  const tenant = await getTenantProfile()
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Perfil do Estúdio</h1>
-        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Informações do seu estúdio fotográfico</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Site / Banner</h1>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Configure o banner da página pública do seu estúdio</p>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">
@@ -54,13 +47,7 @@ export default async function PerfilStudioPage() {
           className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden h-fit"
           style={{ boxShadow: 'var(--shadow-sm)' }}
         >
-          {[
-            { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: false },
-            { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: true },
-            { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
-            { href: '/dashboard/configuracoes/site', label: '🌐 Site / Banner', active: false },
-            { href: '/dashboard/configuracoes/pacotes', label: '📦 Pacotes', active: false },
-          ].map(item => (
+          {NAV_ITEMS.map(item => (
             <a
               key={item.href}
               href={item.href}
@@ -76,7 +63,16 @@ export default async function PerfilStudioPage() {
         </div>
 
         {/* Form card */}
-        <PerfilStudioForm initial={tenant} />
+        <SiteForm
+          tenantId={profile.tenant_id}
+          initial={{
+            banner_image_path: tenant?.banner_image_path ?? null,
+            banner_title: tenant?.banner_title ?? '',
+            banner_subtitle: tenant?.banner_subtitle ?? '',
+            banner_cta_text: tenant?.banner_cta_text ?? '',
+            banner_cta_url: tenant?.banner_cta_url ?? '',
+          }}
+        />
       </div>
     </div>
   )

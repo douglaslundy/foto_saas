@@ -13,8 +13,12 @@ type CheckoutState =
   | { step: 'pix'; pixQrCode: string; pixQrCodeBase64: string; orderId: string }
   | { step: 'done'; orderId: string }
 
-export function CheckoutForm() {
-  const [email, setEmail] = useState('')
+interface CheckoutFormProps {
+  initialEmail?: string
+}
+
+export function CheckoutForm({ initialEmail = '' }: CheckoutFormProps) {
+  const [email, setEmail] = useState(initialEmail)
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'pix'>('stripe')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -1,11 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import WatermarkForm from './_components/watermark-form'
+import PackagesManager from './_components/packages-manager'
 
-export const metadata = { title: "Marca d'água" }
+export const metadata = { title: 'Pacotes' }
 
-export default async function WatermarkPage() {
+const NAV_ITEMS = [
+  { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: false },
+  { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: false },
+  { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
+  { href: '/dashboard/configuracoes/site', label: '🌐 Site / Banner', active: false },
+  { href: '/dashboard/configuracoes/pacotes', label: '📦 Pacotes', active: true },
+]
+
+interface PhotoPackage {
+  id: string
+  tenant_id: string
+  name: string
+  min_quantity: number
+  discount_percent: number
+  active: boolean
+  created_at: string
+}
+
+export default async function PacotesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -13,21 +31,24 @@ export default async function WatermarkPage() {
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (admin as any)
-    .from('users').select('tenant_id').eq('id', user.id).single()
+    .from('users')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single()
   if (!profile?.tenant_id) redirect('/login')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: config } = await (admin as any)
-    .from('watermark_configs')
+  const { data: packages } = await (admin as any)
+    .from('photo_packages')
     .select('*')
     .eq('tenant_id', profile.tenant_id)
-    .maybeSingle()
+    .order('min_quantity', { ascending: true })
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Marca d&apos;água</h1>
-        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Configure sua marca d&apos;água nas fotos</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Pacotes</h1>
+        <p className="text-[var(--color-ink-muted)] text-sm mt-1">Configure pacotes de desconto por quantidade de fotos</p>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">
@@ -36,13 +57,7 @@ export default async function WatermarkPage() {
           className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden h-fit"
           style={{ boxShadow: 'var(--shadow-sm)' }}
         >
-          {[
-            { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: false },
-            { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: false },
-            { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: true },
-            { href: '/dashboard/configuracoes/site', label: '🌐 Site / Banner', active: false },
-            { href: '/dashboard/configuracoes/pacotes', label: '📦 Pacotes', active: false },
-          ].map(item => (
+          {NAV_ITEMS.map(item => (
             <a
               key={item.href}
               href={item.href}
@@ -57,8 +72,8 @@ export default async function WatermarkPage() {
           ))}
         </div>
 
-        {/* Card */}
-        <WatermarkForm tenantId={profile.tenant_id} initial={config} />
+        {/* Packages manager */}
+        <PackagesManager initialPackages={(packages ?? []) as PhotoPackage[]} />
       </div>
     </div>
   )

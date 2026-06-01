@@ -13,6 +13,20 @@ type CartItem = {
   photos?: { public_storage_path: string | null }
 }
 
+type CartPackage = {
+  name: string
+  discount_percent: number
+  min_quantity: number
+}
+
+type CartResponse = {
+  items?: CartItem[]
+  package?: CartPackage | null
+  subtotal_cents?: number
+  discount_cents?: number
+  total_cents?: number
+}
+
 interface CartDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -22,6 +36,10 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: CartDrawerProps) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [cartPackage, setCartPackage] = useState<CartPackage | null>(null)
+  const [subtotalCents, setSubtotalCents] = useState(0)
+  const [discountCents, setDiscountCents] = useState(0)
+  const [totalCents, setTotalCents] = useState(0)
   const [loading, setLoading] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
@@ -29,9 +47,17 @@ export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: Ca
     setLoading(true)
     try {
       const res = await fetch('/api/cart')
-      const data = await res.json() as { items?: CartItem[] }
-      setItems(data.items ?? [])
-      onCountChange(data.items?.length ?? 0)
+      const data = await res.json() as CartResponse
+      const fetchedItems = data.items ?? []
+      setItems(fetchedItems)
+      setCartPackage(data.package ?? null)
+      // Use API-computed values if present, otherwise fall back to client calculation
+      const sub = data.subtotal_cents ?? fetchedItems.reduce((s, i) => s + i.price_cents, 0)
+      const disc = data.discount_cents ?? 0
+      setSubtotalCents(sub)
+      setDiscountCents(disc)
+      setTotalCents(data.total_cents ?? sub - disc)
+      onCountChange(fetchedItems.length)
     } catch (err) {
       console.error('Failed to fetch cart:', err)
     } finally {
@@ -72,7 +98,9 @@ export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: Ca
     return `${STORAGE_BASE}/${path}`
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.price_cents, 0)
+  function formatBRL(cents: number): string {
+    return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -139,7 +167,7 @@ export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: Ca
                       <p className="font-display text-base font-semibold text-[var(--color-ink)] mt-0.5">
                         {item.price_cents === 0
                           ? 'Gratuita'
-                          : (item.price_cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          : formatBRL(item.price_cents)}
                       </p>
                     </div>
 
@@ -162,14 +190,35 @@ export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: Ca
         {/* Footer */}
         {items.length > 0 && !loading && (
           <div className="px-6 py-5 border-t border-[var(--color-border)] bg-[var(--color-card)]">
+            {/* Discount row */}
+            {cartPackage && discountCents > 0 && (
+              <div className="flex items-center justify-between mb-2 text-sm">
+                <span className="text-[var(--color-ink-muted)]">
+                  Subtotal
+                </span>
+                <span className="text-[var(--color-ink-muted)]">
+                  {formatBRL(subtotalCents)}
+                </span>
+              </div>
+            )}
+            {cartPackage && discountCents > 0 && (
+              <div className="flex items-center justify-between mb-3 text-sm">
+                <span className="text-green-600 font-medium">
+                  Desconto ({cartPackage.name})
+                </span>
+                <span className="text-green-600 font-medium">
+                  -{formatBRL(discountCents)}
+                </span>
+              </div>
+            )}
             <div className="flex items-baseline justify-between mb-4">
               <span className="text-sm text-[var(--color-ink-muted)]">
                 {items.length} {items.length === 1 ? 'foto' : 'fotos'}
               </span>
               <span className="font-display text-2xl font-bold text-[var(--color-ink)]">
-                {subtotal === 0
+                {totalCents === 0
                   ? 'Gratuito'
-                  : (subtotal / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  : formatBRL(totalCents)}
               </span>
             </div>
             <button

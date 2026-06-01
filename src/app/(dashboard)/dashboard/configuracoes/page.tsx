@@ -40,6 +40,8 @@ export default async function ConfiguracoesPage() {
             { href: '/dashboard/configuracoes', label: '👤 Dados da Conta', active: true },
             { href: '/dashboard/configuracoes/perfil-studio', label: '🏢 Perfil do Estúdio', active: false },
             { href: '/dashboard/configuracoes/watermark', label: "💧 Marca d'água", active: false },
+            { href: '/dashboard/configuracoes/site', label: '🌐 Site / Banner', active: false },
+            { href: '/dashboard/configuracoes/pacotes', label: '📦 Pacotes', active: false },
           ].map(item => (
             <a
               key={item.href}

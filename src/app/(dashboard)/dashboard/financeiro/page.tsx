@@ -61,6 +61,26 @@ export default async function FinanceiroPage() {
   const profile = await getProfile()
   const adminClient = createAdminClient()
 
+  // Fetch commission rate for this tenant (override or global)
+  const [tenantCommissionResult, globalSettingResult] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('tenants')
+      .select('commission_override_percent')
+      .eq('id', profile.tenant_id)
+      .single(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'global_commission_percent')
+      .single(),
+  ])
+
+  const override = tenantCommissionResult.data?.commission_override_percent
+  const globalRate = parseInt(globalSettingResult.data?.value ?? '10', 10)
+  const commissionPercent = override !== null && override !== undefined ? override : globalRate
+
   // Fetch all paid orders with tenant info via joins
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: orders } = (await (adminClient as any)
@@ -118,6 +138,34 @@ export default async function FinanceiroPage() {
           <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">Financeiro</h1>
           <p className="text-[var(--color-ink-muted)] text-sm mt-1">Acompanhe sua receita e pedidos</p>
         </div>
+      </div>
+
+      {/* Commission info card */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-6 py-4 flex items-center gap-4"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="w-9 h-9 rounded-[var(--radius-sm)] bg-[var(--color-gold)]/10 flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="5.5" cy="5.5" r="2" stroke="var(--color-gold)" strokeWidth="1.5"/>
+            <circle cx="10.5" cy="10.5" r="2" stroke="var(--color-gold)" strokeWidth="1.5"/>
+            <path d="M3 13L13 3" stroke="var(--color-gold)" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">
+            Sua comissão
+          </p>
+          <p className="text-lg font-bold text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-display)' }}>
+            {commissionPercent}%
+            {override !== null && override !== undefined && (
+              <span className="ml-2 text-xs font-normal text-[var(--color-gold)]">(taxa personalizada)</span>
+            )}
+          </p>
+        </div>
+        <p className="ml-auto text-xs text-[var(--color-ink-muted)] max-w-xs text-right">
+          Taxa cobrada pela plataforma sobre cada venda realizada.
+        </p>
       </div>
 
       {/* Stats row — 3 cards */}
