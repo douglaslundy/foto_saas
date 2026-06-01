@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { PasswordGate } from '@/components/events/password-gate'
 import { PhotoGrid, type Photo } from './_components/photo-grid'
 import { EventoPageClient } from './_components/evento-page-client'
@@ -83,6 +84,25 @@ export default async function EventoPage({ params }: Props) {
 
   if (!event || event.status !== 'published') notFound()
 
+  // Check if the logged-in user is the photographer/owner of this event
+  let isManager = false
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const adminClient2 = createAdminClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profile } = await (adminClient2 as any)
+        .from('users')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .single() as { data: { tenant_id: string; role: string } | null }
+      isManager =
+        profile?.tenant_id === event.tenant_id &&
+        ['photographer', 'sub_photographer', 'admin'].includes(profile?.role ?? '')
+    }
+  } catch {}
+
   // Fetch first 48 photos server-side for SSR
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -158,6 +178,7 @@ export default async function EventoPage({ params }: Props) {
             eventId={event.id}
             initialPhotos={photos ?? []}
             total={photoCount}
+            isManager={isManager}
           />
         )}
 
@@ -167,6 +188,7 @@ export default async function EventoPage({ params }: Props) {
             initialPhotos={photos ?? []}
             eventId={event.id}
             total={photoCount}
+            isManager={isManager}
           />
         )}
       </div>
