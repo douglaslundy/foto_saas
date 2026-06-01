@@ -36,7 +36,7 @@ export function Navbar({ userName, userRole }: NavbarProps) {
   return (
     <nav
       className="sticky top-0 z-50 h-[60px] flex items-center px-6 gap-8 border-b border-[var(--color-border)]"
-      style={{ background: 'rgba(var(--color-surface-rgb, 245,244,240), 0.88)', backdropFilter: 'blur(16px)' }}
+      style={{ background: 'rgba(var(--color-surface-rgb), 0.92)', backdropFilter: 'blur(16px)' }}
     >
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2 shrink-0">

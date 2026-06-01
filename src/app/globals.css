@@ -7,6 +7,7 @@
 @layer base {
   :root {
     /* FotoSaaS Design System — Light Mode */
+    --color-surface-rgb: 245, 244, 240;
     --color-ink: #0d0f14;
     --color-ink-soft: #3a3d4a;
     --color-ink-muted: #7c8199;
@@ -58,6 +59,7 @@
 
   .dark {
     /* FotoSaaS Design System — Dark Mode */
+    --color-surface-rgb: 15, 17, 23;
     --color-ink: #f0ede8;
     --color-ink-soft: #c2bfb8;
     --color-ink-muted: #7a7870;

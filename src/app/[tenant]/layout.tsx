@@ -40,7 +40,10 @@ export default async function TenantLayout({
   return (
     <div className="min-h-screen bg-[var(--color-surface,var(--background))]">
       {/* Top navigation bar */}
-      <nav className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface,var(--background))]/90 backdrop-blur-sm">
+      <nav
+        className="sticky top-0 z-40 border-b border-[var(--color-border)]"
+        style={{ background: 'rgba(var(--color-surface-rgb), 0.92)', backdropFilter: 'blur(12px)' }}
+      >
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {logoUrl ? (
