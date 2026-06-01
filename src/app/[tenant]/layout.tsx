@@ -1,8 +1,6 @@
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { CartButton } from '@/components/cart/cart-button'
 import { CookieConsent } from '@/components/ui/cookie-consent'
 
@@ -25,23 +23,12 @@ export default async function TenantLayout({
 
   if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
-  const tenantData = tenant as { name: string }
-
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b px-6 py-3 flex items-center justify-between">
-        <span className="font-bold text-xl">{tenantData.name}</span>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <CartButton />
-          <Link
-            href="/login"
-            className="inline-flex items-center px-3 py-1.5 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            Entrar
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-[var(--color-surface,var(--background))]">
+      {/* CartButton floating — available across all tenant pages */}
+      <div className="fixed top-4 right-4 z-50">
+        <CartButton />
+      </div>
       <main>{children}</main>
       <CookieConsent />
     </div>

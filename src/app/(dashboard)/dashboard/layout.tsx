@@ -1,15 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-
-const navLinks = [
-  { href: '/dashboard', label: 'Início' },
-  { href: '/dashboard/eventos', label: 'Eventos' },
-  { href: '/dashboard/financeiro', label: 'Financeiro' },
-  { href: '/dashboard/clientes', label: 'Clientes' },
-  { href: '/dashboard/equipe', label: 'Equipe' },
-  { href: '/dashboard/configuracoes', label: 'Configurações' },
-]
+import { Navbar } from '@/components/navbar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -29,39 +20,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const profileWithName = profile as { name?: string; role?: string } | null
-  const isAdmin = profileWithName?.role === 'admin'
+  const userName = profileWithName?.name || user.email?.split('@')[0] || 'Usuário'
+  const userRole = (profileWithName?.role || 'photographer') as 'admin' | 'photographer' | 'sub_photographer' | 'viewer'
+
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="font-bold text-lg">FotoSaaS</span>
-          <div className="flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-1.5 rounded text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="text-xs px-2 py-1 rounded bg-destructive/10 text-destructive font-medium hover:bg-destructive/20 transition-colors"
-            >
-              Painel Admin
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">
-            {profileWithName?.name ?? user.email}
-          </span>
-        </div>
-      </nav>
-      <main className="p-6">{children}</main>
+    <div className="min-h-screen bg-[var(--color-surface)]">
+      <Navbar userName={userName} userRole={userRole} />
+      <main className="max-w-[1200px] mx-auto px-6 py-10">
+        {children}
+      </main>
     </div>
   )
 }

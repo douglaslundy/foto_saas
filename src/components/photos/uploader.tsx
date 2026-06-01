@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useRef, useState } from 'react'
 
 type FileStatus = 'pending' | 'uploading' | 'processing' | 'ready' | 'error'
 
@@ -26,17 +25,18 @@ const statusLabel: Record<FileStatus, string> = {
 }
 
 const statusColor: Record<FileStatus, string> = {
-  pending: 'text-muted-foreground',
+  pending: 'text-[var(--color-ink-muted)]',
   uploading: 'text-blue-500',
-  processing: 'text-yellow-500',
+  processing: 'text-[var(--color-gold)]',
   ready: 'text-green-600',
-  error: 'text-destructive',
+  error: 'text-[var(--color-danger)]',
 }
 
 export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps) {
   const [uploads, setUploads] = useState<FileUploadState[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function setFileStatus(index: number, update: Partial<FileUploadState>) {
     setUploads((prev) => prev.map((u, i) => (i === index ? { ...u, ...update } : u)))
@@ -120,51 +120,72 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
 
   return (
     <div className="space-y-4">
+      {/* Zona de drop */}
       <div
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
-        className={[
-          'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+        className={`relative border-2 border-dashed rounded-[var(--radius)] p-10 text-center transition-all duration-200 ${
           isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/30 hover:border-primary/50',
-        ].join(' ')}
+            ? 'border-[var(--color-gold)] bg-[var(--color-gold-light)]'
+            : 'border-[var(--color-border-strong)] hover:border-[var(--color-gold)]/50 hover:bg-[var(--color-surface-alt)]'
+        }`}
       >
-        <p className="text-muted-foreground mb-3">Arraste fotos aqui ou</p>
-        <label className="cursor-pointer">
-          <Button type="button" variant="outline" disabled={isUploading} asChild>
-            <span>{isUploading ? 'Enviando…' : 'Selecionar arquivos'}</span>
-          </Button>
-          <input
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
-            className="sr-only"
-            disabled={isUploading}
-            onChange={(e) => e.target.files && handleFiles(e.target.files)}
-          />
-        </label>
-        <p className="text-xs text-muted-foreground mt-3">
+        <svg
+          className="mx-auto mb-4 text-[var(--color-ink-muted)]"
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          opacity="0.5"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <p className="font-display text-lg font-semibold text-[var(--color-ink)] mb-1">
+          Arraste fotos ou clique para selecionar
+        </p>
+        <p className="text-[var(--color-ink-muted)] text-sm mb-4">
           JPG, PNG, WEBP, HEIC · Máx. 50 MB por foto
         </p>
+        <button
+          type="button"
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="px-5 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isUploading ? 'Enviando…' : 'Selecionar arquivos'}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+          className="hidden"
+          disabled={isUploading}
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        />
       </div>
 
+      {/* Lista de uploads */}
       {uploads.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <p className="text-sm text-[var(--color-ink-muted)]">
             {doneCount}/{uploads.length} enviadas
             {errorCount > 0 && (
-              <span className="text-destructive ml-2">· {errorCount} com erro</span>
+              <span className="text-[var(--color-danger)] ml-2">· {errorCount} com erro</span>
             )}
           </p>
           <ul className="max-h-64 overflow-y-auto space-y-1">
             {uploads.map((u, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between text-sm border rounded px-3 py-2"
+                className="flex items-center justify-between text-sm border border-[var(--color-border)] rounded-[var(--radius-sm)] px-3 py-2 bg-[var(--color-card)]"
               >
-                <span className="truncate max-w-xs text-foreground">{u.file.name}</span>
+                <span className="truncate max-w-xs text-[var(--color-ink)]">{u.file.name}</span>
                 <span className={statusColor[u.status]}>
                   {u.status === 'error' ? (u.error ?? 'Erro') : statusLabel[u.status]}
                 </span>

@@ -1,14 +1,31 @@
-import { Badge } from '@/components/ui/badge'
-
 type EventStatus = 'draft' | 'published' | 'archived'
 
-const STATUS_CONFIG: Record<EventStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  draft: { label: 'Rascunho', variant: 'secondary' },
-  published: { label: 'Publicado', variant: 'default' },
-  archived: { label: 'Arquivado', variant: 'outline' },
+const STATUS_CONFIG: Record<EventStatus, { label: string; className: string }> = {
+  draft: {
+    label: 'Rascunho',
+    className:
+      'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)] border border-[var(--color-border-strong)]',
+  },
+  published: {
+    label: 'Publicado',
+    className: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+  },
+  archived: {
+    label: 'Arquivado',
+    className: 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)]',
+  },
 }
 
 export function EventStatusBadge({ status }: { status: string }) {
-  const config = STATUS_CONFIG[status as EventStatus] ?? { label: status, variant: 'outline' as const }
-  return <Badge variant={config.variant}>{config.label}</Badge>
+  const config = STATUS_CONFIG[status as EventStatus] ?? {
+    label: status,
+    className: 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)]',
+  }
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${config.className}`}
+    >
+      {config.label}
+    </span>
+  )
 }

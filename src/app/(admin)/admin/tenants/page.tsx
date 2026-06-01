@@ -18,62 +18,97 @@ export default async function TenantsPage() {
     .select('id, name, slug, status, created_at')
     .order('created_at', { ascending: false })) as { data: Tenant[] | null }
 
-  const statusClass: Record<string, string> = {
-    active: 'text-green-600 bg-green-50',
-    suspended: 'text-red-600 bg-red-50',
-    pending: 'text-yellow-600 bg-yellow-50',
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    active: {
+      label: 'Ativo',
+      className: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+    },
+    suspended: {
+      label: 'Suspenso',
+      className: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]',
+    },
+    pending: {
+      label: 'Pendente',
+      className: 'bg-[var(--color-gold-light)] text-[var(--color-gold)]',
+    },
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Fotógrafos ({tenants?.length ?? 0})</h1>
+        <div>
+          <h1
+            className="text-3xl font-bold tracking-tight text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Tenants
+          </h1>
+          <p className="text-[var(--color-ink-muted)] text-sm mt-1">
+            {tenants?.length ?? 0} estúdio{tenants?.length !== 1 ? 's' : ''} cadastrado{tenants?.length !== 1 ? 's' : ''}
+          </p>
+        </div>
         <Link
           href="/admin/tenants/novo"
-          className="inline-flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
         >
-          + Novo Fotógrafo
+          + Novo Tenant
         </Link>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-muted/40">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium">Nome</th>
-              <th className="px-4 py-2 text-left font-medium">Slug</th>
-              <th className="px-4 py-2 text-left font-medium">Status</th>
-              <th className="px-4 py-2 text-left font-medium">Criado em</th>
-              <th className="px-4 py-2 text-left font-medium">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {(tenants ?? []).map((t) => (
-              <tr key={t.id}>
-                <td className="px-4 py-3 font-medium">{t.name}</td>
-                <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{t.slug}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${statusClass[t.status] ?? 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {t.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        {/* Table header */}
+        <div className="bg-[var(--color-surface-alt)] px-6 py-3 border-b border-[var(--color-border-strong)] grid grid-cols-[2fr_1fr_auto_auto_auto] gap-4 items-center">
+          {['Estúdio', 'Slug', 'Criado em', 'Status', 'Ações'].map((h) => (
+            <span
+              key={h}
+              className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--color-ink-muted)]"
+            >
+              {h}
+            </span>
+          ))}
+        </div>
+
+        {/* Table rows */}
+        <div className="divide-y divide-[var(--color-border)]">
+          {(tenants ?? []).map((t) => {
+            const sc = statusConfig[t.status]
+            return (
+              <div
+                key={t.id}
+                className="px-6 py-4 grid grid-cols-[2fr_1fr_auto_auto_auto] gap-4 items-center hover:bg-[var(--color-surface)] transition-colors"
+              >
+                <p className="text-sm font-semibold text-[var(--color-ink)]">{t.name}</p>
+                <p className="text-sm font-mono text-[var(--color-ink-muted)]">{t.slug}</p>
+                <p className="text-sm text-[var(--color-ink-muted)]">
                   {new Date(t.created_at).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="px-4 py-3">
+                </p>
+                <span
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    sc?.className ?? 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)] border border-[var(--color-border-strong)]'
+                  }`}
+                >
+                  {sc?.label ?? t.status}
+                </span>
+                <div className="flex items-center gap-2">
                   <Link
                     href={`/admin/tenants/${t.id}`}
-                    className="text-primary text-xs underline"
+                    className="text-xs font-medium px-2.5 py-1 rounded border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-alt)] transition-colors text-[var(--color-ink-soft)]"
                   >
-                    Ver detalhes
+                    Ver
                   </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            )
+          })}
+          {(tenants ?? []).length === 0 && (
+            <p className="px-6 py-10 text-sm text-[var(--color-ink-muted)] text-center">
+              Nenhum tenant cadastrado.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )

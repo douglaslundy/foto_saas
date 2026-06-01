@@ -1,10 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Separator } from '@/components/ui/separator'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 type CartItem = {
   id: string
@@ -51,73 +48,133 @@ export function CartDrawer({ open, onOpenChange, onCountChange }: CartDrawerProp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle>Carrinho</SheetTitle>
-        </SheetHeader>
+      <SheetContent
+        side="right"
+        className="w-[400px] sm:w-[480px] p-0 flex flex-col bg-[var(--color-card)] border-l border-[var(--color-border-strong)]"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">
+              Meu Carrinho
+            </h2>
+            {items.length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-[var(--color-gold)] text-[var(--color-ink)] text-[10px] font-bold flex items-center justify-center leading-none">
+                {items.length}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-8 h-8 rounded-full hover:bg-[var(--color-surface-alt)] flex items-center justify-center text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
+            aria-label="Fechar carrinho"
+          >
+            ✕
+          </button>
+        </div>
 
-        <div className="flex flex-col h-full pt-4">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           {loading ? (
-            <p className="text-muted-foreground text-sm">Carregando...</p>
+            <div className="flex items-center justify-center py-12">
+              <div
+                className="w-8 h-8 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin"
+                aria-label="Carregando..."
+              />
+            </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Seu carrinho está vazio.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-[var(--color-ink)] opacity-30 mb-4"
+              >
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <p className="font-display text-base font-semibold text-[var(--color-ink)] mb-1">
+                Carrinho vazio
+              </p>
+              <p className="text-sm text-[var(--color-ink-muted)]">
+                Adicione fotos aos favoritos para comprar
+              </p>
+            </div>
           ) : (
-            <>
-              <div className="flex-1 overflow-y-auto space-y-3">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-2 border rounded">
-                    {item.photos?.public_storage_path && (
+            <div className="space-y-3">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                >
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 rounded-[var(--radius-sm)] overflow-hidden bg-[var(--color-surface-alt)] flex-shrink-0">
+                    {item.photos?.public_storage_path ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={item.photos.public_storage_path}
                         alt="Foto"
-                        className="h-16 w-16 object-cover rounded"
+                        className="w-full h-full object-cover"
                       />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[var(--color-ink-muted)] text-xs">
+                        📷
+                      </div>
                     )}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {(item.price_cents / 100).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.photo_id)}
-                      aria-label="Remover do carrinho"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-                ))}
-              </div>
 
-              <div className="pt-4 space-y-3">
-                <Separator />
-                <div className="flex justify-between text-sm font-semibold">
-                  <span>Subtotal</span>
-                  <span>
-                    {(subtotal / 100).toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-[var(--color-ink-muted)] truncate">Foto digital</p>
+                    <p className="font-display text-base font-semibold text-[var(--color-ink)] mt-0.5">
+                      {(item.price_cents / 100).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </p>
+                  </div>
+
+                  {/* Remove */}
+                  <button
+                    onClick={() => removeItem(item.photo_id)}
+                    aria-label="Remover do carrinho"
+                    className="w-7 h-7 rounded-full hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] flex items-center justify-center text-[var(--color-ink-muted)] transition-colors text-xs"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    onOpenChange(false)
-                    window.location.href = '/checkout'
-                  }}
-                >
-                  Finalizar Compra
-                </Button>
-              </div>
-            </>
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Footer — sticky, only when cart has items */}
+        {items.length > 0 && !loading && (
+          <div className="px-6 py-5 border-t border-[var(--color-border)] bg-[var(--color-card)]">
+            <div className="flex items-baseline justify-between mb-4">
+              <span className="text-sm text-[var(--color-ink-muted)]">Total</span>
+              <span className="font-display text-2xl font-bold text-[var(--color-ink)]">
+                {(subtotal / 100).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                onOpenChange(false)
+                window.location.href = '/checkout'
+              }}
+              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+            >
+              Finalizar pedido
+            </button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   )
