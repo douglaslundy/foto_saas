@@ -68,9 +68,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Erro no serviço de reconhecimento facial.' }, { status: 502 })
   }
 
-  const faceData = await faceResponse.json() as { photo_ids?: string[]; count?: number }
-  return NextResponse.json({
-    photo_ids: faceData.photo_ids ?? [],
-    count: faceData.count ?? faceData.photo_ids?.length ?? 0,
-  })
+  const faceData = await faceResponse.json() as {
+    matches?: Array<{ photo_id: string; face_index: number; score: number }>
+  }
+  // Deduplicate: a photo with multiple faces may appear more than once
+  const photo_ids = [...new Set((faceData.matches ?? []).map((m) => m.photo_id))]
+  return NextResponse.json({ photo_ids, count: photo_ids.length })
 }
