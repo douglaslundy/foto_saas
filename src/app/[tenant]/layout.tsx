@@ -59,7 +59,7 @@ export default async function TenantLayout({
               </span>
             )}
           </div>
-          <CartButton />
+          <CartButton tenantSlug={tenantRecord.slug} />
         </div>
       </nav>
       <main>{children}</main>
