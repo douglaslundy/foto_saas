@@ -34,6 +34,10 @@ export default async function CheckoutPage({ params }: Props) {
     profileRole = profile?.role ?? null
   }
 
+  // Only clients can checkout; admins/photographers must log in with a client account
+  const isClient = isLoggedIn && profileRole === 'client'
+  const needsLogin = !isLoggedIn || !isClient
+
   return (
     <div className="min-h-screen bg-[var(--color-surface)] flex flex-col">
       {/* Minimal header */}
@@ -52,34 +56,34 @@ export default async function CheckoutPage({ params }: Props) {
             Finalizar Compra
           </h1>
 
-          {!isLoggedIn ? (
-            /* Not logged in — prompt login */
+          {needsLogin ? (
+            /* Not logged in or wrong role — prompt login/register */
             <div
               className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-8 text-center"
               style={{ boxShadow: 'var(--shadow-md)' }}
             >
-              <p className="text-[var(--color-ink)] font-semibold mb-2">Login necessário</p>
+              <p className="text-[var(--color-ink)] font-semibold mb-2">Conta necessária</p>
               <p className="text-sm text-[var(--color-ink-muted)] mb-6">
-                Faça login ou crie uma conta para finalizar sua compra.
+                Crie uma conta ou faça login para finalizar sua compra e receber os downloads.
               </p>
               <Link
-                href={`/${tenantSlug}/login?redirect=checkout`}
+                href={`/${tenantSlug}/cadastro?redirect=/${tenantSlug}/checkout`}
                 className="inline-flex items-center justify-center w-full h-[50px] rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
               >
-                Entrar na minha conta
+                Criar conta gratuita
               </Link>
               <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
-                Não tem conta?{' '}
+                Já tem conta?{' '}
                 <Link
-                  href={`/${tenantSlug}/cadastro`}
+                  href={`/${tenantSlug}/login?redirect=/${tenantSlug}/checkout`}
                   className="text-[var(--color-gold)] font-medium hover:underline"
                 >
-                  Cadastrar &rarr;
+                  Entrar &rarr;
                 </Link>
               </p>
             </div>
           ) : (
-            /* Logged in — show checkout form */
+            /* Logged in as client — show checkout form */
             <>
               <p className="text-sm text-[var(--color-ink-muted)] mb-8">
                 Preencha seus dados para receber os downloads por e-mail.
@@ -88,9 +92,7 @@ export default async function CheckoutPage({ params }: Props) {
                 className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-6"
                 style={{ boxShadow: 'var(--shadow-md)' }}
               >
-                <CheckoutForm
-                  initialEmail={profileRole === 'client' ? (userEmail ?? '') : ''}
-                />
+                <CheckoutForm initialEmail={userEmail ?? ''} />
               </div>
             </>
           )}

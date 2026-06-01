@@ -35,25 +35,32 @@ export function CheckoutForm({ initialEmail = '' }: CheckoutFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, paymentMethod }),
       })
-      const data = await res.json()
+
+      let data: Record<string, unknown> = {}
+      try {
+        data = await res.json()
+      } catch {
+        setError('Erro interno no servidor. Tente novamente.')
+        return
+      }
 
       if (!res.ok) {
-        setError(data.error ?? 'Erro ao processar checkout.')
+        setError((data.error as string) ?? 'Erro ao processar checkout.')
         return
       }
 
       if (paymentMethod === 'stripe') {
-        setState({ step: 'stripe', clientSecret: data.clientSecret, orderId: data.orderId })
+        setState({ step: 'stripe', clientSecret: data.clientSecret as string, orderId: data.orderId as string })
       } else {
         setState({
           step: 'pix',
-          pixQrCode: data.pixQrCode,
-          pixQrCodeBase64: data.pixQrCodeBase64,
-          orderId: data.orderId,
+          pixQrCode: data.pixQrCode as string,
+          pixQrCodeBase64: data.pixQrCodeBase64 as string,
+          orderId: data.orderId as string,
         })
       }
     } catch (err) {
-      setError('Erro de rede. Tente novamente.')
+      setError('Erro de conexão. Verifique sua internet e tente novamente.')
       console.error(err)
     } finally {
       setLoading(false)

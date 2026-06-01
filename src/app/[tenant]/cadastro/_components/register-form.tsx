@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
@@ -11,6 +11,7 @@ interface RegisterFormProps {
 
 export function RegisterForm({ tenantSlug }: RegisterFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,7 +49,11 @@ export function RegisterForm({ tenantSlug }: RegisterFormProps) {
         return
       }
 
-      router.push(`/${tenantSlug}/login?registered=1`)
+      const redirectParam = searchParams.get('redirect')
+      const loginUrl = redirectParam
+        ? `/${tenantSlug}/login?registered=1&redirect=${encodeURIComponent(redirectParam)}`
+        : `/${tenantSlug}/login?registered=1`
+      router.push(loginUrl)
     } catch {
       setError('Erro de rede. Tente novamente.')
     } finally {
@@ -136,7 +141,12 @@ export function RegisterForm({ tenantSlug }: RegisterFormProps) {
       <p className="mt-6 text-center text-sm text-[var(--color-ink-muted)]">
         Já tem conta?{' '}
         <Link
-          href={`/${tenantSlug}/login`}
+          href={(() => {
+            const r = searchParams.get('redirect')
+            return r
+              ? `/${tenantSlug}/login?redirect=${encodeURIComponent(r)}`
+              : `/${tenantSlug}/login`
+          })()}
           className="text-[var(--color-gold)] font-medium hover:underline"
         >
           Entrar &rarr;
