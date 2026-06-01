@@ -61,10 +61,19 @@ export default async function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Clientes e Pedidos</h1>
-        <p className="text-muted-foreground text-sm mt-1">{tenantOrders.length} pedido(s) encontrado(s)</p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+            Clientes
+          </h1>
+          <p className="text-[var(--color-ink-muted)] text-sm mt-1">
+            {tenantOrders.length} pedido{tenantOrders.length !== 1 ? 's' : ''} encontrado
+            {tenantOrders.length !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
+
       <OrdersTable orders={tenantOrders} />
     </div>
   )
