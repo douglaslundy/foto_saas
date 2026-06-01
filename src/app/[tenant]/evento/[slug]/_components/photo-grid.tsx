@@ -10,6 +10,14 @@ export type Photo = {
   status: string
 }
 
+const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+
+function getPhotoUrl(path: string | null): string | null {
+  if (!path) return null
+  if (path.startsWith('http')) return path
+  return `${STORAGE_URL}/${path}`
+}
+
 type PhotoGridProps = {
   initialPhotos: Photo[]
   eventId: string
@@ -74,7 +82,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds }: PhotoG
             {photo.status === 'ready' && photo.public_storage_path ? (
               <>
                 <img
-                  src={photo.public_storage_path}
+                  src={getPhotoUrl(photo.public_storage_path) ?? ''}
                   alt=""
                   className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                   draggable="false"
@@ -120,7 +128,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds }: PhotoG
           onClick={() => setLightbox(null)}
         >
           <img
-            src={lightbox.public_storage_path!}
+            src={getPhotoUrl(lightbox.public_storage_path) ?? ''}
             alt=""
             className="max-w-full max-h-full object-contain"
             draggable="false"
