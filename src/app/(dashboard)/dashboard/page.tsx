@@ -57,8 +57,8 @@ const totalEvents: number | null = null
 const totalPhotos: number | null = null
 const monthRevenue: number | null = null
 const weekOrders: number | null = null
-const recentEvents: null = null
-const recentOrders: null = null
+const recentEvents: Array<{ id: string; title: string; event_date?: string | null; status: string }> | null = null
+const recentOrders: Array<{ id: string; client_email?: string; created_at: string; total: number }> | null = null
 
 export default function DashboardPage() {
   const hour = new Date().getHours()

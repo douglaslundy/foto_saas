@@ -17,7 +17,7 @@ interface WatermarkConfig {
 }
 
 interface WatermarkFormProps {
-  tenantId: string
+  tenantId?: string
   initial: WatermarkConfig | null
 }
 
@@ -35,10 +35,10 @@ const inputClass =
 const labelClass =
   'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
-export default function WatermarkForm({ tenantId, initial }: WatermarkFormProps) {
+export default function WatermarkForm({ initial }: WatermarkFormProps) {
   const [type, setType] = useState(initial?.type ?? 'text')
   const [textContent, setTextContent] = useState(initial?.text_content ?? '')
-  const [font, setFont] = useState(initial?.font ?? 'sans-serif')
+  const [font] = useState(initial?.font ?? 'sans-serif')
   const [fontSize, setFontSize] = useState(initial?.font_size ?? 24)
   const [color, setColor] = useState(initial?.color ?? '#ffffff')
   const [opacity, setOpacity] = useState(initial?.opacity ?? 0.6)
