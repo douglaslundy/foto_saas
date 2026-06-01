@@ -10,13 +10,6 @@ type Photo = {
   created_at: string
 }
 
-const statusLabel: Record<string, string> = {
-  ready: 'Pronta',
-  processing: 'Processando…',
-  error: 'Erro',
-  pending: 'Aguardando',
-}
-
 export function PhotoGrid({ photos: initial, storageBase }: { photos: Photo[]; storageBase: string }) {
   const [photos, setPhotos] = useState(initial)
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
@@ -36,55 +29,94 @@ export function PhotoGrid({ photos: initial, storageBase }: { photos: Photo[]; s
     }
   }
 
-  if (photos.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg">
-        Nenhuma foto enviada ainda.
-      </p>
-    )
-  }
-
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
       {photos.map((photo) => {
         const isDeleting = deleting.has(photo.id)
+        const imgSrc = photo.thumbnail_path ? `${storageBase}/${photo.thumbnail_path}` : null
+
         return (
-          <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
-            {photo.thumbnail_path ? (
+          <div
+            key={photo.id}
+            className="relative group aspect-square rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-alt)]"
+          >
+            {imgSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`${storageBase}/${photo.thumbnail_path}`}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-xs text-muted-foreground text-center px-2">
-                  {statusLabel[photo.status] ?? photo.status}
+                <span className="text-xs text-[var(--color-ink-muted)] text-center px-2">
+                  {photo.status}
                 </span>
               </div>
             )}
 
-            {photo.status !== 'ready' && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <span className="text-xs text-white font-medium">
-                  {statusLabel[photo.status] ?? photo.status}
-                </span>
+            {/* Overlay hover */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+              {/* Botão excluir */}
+              <button
+                onClick={() => handleDelete(photo.id)}
+                disabled={isDeleting}
+                className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-colors disabled:opacity-50"
+                title="Excluir"
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Status overlay — processando */}
+            {photo.status === 'processing' && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                <div className="w-6 h-6 rounded-full border-2 border-[var(--color-gold)] border-t-transparent animate-spin" />
               </div>
             )}
 
-            {/* Botão deletar — aparece no hover */}
-            <button
-              onClick={() => handleDelete(photo.id)}
-              disabled={isDeleting}
-              className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-              title="Deletar foto"
-            >
-              {isDeleting ? '…' : '×'}
-            </button>
+            {/* Status overlay — pendente (sem thumbnail ainda) */}
+            {photo.status === 'pending' && !imgSrc && (
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                <div className="w-6 h-6 rounded-full border-2 border-white/60 border-t-transparent animate-spin" />
+              </div>
+            )}
+
+            {/* Status overlay — erro */}
+            {photo.status === 'error' && (
+              <div className="absolute inset-0 bg-[var(--color-danger)]/30 flex items-center justify-center pointer-events-none">
+                <span className="text-white text-lg">&#9888;</span>
+              </div>
+            )}
           </div>
         )
       })}
+
+      {(!photos || photos.length === 0) && (
+        <div className="col-span-full py-16 text-center">
+          <svg
+            className="mx-auto mb-4 text-[var(--color-ink-muted)]"
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            opacity="0.3"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <p className="font-display text-lg font-semibold text-[var(--color-ink)]">
+            Nenhuma foto enviada ainda.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
