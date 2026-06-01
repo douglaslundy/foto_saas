@@ -21,7 +21,7 @@
   - POST com body `{ bib_number: string }`
   - Query: `SELECT id FROM photos WHERE event_id = $1 AND bib_number = $2 AND status = 'ready'`
   - Retorna `{ photo_ids: string[], count: number }`
-- [ ] Criar rota API
+- [x] Criar rota API
 - [ ] Testar no portal público de evento com BIB habilitado
 
 ### BUG-02 · Download entrega foto original sem watermark
@@ -29,13 +29,13 @@
 - **Solução**: Alterar `delivery.ts` para usar bucket `photos-public` (fotos já processadas pelo worker com watermark)
   - Se `public_storage_path` existir na foto → gerar signed URL de `photos-public`
   - Fallback para `photos-original` apenas se watermark não processado ainda
-- [ ] Atualizar `src/lib/delivery.ts`
-- [ ] Atualizar `src/app/api/orders/[id]/download/route.ts`
+- [x] Atualizar `src/lib/delivery.ts`
+- [x] Atualizar `src/app/api/orders/[id]/download/route.ts` (não necessário — já usa generateDownloadUrls)
 
 ### BUG-03 · Tabela `watermark_configs` não existe no banco
 - **Problema**: `workers/watermark.ts:20` faz query em `watermark_configs` mas a tabela não está em `00-schema.sql` → worker falha silenciosamente ao processar fotos
 - **Solução**: Criar a tabela e a UI de configuração (ver FEAT-01 abaixo)
-- [ ] Adicionar tabela ao schema (ver FEAT-01)
+- [x] Adicionar tabela ao schema (migration `docker/db/02-watermark-config.sql` aplicada na VPS)
 
 ---
 
@@ -49,28 +49,11 @@
   - Página `/dashboard/configuracoes/watermark` com formulário
   - Upload de imagem de watermark para storage
   - Preview em tempo real (opcional MVP)
-- [ ] Criar migration `docker/db/02-watermark-config.sql`
-  ```sql
-  CREATE TABLE IF NOT EXISTS public.watermark_configs (
-    id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id     UUID        NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE UNIQUE,
-    type          TEXT        NOT NULL DEFAULT 'text', -- 'text' | 'image'
-    text_content  TEXT,
-    font          TEXT        NOT NULL DEFAULT 'sans-serif',
-    font_size     INTEGER     NOT NULL DEFAULT 24,
-    color         TEXT        NOT NULL DEFAULT '#ffffff',
-    opacity       REAL        NOT NULL DEFAULT 0.6,
-    position      TEXT        NOT NULL DEFAULT 'bottom-right',
-    image_storage_path TEXT,
-    image_size_percent INTEGER NOT NULL DEFAULT 20,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  );
-  ```
-- [ ] Criar `src/app/(dashboard)/dashboard/configuracoes/watermark/page.tsx`
-- [ ] Criar `src/app/api/watermark-config/route.ts` (GET + PUT)
-- [ ] Adicionar link "Marca d'água" ao nav de configurações
-- [ ] Corrigir BUG-03 aplicando a migration na VPS
+- [x] Criar migration `docker/db/02-watermark-config.sql` — aplicada na VPS
+- [x] Criar `src/app/(dashboard)/dashboard/configuracoes/watermark/page.tsx`
+- [x] Criar `src/app/api/watermark-config/route.ts` (GET + PUT)
+- [x] Adicionar link "Marca d'água" ao nav de configurações
+- [x] Corrigir BUG-03 aplicando a migration na VPS
 
 ### FEAT-02 · Configurações do Tenant (perfil, logo, domínio)
 - **Contexto**: Fotógrafo não tem como configurar nome do estúdio, logo, domínio customizado, etc.
@@ -79,9 +62,9 @@
   - Página `/dashboard/configuracoes/perfil-studio` 
   - Upload de logo
   - Configurar domínio customizado (informativo + instrução DNS)
-- [ ] Migration: adicionar colunas em `tenants`
-- [ ] Criar página de configurações do studio
-- [ ] Criar API `PATCH /api/tenant/profile`
+- [x] Migration: adicionar colunas em `tenants` (`docker/db/03-tenant-profile.sql`) — aplicada na VPS
+- [x] Criar página de configurações do studio (`/dashboard/configuracoes/perfil-studio`)
+- [x] Criar API `PATCH /api/tenant/profile`
 - [ ] Exibir logo do tenant no portal público (tenant layout)
 
 ### FEAT-03 · Lista de fotos na página de gerenciamento do evento
@@ -91,17 +74,17 @@
   - Contagem total, breakdown por status
   - Botão para deletar foto individual
   - Indicação de progresso do worker
-- [ ] Buscar fotos do evento na page (`SELECT id, public_storage_path, status FROM photos WHERE event_id = $1`)
-- [ ] Criar `PhotoGrid` no contexto do dashboard (diferente do portal público)
-- [ ] API `DELETE /api/events/[id]/photos/[photoId]`
+- [x] Buscar fotos do evento na page — já implementado
+- [x] Criar `PhotoGrid` no contexto do dashboard — já implementado (`src/components/photos/photo-grid.tsx`)
+- [x] API `DELETE /api/photos/[photoId]` — já implementado
 
 ### FEAT-04 · Confirmação de pagamento em tempo real
 - **Contexto**: Após pagar, cliente precisa recarregar `/[tenant]/pedido/[id]` manualmente para ver downloads disponíveis
 - **Solução mínima**: Polling a cada 3s por até 2 minutos até status='paid'
 - **Solução ideal**: SSE (Server-Sent Events) ou WebSocket
-- [ ] Criar client component com polling em `/[tenant]/pedido/[id]/page.tsx`
-- [ ] Mostrar spinner "Aguardando confirmação do pagamento..." enquanto status=pending
-- [ ] Atualizar UI automaticamente quando status mudar para paid
+- [x] Criar client component com polling em `/[tenant]/pedido/[id]/_components/order-status.tsx`
+- [x] Mostrar spinner "Aguardando confirmação do pagamento..." enquanto status=pending
+- [x] Atualizar UI automaticamente quando status mudar para paid
 
 ### FEAT-05 · Dashboard home com métricas reais
 - **Contexto**: `/dashboard` mostra apenas cards de navegação (substituiu placeholder)
@@ -110,80 +93,70 @@
   - Total de fotos processadas
   - Receita do mês atual
   - Pedidos dos últimos 7 dias
-- [ ] Buscar stats na page server-side
-- [ ] Mostrar KPI cards antes dos links de navegação
+- [x] Buscar stats na page server-side
+- [x] Mostrar KPI cards antes dos links de navegação
 
 ---
 
 ## 🟠 MÉDIO — Dashboard/Admin melhorias
 
 ### FEAT-06 · Filtros na lista de eventos
-- [ ] Filtrar por status: draft / published / todos
-- [ ] Filtrar por tipo: evento / ensaio / todos
-- [ ] Busca por título
+- [x] Filtrar por status: draft / published / todos
+- [x] Filtrar por tipo: evento / ensaio / todos
+- [x] Busca por título
 
 ### FEAT-07 · Filtro de período no Financeiro
-- [ ] Seletor de período: últimos 30 dias / 3 meses / 6 meses / personalizado
-- [ ] Gráfico atualiza conforme período selecionado
+- [x] Seletor de período: últimos 30 dias / 3 meses / 6 meses / este ano / tudo
+- [x] Gráfico atualiza conforme período selecionado
 
 ### FEAT-08 · Paginação em tabelas do admin
-- [ ] Paginação na lista de tenants (admin)
-- [ ] Paginação na lista de clientes/pedidos (dashboard)
+- [x] Paginação na lista de tenants (admin) — `tenants-table.tsx`
+- [x] Paginação na lista de clientes/pedidos (dashboard) — `clientes-table.tsx`
 
 ### FEAT-09 · Download em ZIP
-- **Contexto**: Cliente baixa foto por foto via signed URL
-- **Solução**: BullMQ job que gera ZIP, armazena temporariamente e envia link
-- [ ] Criar `src/lib/queues/zip-queue.ts`
-- [ ] Worker que agrupa fotos de um pedido em ZIP
-- [ ] Endpoint `GET /api/orders/[id]/download-zip`
-- [ ] UI no pedido: botão "Baixar todas (.zip)"
+- **Solução**: ZIP construído manualmente com `zlib.deflateRawSync` (sem dependências extras)
+- [x] Endpoint `GET /api/orders/[id]/download-zip`
+- [x] UI no pedido: botão "Baixar todas (.zip)"
 
 ### FEAT-10 · Admin: criar outro administrador
-- **Contexto**: Só é possível criar fotógrafos pelo admin. Para criar outro admin é necessário SQL manual.
-- [ ] Adicionar opção de role "admin" no formulário de criação de usuário
-- [ ] Proteger para que só admins possam criar outros admins
+- [x] Adicionar opção de role "admin" no formulário de criação de usuário
+- [x] Proteger para que só admins possam criar outros admins
 
 ### FEAT-11 · Admin: excluir tenant
-- **Contexto**: Admin só pode suspender. Não há opção de exclusão total.
-- [ ] Botão "Excluir tenant" com confirmação dupla
-- [ ] API `DELETE /api/admin/tenants/[id]` com cascade
+- [x] Botão "Excluir tenant" com confirmação dupla (`delete-tenant-button.tsx`)
+- [x] API `DELETE /api/admin/tenants/[id]` com cascade
 
 ### FEAT-12 · Portal público: verificar status do tenant
-- **Contexto**: Eventos de tenant suspenso ainda ficam acessíveis publicamente
-- [ ] Adicionar verificação em `[tenant]/layout.tsx`: se `tenant.status !== 'active'` → notFound()
-- [ ] (Já está implementado: `if (!tenant || tenant.status !== 'active') notFound()` — verificar se suspension propaga)
+- [x] Verificação já implementada em `[tenant]/layout.tsx` — `if (!tenant || tenant.status !== 'active') notFound()`
 
 ---
 
 ## 🟢 BAIXO — Polimento e UX
 
 ### FEAT-13 · Slideshow: controles de teclado
-- [ ] ← / → para navegação
-- [ ] Espaço para play/pause
-- [ ] Escape para fechar
+- [x] ← / → para navegação
+- [x] Espaço para play/pause
+- [x] Escape para fechar
 
 ### FEAT-14 · SEO do portal público
-- [ ] `src/app/[tenant]/sitemap.ts` — gerar sitemap por tenant
-- [ ] `src/app/robots.ts` — robots.txt
-- [ ] og:image nas páginas de evento (primeira foto do evento)
+- [x] `src/app/[tenant]/sitemap.ts` — gerar sitemap por tenant
+- [x] `src/app/robots.ts` — robots.txt
+- [x] og:image nas páginas de evento (primeira foto do evento)
 
 ### FEAT-15 · Paginação no portal público
-- **Contexto**: Grade de fotos do evento carrega primeiros 48 fixos
-- `src/app/[tenant]/evento/[slug]/_components/photo-grid.tsx` tem `loadMore` mas verificar se funciona
-- [ ] Botão "Carregar mais" funcional
+- [x] Botão "Carregar mais" já implementado e funcional
 
 ### FEAT-16 · Email: personalização por tenant
-- [ ] Template de email com nome do estúdio, logo, cores (usar dados de FEAT-02)
-- [ ] Pelo menos o nome do estúdio no assunto/corpo do email
+- [x] Nome do estúdio no assunto/corpo do email — `email.ts` + webhooks stripe/mercadopago atualizados
 
 ### FEAT-17 · Retry de email com BullMQ
-- [ ] Criar fila `email-queue` no BullMQ
-- [ ] Worker com retry automático (3 tentativas, backoff exponencial)
-- [ ] Substituir envio direto nos webhooks por enfileiramento
+- [x] Criar fila `src/lib/queues/email-queue.ts`
+- [x] Worker `workers/email.ts` com 3 tentativas + backoff exponencial 10s — container `fotosaas-email-worker` rodando na VPS
+- [x] Webhooks stripe e mercadopago enfileiram via `emailQueue.add()` em vez de enviar diretamente
 
 ### FEAT-18 · Fotos: indicar quando worker falhou
-- [ ] Foto com `status='error'` deve aparecer na página de fotos do dashboard
-- [ ] Botão "Reprocessar" para re-enfileirar no watermark worker
+- [x] Foto com `status='error'` aparece com overlay vermelho no dashboard
+- [x] Botão "Reprocessar" (↻) re-enfileira no watermark worker via `/api/photos/[id]/reprocess`
 
 ---
 

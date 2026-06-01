@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+type UserType = 'photographer' | 'admin'
+
 export function NewTenantForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [userType, setUserType] = useState<UserType>('photographer')
   const [form, setForm] = useState({
     tenantName: '',
     slug: '',
@@ -38,14 +41,25 @@ export function NewTenantForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    const payload =
+      userType === 'admin'
+        ? {
+            role: 'admin',
+            name: form.photographerName,
+            email: form.email,
+            password: form.password,
+          }
+        : { ...form }
+
     const res = await fetch('/api/admin/tenants', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
     if (!res.ok) {
-      setError(data.error ?? 'Erro ao criar fotógrafo.')
+      setError(data.error ?? 'Erro ao criar usuário.')
       setLoading(false)
       return
     }
@@ -55,41 +69,79 @@ export function NewTenantForm() {
 
   return (
     <form onSubmit={handleSubmit} className="border rounded-lg p-6 space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="tenantName">Nome da empresa / estúdio *</Label>
-        <Input
-          id="tenantName"
-          name="tenantName"
-          value={form.tenantName}
-          onChange={handleChange}
-          placeholder="Ex: Studio Silva Fotografia"
-          required
-        />
+      {/* User type selector */}
+      <div className="space-y-2">
+        <Label>Tipo de usuário</Label>
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="userType"
+              value="photographer"
+              checked={userType === 'photographer'}
+              onChange={() => setUserType('photographer')}
+              className="accent-primary"
+            />
+            <span className="text-sm">Fotógrafo (novo estúdio)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="userType"
+              value="admin"
+              checked={userType === 'admin'}
+              onChange={() => setUserType('admin')}
+              className="accent-primary"
+            />
+            <span className="text-sm">Administrador da plataforma</span>
+          </label>
+        </div>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="slug">Slug (URL pública) *</Label>
-        <Input
-          id="slug"
-          name="slug"
-          value={form.slug}
-          onChange={handleChange}
-          placeholder="studio-silva"
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          Usado na URL pública: <span className="font-mono">studio-silva.seudominio.com</span>
-        </p>
-      </div>
+      {/* Tenant fields — only for photographer */}
+      {userType === 'photographer' && (
+        <>
+          <div className="space-y-1">
+            <Label htmlFor="tenantName">Nome da empresa / estúdio *</Label>
+            <Input
+              id="tenantName"
+              name="tenantName"
+              value={form.tenantName}
+              onChange={handleChange}
+              placeholder="Ex: Studio Silva Fotografia"
+              required
+            />
+          </div>
 
+          <div className="space-y-1">
+            <Label htmlFor="slug">Slug (URL pública) *</Label>
+            <Input
+              id="slug"
+              name="slug"
+              value={form.slug}
+              onChange={handleChange}
+              placeholder="studio-silva"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Usado na URL pública: <span className="font-mono">studio-silva.seudominio.com</span>
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Name field label changes by type */}
       <div className="space-y-1">
-        <Label htmlFor="photographerName">Nome do fotógrafo responsável</Label>
+        <Label htmlFor="photographerName">
+          {userType === 'photographer' ? 'Nome do fotógrafo responsável' : 'Nome do administrador *'}
+        </Label>
         <Input
           id="photographerName"
           name="photographerName"
           value={form.photographerName}
           onChange={handleChange}
-          placeholder="Ex: João Silva"
+          placeholder={userType === 'photographer' ? 'Ex: João Silva' : 'Ex: Maria Souza'}
+          required={userType === 'admin'}
         />
       </div>
 
@@ -105,7 +157,7 @@ export function NewTenantForm() {
           type="email"
           value={form.email}
           onChange={handleChange}
-          placeholder="joao@studiosliva.com"
+          placeholder={userType === 'photographer' ? 'joao@studiosliva.com' : 'admin@plataforma.com'}
           required
         />
       </div>
@@ -123,7 +175,7 @@ export function NewTenantForm() {
           minLength={6}
         />
         <p className="text-xs text-muted-foreground">
-          O fotógrafo pode alterar a senha após o primeiro acesso em Configurações.
+          O usuário pode alterar a senha após o primeiro acesso em Configurações.
         </p>
       </div>
 
@@ -131,7 +183,11 @@ export function NewTenantForm() {
 
       <div className="flex gap-3 pt-2">
         <Button type="submit" disabled={loading}>
-          {loading ? 'Criando...' : 'Criar fotógrafo'}
+          {loading
+            ? 'Criando...'
+            : userType === 'admin'
+            ? 'Criar administrador'
+            : 'Criar fotógrafo'}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancelar

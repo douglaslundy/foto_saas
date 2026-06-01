@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyStripeWebhook } from '@/lib/payments/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendOrderConfirmation, sendSaleNotification } from '@/lib/notifications/email'
+import { emailQueue } from '@/lib/queues/email-queue'
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
@@ -54,39 +54,58 @@ async function sendOrderNotifications(adminClient: any, orderId: string) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
 
-    // Notify client
-    await sendOrderConfirmation({
+    // Find photographer email via event → tenant
+    const eventId = order.order_items?.[0]?.event_id
+
+    let studioName: string | undefined
+    let tenantId: string | undefined
+
+    if (eventId) {
+      const { data: eventRow } = await adminClient
+        .from('events')
+        .select('tenant_id')
+        .eq('id', eventId)
+        .single()
+
+      tenantId = eventRow?.tenant_id
+
+      if (tenantId) {
+        const { data: tenantRow } = await adminClient
+          .from('tenants')
+          .select('name')
+          .eq('id', tenantId)
+          .single()
+        studioName = (tenantRow as any)?.name
+      }
+    }
+
+    // Enqueue client confirmation (3 retries with exponential backoff)
+    await emailQueue.add('order_confirmation', {
+      type: 'order_confirmation',
       to: order.client_email,
       orderId,
       totalCents: order.total_cents,
       downloadUrl: `${appUrl}/pedido/${orderId}`,
+      studioName,
     })
 
-    // Find photographer email via event → tenant
-    const eventId = order.order_items?.[0]?.event_id
-    if (!eventId) return
-
-    const { data: event } = await adminClient
-      .from('events')
-      .select('tenant_id')
-      .eq('id', eventId)
-      .single()
-
-    if (!event?.tenant_id) return
+    if (!tenantId) return
 
     const { data: photographer } = await adminClient
       .from('users')
       .select('email')
-      .eq('tenant_id', event.tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('role', 'photographer')
       .single()
 
     if (photographer?.email) {
-      await sendSaleNotification({
+      await emailQueue.add('sale_notification', {
+        type: 'sale_notification',
         to: photographer.email,
         orderId,
         totalCents: order.total_cents,
         clientEmail: order.client_email,
+        studioName,
       })
     }
   } catch (err) {

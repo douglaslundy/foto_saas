@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import { OrdersTable } from './_components/orders-table'
+import { ClientesTable } from './_components/clientes-table'
+import { AddClientDialog } from './_components/add-client-dialog'
 
 type OrderRow = {
   id: string
@@ -36,18 +37,30 @@ export default async function ClientesPage() {
   const profile = await getProfile()
   const adminClient = createAdminClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: orders } = (await (adminClient as any)
-    .from('orders')
-    .select(
-      `id, client_email, total_cents, payment_method, status, created_at,
-       order_items(events(tenant_id))`
-    )
-    .order('created_at', { ascending: false })
-    .limit(500)) as { data: OrderRow[] | null }
+  const [ordersRes, eventsRes] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('orders')
+      .select(
+        `id, client_email, total_cents, payment_method, status, created_at,
+         order_items(events(tenant_id))`
+      )
+      .order('created_at', { ascending: false })
+      .limit(500),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('events')
+      .select('id, title')
+      .eq('tenant_id', profile.tenant_id)
+      .order('event_date', { ascending: false })
+      .limit(200),
+  ])
+
+  const orders = (ordersRes.data ?? []) as OrderRow[]
+  const events = (eventsRes.data ?? []) as { id: string; title: string }[]
 
   // Filter to this tenant and strip join data
-  const tenantOrders = (orders ?? [])
+  const tenantOrders = orders
     .filter((o) => o.order_items?.some((oi) => oi.events?.tenant_id === profile.tenant_id))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ order_items: _oi, ...rest }) => rest) as {
@@ -61,11 +74,14 @@ export default async function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Clientes e Pedidos</h1>
-        <p className="text-muted-foreground text-sm mt-1">{tenantOrders.length} pedido(s) encontrado(s)</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Clientes e Pedidos</h1>
+          <p className="text-muted-foreground text-sm mt-1">{tenantOrders.length} pedido(s) encontrado(s)</p>
+        </div>
+        <AddClientDialog events={events} />
       </div>
-      <OrdersTable orders={tenantOrders} />
+      <ClientesTable orders={tenantOrders} />
     </div>
   )
 }

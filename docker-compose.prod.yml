@@ -207,6 +207,27 @@ services:
     networks:
       - fotosaas-net
 
+  # ── BullMQ Email Worker ────────────────────────────────────
+  fotosaas-email-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.email-worker
+    container_name: fotosaas-email-worker
+    restart: unless-stopped
+    depends_on:
+      fotosaas-redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://fotosaas-redis:6379
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@fotosaas.com}
+      NODE_ENV: production
+    networks:
+      - fotosaas-net
+
   # ── Nginx (API Gateway + App Proxy) ───────────────────────
   fotosaas-nginx:
     image: nginx:alpine

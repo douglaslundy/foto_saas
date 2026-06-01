@@ -39,6 +39,25 @@ export default async function ConfiguracoesPage() {
         currentName={profile?.name ?? null}
         email={user.email ?? ''}
       />
+      <div className="border-t pt-4 space-y-3">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Configurações do Estúdio</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <a
+            href="/dashboard/configuracoes/perfil-studio"
+            className="border rounded-lg p-4 hover:border-primary hover:shadow-sm transition-all space-y-1 block"
+          >
+            <h3 className="font-medium">Perfil do Estúdio</h3>
+            <p className="text-sm text-muted-foreground">Nome, bio, cor e domínio personalizado.</p>
+          </a>
+          <a
+            href="/dashboard/configuracoes/watermark"
+            className="border rounded-lg p-4 hover:border-primary hover:shadow-sm transition-all space-y-1 block"
+          >
+            <h3 className="font-medium">Marca d&apos;água</h3>
+            <p className="text-sm text-muted-foreground">Configure a marca d&apos;água aplicada nas fotos.</p>
+          </a>
+        </div>
+      </div>
     </div>
   )
 }

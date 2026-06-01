@@ -3,8 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { PhotoUploader } from '@/components/photos/uploader'
-import { PhotoGrid } from '@/components/photos/photo-grid'
+import { FotosManager } from '@/components/photos/fotos-manager'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -98,19 +97,7 @@ export default async function FotosEventoPage({ params }: Props) {
         </div>
       )}
 
-      <PhotoUploader eventId={id} />
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">
-            {photos.length} {photos.length === 1 ? 'foto' : 'fotos'} neste evento
-          </h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/eventos/${id}/fotos`}>↻ Atualizar</Link>
-          </Button>
-        </div>
-        <PhotoGrid photos={photos} storageBase={storageBase} />
-      </div>
+      <FotosManager eventId={id} initialPhotos={photos} storageBase={storageBase} />
     </div>
   )
 }

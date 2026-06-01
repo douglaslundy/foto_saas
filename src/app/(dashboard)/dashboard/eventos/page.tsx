@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { EventCard } from '@/components/events/event-card'
+import { EventFilters } from './_components/event-filters'
 
 type EventItem = {
   id: string
@@ -46,7 +46,7 @@ export default async function EventosPage() {
     .select('id, title, slug, type, event_date, status')
     .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: false })
-    .range(0, 49)) as { data: EventItem[] | null }
+    .range(0, 199)) as { data: EventItem[] | null }
 
   return (
     <div className="space-y-4">
@@ -65,11 +65,7 @@ export default async function EventosPage() {
           </Link>
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} tenantSlug={tenantRow?.slug} />
-          ))}
-        </div>
+        <EventFilters events={events} tenantSlug={tenantRow?.slug} />
       )}
     </div>
   )

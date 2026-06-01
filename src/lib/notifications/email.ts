@@ -18,20 +18,23 @@ export async function sendOrderConfirmation({
   orderId,
   totalCents,
   downloadUrl,
+  studioName,
 }: {
   to: string
   orderId: string
   totalCents: number
   downloadUrl: string
+  studioName?: string
 }): Promise<void> {
   try {
     const transport = getTransport()
     await transport.sendMail({
       from: FROM,
       to,
-      subject: `Pedido confirmado — #${orderId.slice(0, 8)}`,
+      subject: `Pedido confirmado — ${studioName ?? 'FotoSaaS'} #${orderId.slice(0, 8)}`,
       html: `
         <h2>Seu pedido foi confirmado! 🎉</h2>
+        <p>Estúdio: <strong>${studioName ?? 'FotoSaaS'}</strong></p>
         <p>Pedido: <strong>#${orderId}</strong></p>
         <p>Total: <strong>${(totalCents / 100).toLocaleString('pt-BR', {
           style: 'currency',
@@ -52,11 +55,13 @@ export async function sendSaleNotification({
   orderId,
   totalCents,
   clientEmail,
+  studioName,
 }: {
   to: string
   orderId: string
   totalCents: number
   clientEmail: string
+  studioName?: string
 }): Promise<void> {
   try {
     const transport = getTransport()

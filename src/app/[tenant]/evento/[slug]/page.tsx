@@ -48,12 +48,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tenant, slug } = await params
   const event = await getEvent(tenant, slug)
   if (!event || event.status !== 'published') return {}
+
+  const adminClient = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: firstPhoto } = await (adminClient as any)
+    .from('photos')
+    .select('public_storage_path')
+    .eq('event_id', event.id)
+    .eq('status', 'ready')
+    .not('public_storage_path', 'is', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single()
+
+  const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+  const ogImage = firstPhoto?.public_storage_path
+    ? `${storageBase}/${firstPhoto.public_storage_path}`
+    : undefined
+
   return {
     title: event.title,
     description: event.description ?? `Fotos do evento ${event.title}`,
     openGraph: {
       title: event.title,
       description: event.description ?? `Fotos do evento ${event.title}`,
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
   }
 }

@@ -13,11 +13,11 @@ export async function generateDownloadUrls(photoIds: string[]): Promise<Download
 
   const adminClient = createAdminClient()
 
-  // Fetch original storage paths
+  // Fetch original and public (watermarked) storage paths
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos, error } = await (adminClient as any)
     .from('photos')
-    .select('id, original_storage_path')
+    .select('id, original_storage_path, public_storage_path')
     .in('id', photoIds)
 
   if (error || !photos) {
@@ -30,10 +30,15 @@ export async function generateDownloadUrls(photoIds: string[]): Promise<Download
   for (const photo of photos) {
     if (!photo.original_storage_path) continue
 
+    // Use the watermarked version from photos-public if available;
+    // fall back to photos-original when the worker hasn't processed it yet.
+    const bucket = photo.public_storage_path ? 'photos-public' : 'photos-original'
+    const storagePath = photo.public_storage_path ?? photo.original_storage_path
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: signError } = await (adminClient as any).storage
-      .from('photos-original')
-      .createSignedUrl(photo.original_storage_path, DOWNLOAD_URL_EXPIRY_SECONDS)
+      .from(bucket)
+      .createSignedUrl(storagePath, DOWNLOAD_URL_EXPIRY_SECONDS)
 
     if (signError || !data?.signedUrl) {
       console.error('[delivery] sign url error for', photo.id, signError)

@@ -23,7 +23,7 @@ async function getAuthedProfile() {
   return profile
 }
 
-// GET /api/photos/[id] — retorna status atual da foto
+// GET /api/photos/[id] — retorna dados da foto (usado pelo uploader para polling)
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params
   const profile = await getAuthedProfile()
@@ -33,13 +33,21 @@ export async function GET(_req: NextRequest, { params }: Params) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photo } = await (admin as any)
     .from('photos')
-    .select('id, status')
+    .select('id, status, thumbnail_path, public_storage_path, created_at')
     .eq('id', id)
     .eq('tenant_id', profile.tenant_id)
-    .single() as { data: { id: string; status: string } | null }
+    .single() as {
+      data: {
+        id: string
+        status: string
+        thumbnail_path: string | null
+        public_storage_path: string | null
+        created_at: string
+      } | null
+    }
 
   if (!photo) return NextResponse.json({ error: 'Foto não encontrada.' }, { status: 404 })
-  return NextResponse.json({ id: photo.id, status: photo.status })
+  return NextResponse.json(photo)
 }
 
 // DELETE /api/photos/[id] — remove foto do storage e do banco

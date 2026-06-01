@@ -29,6 +29,17 @@ export function SlideshowPlayer({ photos, intervalMs = 4000 }: SlideshowPlayerPr
     return () => clearInterval(timer)
   }, [playing, next, intervalMs, photos.length])
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') { prev() }
+      if (e.key === 'ArrowRight') { next() }
+      if (e.key === ' ') { e.preventDefault(); setPlaying((p) => !p) }
+      if (e.key === 'Escape') { window.history.back() }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [prev, next])
+
   if (photos.length === 0) {
     return (
       <p className="text-center text-muted-foreground py-20">
@@ -84,6 +95,11 @@ export function SlideshowPlayer({ photos, intervalMs = 4000 }: SlideshowPlayerPr
           {index + 1} / {photos.length}
         </span>
       </div>
+
+      {/* Keyboard hint */}
+      <p className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-white/30 select-none">
+        ← → navegar · Espaço pausar · Esc fechar
+      </p>
     </div>
   )
 }

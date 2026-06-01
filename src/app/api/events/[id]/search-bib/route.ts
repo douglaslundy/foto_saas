@@ -3,7 +3,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 type Params = { params: Promise<{ id: string }> }
 
-// Stub: returns all photo IDs for the event (OCR implementation in future plan)
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params
 
@@ -20,25 +19,18 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: event } = (await (adminClient as any)
-    .from('events')
-    .select('id, status')
-    .eq('id', id)
-    .single()) as { data: { id: string; status: string } | null }
-
-  if (!event) return NextResponse.json({ error: 'Evento não encontrado.' }, { status: 404 })
-  if (event.status !== 'published') {
-    return NextResponse.json({ error: 'Evento não publicado.' }, { status: 403 })
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: photos } = (await (adminClient as any)
+  const { data: photos, error } = await (adminClient as any)
     .from('photos')
     .select('id')
     .eq('event_id', id)
+    .eq('bib_number', body.bib_number)
     .eq('status', 'ready')
-    .range(0, 499)) as { data: { id: string }[] | null }
 
-  const photoIds = (photos ?? []).map((p) => p.id)
-  return NextResponse.json({ photo_ids: photoIds, count: photoIds.length })
+  if (error) {
+    return NextResponse.json({ error: 'Erro ao buscar fotos.' }, { status: 500 })
+  }
+
+  const photo_ids: string[] = (photos ?? []).map((p: { id: string }) => p.id)
+
+  return NextResponse.json({ photo_ids, count: photo_ids.length })
 }

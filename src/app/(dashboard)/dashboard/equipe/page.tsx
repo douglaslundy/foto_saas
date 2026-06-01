@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { InviteForm } from './_components/invite-form'
+import { MemberList } from './_components/member-list'
 
 type Member = {
   id: string
@@ -21,12 +22,12 @@ async function getProfile() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (adminClient as any)
     .from('users')
-    .select('tenant_id, role')
+    .select('id, tenant_id, role')
     .eq('id', user.id)
     .single()
 
   if (!profile?.tenant_id) redirect('/login')
-  return { profile: profile as { tenant_id: string; role: string } }
+  return { profile: profile as { id: string; tenant_id: string; role: string } }
 }
 
 export default async function EquipePage() {
@@ -40,11 +41,6 @@ export default async function EquipePage() {
     .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: true })) as { data: Member[] | null }
 
-  const roleLabel: Record<string, string> = {
-    photographer: 'Fotógrafo Principal',
-    sub_photographer: 'Sub-fotógrafo',
-  }
-
   return (
     <div className="space-y-8">
       <div>
@@ -54,33 +50,11 @@ export default async function EquipePage() {
         </p>
       </div>
 
-      {/* Member list */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b">
-          <h2 className="font-medium">Membros ({members?.length ?? 0})</h2>
-        </div>
-        <div className="divide-y">
-          {(members ?? []).map((m) => (
-            <div key={m.id} className="px-4 py-3 flex items-center justify-between text-sm">
-              <div>
-                <p className="font-medium">{m.email}</p>
-                <p className="text-xs text-muted-foreground">
-                  Desde {new Date(m.created_at).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <span
-                className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  m.role === 'photographer'
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {roleLabel[m.role] ?? m.role}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <MemberList
+        members={members ?? []}
+        canManage={profile.role === 'photographer'}
+        currentUserId={profile.id}
+      />
 
       {/* Invite form — only visible to main photographer */}
       {profile.role === 'photographer' && (

@@ -12,9 +12,18 @@ type FileUploadState = {
   error?: string
 }
 
+type PhotoData = {
+  id: string
+  status: string
+  thumbnail_path: string | null
+  public_storage_path: string | null
+  created_at: string
+}
+
 type PhotoUploaderProps = {
   eventId: string
   onUploadComplete?: (photoIds: string[]) => void
+  onPhotoReady?: (photo: PhotoData) => void
 }
 
 const statusLabel: Record<FileStatus, string> = {
@@ -33,7 +42,7 @@ const statusColor: Record<FileStatus, string> = {
   error: 'text-destructive',
 }
 
-export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps) {
+export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: PhotoUploaderProps) {
   const [uploads, setUploads] = useState<FileUploadState[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -49,12 +58,13 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
       try {
         const res = await fetch(`/api/photos/${photoId}`)
         if (!res.ok) break
-        const { status } = await res.json()
-        if (status === 'ready') {
+        const photo = await res.json()
+        if (photo.status === 'ready') {
           setFileStatus(index, { status: 'ready' })
+          onPhotoReady?.(photo)
           return
         }
-        if (status === 'error') {
+        if (photo.status === 'error') {
           setFileStatus(index, { status: 'error', error: 'Erro no processamento' })
           return
         }
