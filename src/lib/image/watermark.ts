@@ -54,8 +54,8 @@ async function buildTextSvg(
   tiled = false
 ): Promise<Buffer> {
   const text = config.text_content ?? ''
-  const fontSize = config.font_size ?? 24
-  const font = config.font ?? 'Arial'
+  const fontSize = config.font_size ?? 36
+  const font = config.font ?? 'DejaVu Sans'
   const color = config.color
   const opacity = config.opacity
 
@@ -68,9 +68,9 @@ async function buildTextSvg(
           <pattern id="wm" width="${patternW}" height="${patternH}"
             patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
             <text x="10" y="${fontSize + 4}" font-family="${font}" font-size="${fontSize}px"
-              fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
+              font-weight="bold" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
             <text x="10" y="${fontSize * 3 + 4}" font-family="${font}" font-size="${fontSize}px"
-              fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
+              font-weight="bold" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#wm)"/>
@@ -95,7 +95,7 @@ async function buildTextSvg(
   return Buffer.from(
     `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <text x="${pos.x}" y="${pos.y}" font-family="${font}" font-size="${fontSize}px"
-        fill="${color}" opacity="${opacity}" text-anchor="${pos.anchor}">${escapeXml(text)}</text>
+        font-weight="bold" fill="${color}" opacity="${opacity}" text-anchor="${pos.anchor}">${escapeXml(text)}</text>
     </svg>`
   )
 }
