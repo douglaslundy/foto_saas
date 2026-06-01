@@ -89,7 +89,15 @@ export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: Photo
       }
       const { photo_id } = await res.json()
       setFileStatus(index, { status: 'processing', photoId: photo_id })
-      pollStatus(photo_id, index) // não aguarda — roda em paralelo
+      // Add to grid immediately so it's visible while worker processes
+      onPhotoReady?.({
+        id: photo_id,
+        status: 'processing',
+        thumbnail_path: null,
+        public_storage_path: null,
+        created_at: new Date().toISOString(),
+      })
+      pollStatus(photo_id, index) // updates to 'ready' when worker finishes
       return photo_id as string
     } catch {
       setFileStatus(index, { status: 'error', error: 'Erro de rede' })
