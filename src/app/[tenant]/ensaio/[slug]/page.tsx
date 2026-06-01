@@ -51,8 +51,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function EnsaioPage({ params }: Props) {
-  const { tenant, slug } = await params
-  const session = await getSession(tenant, slug)
+  const { tenant: tenantSlug, slug } = await params
+  const session = await getSession(tenantSlug, slug)
 
   if (!session || session.status !== 'published') notFound()
 
@@ -66,30 +66,69 @@ export default async function EnsaioPage({ params }: Props) {
     .order('created_at', { ascending: true })
     .range(0, 47)) as { data: Photo[] | null; count: number | null }
 
+  const photoCount = count ?? 0
+
   const content = (
-    <div className="p-6 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold">{session.title}</h1>
-        {session.event_date && (
-          <p className="text-muted-foreground">
-            {new Date(session.event_date).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-              timeZone: 'UTC',
-            })}
-          </p>
-        )}
-        {session.description && (
-          <p className="text-muted-foreground">{session.description}</p>
-        )}
+    <div className="min-h-screen bg-[var(--color-surface)]">
+      {/* Imersive header */}
+      <div
+        className="relative h-64 overflow-hidden flex flex-col justify-end"
+        style={{
+          background: '#0d0f14',
+          backgroundImage:
+            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,169,110,0.12), transparent)',
+        }}
+      >
+        <a
+          href={`/${tenantSlug}`}
+          className="absolute top-5 left-6 text-white/70 hover:text-white text-sm flex items-center gap-1 transition-colors"
+        >
+          ← Voltar
+        </a>
+        <div className="px-6 pb-8">
+          <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-gold)] mb-2 block">
+            Ensaio
+          </span>
+          <h1 className="text-3xl font-bold text-white">{session.title}</h1>
+          {session.event_date && (
+            <p className="text-white/60 text-sm mt-1">
+              {new Date(session.event_date).toLocaleDateString('pt-BR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'UTC',
+              })}
+            </p>
+          )}
+        </div>
       </div>
 
-      <PhotoGrid
-        initialPhotos={photos ?? []}
-        eventId={session.id}
-        total={count ?? 0}
-      />
+      {/* Main content */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Sticky action bar */}
+        <div
+          className="sticky top-0 z-10 -mx-6 px-6 py-3 mb-6 flex items-center justify-between border-b border-[var(--color-border)]"
+          style={{
+            background: 'rgba(245,244,240,0.92)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <p className="text-sm text-[var(--color-ink-muted,#6b6b6b)]">
+            {photoCount} {photoCount === 1 ? 'foto' : 'fotos'}
+          </p>
+        </div>
+
+        {/* Description */}
+        {session.description && (
+          <p className="text-[var(--color-ink-muted,#6b6b6b)] text-sm mb-6">{session.description}</p>
+        )}
+
+        <PhotoGrid
+          initialPhotos={photos ?? []}
+          eventId={session.id}
+          total={photoCount}
+        />
+      </div>
     </div>
   )
 
