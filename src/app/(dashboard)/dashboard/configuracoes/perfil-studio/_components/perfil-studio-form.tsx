@@ -139,7 +139,7 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+            className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
           >
             {loading ? 'Salvando...' : 'Salvar alterações'}
           </button>

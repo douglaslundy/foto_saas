@@ -171,7 +171,7 @@ export function NewTenantForm() {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
+            className="px-5 py-2 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
           >
             {loading ? 'Criando...' : 'Criar Tenant'}
           </button>

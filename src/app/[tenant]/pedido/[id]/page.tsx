@@ -47,7 +47,7 @@ export default async function PedidoPage({ params }: Props) {
     <div className="min-h-screen bg-[var(--color-surface)] flex flex-col">
       {/* Minimal header */}
       <header className="border-b border-[var(--color-border)] px-6 py-4 flex items-center gap-3 bg-[var(--color-card)]">
-        <div className="w-8 h-8 rounded-lg bg-[var(--color-ink)] flex items-center justify-center text-white text-sm">
+        <div className="w-8 h-8 rounded-lg bg-[var(--color-cta)] flex items-center justify-center text-[var(--color-cta-fg)] text-sm">
           📷
         </div>
         <span className="font-display font-bold text-[var(--color-ink)]">FotoSaaS</span>
@@ -88,7 +88,7 @@ export default async function PedidoPage({ params }: Props) {
               </p>
               <a
                 href={downloadUrl}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
               >
                 <svg
                   width="16"
@@ -142,7 +142,7 @@ export default async function PedidoPage({ params }: Props) {
               </p>
               <a
                 href={checkoutHref}
-                className="inline-flex px-6 py-3 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold hover:-translate-y-0.5 transition-all duration-200"
+                className="inline-flex px-6 py-3 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold hover:-translate-y-0.5 transition-all duration-200"
               >
                 Tentar novamente
               </a>

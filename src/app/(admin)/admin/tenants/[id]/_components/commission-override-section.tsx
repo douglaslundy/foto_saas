@@ -112,7 +112,7 @@ export function CommissionOverrideSection({ tenantId, currentOverride, globalRat
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>

@@ -293,7 +293,7 @@ export function EventForm({
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
             >
               {loading ? 'Salvando...' : mode === 'create' ? 'Criar evento' : 'Salvar alterações'}
             </button>

@@ -24,7 +24,7 @@ export function CartButton({ initialCount = 0, tenantSlug }: CartButtonProps) {
       <button
         onClick={() => setOpen(true)}
         aria-label={`Carrinho com ${count} itens`}
-        className="relative w-11 h-11 rounded-full bg-[var(--color-ink)] text-white flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
+        className="relative w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
         style={{ boxShadow: 'var(--shadow-md)' }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

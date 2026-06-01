@@ -147,7 +147,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-[50px] rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed mb-4"
+                  className="w-full h-[50px] rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed mb-4"
                 >
                   {loading ? 'Enviando...' : 'Enviar link de redefinição'}
                 </button>

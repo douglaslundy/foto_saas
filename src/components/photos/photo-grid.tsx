@@ -120,12 +120,12 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
         <div className="flex items-center gap-0.5 border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] p-0.5">
           <button
             onClick={() => { setViewMode('grid'); try { localStorage.setItem('fotosaas_view_mode', 'grid') } catch {} }}
-            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
+            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-cta)] text-[var(--color-cta-fg)]' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
             title="Grade"
           >⊞</button>
           <button
             onClick={() => { setViewMode('list'); try { localStorage.setItem('fotosaas_view_mode', 'list') } catch {} }}
-            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
+            className={`px-2.5 py-1 rounded text-sm transition-colors ${viewMode === 'list' ? 'bg-[var(--color-cta)] text-[var(--color-cta-fg)]' : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'}`}
             title="Lista"
           >☰</button>
         </div>

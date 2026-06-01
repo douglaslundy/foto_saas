@@ -185,7 +185,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
         <button
           type="submit"
           disabled={saving}
-          className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? 'Salvando...' : 'Salvar configurações'}
         </button>

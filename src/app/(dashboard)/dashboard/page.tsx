@@ -8,7 +8,7 @@ function StatCard({ label, value, sub, variant = 'default' }: {
     <div
       className={`relative overflow-hidden rounded-[var(--radius)] p-6 border ${
         variant === 'dark'
-          ? 'bg-[var(--color-ink)] border-transparent text-white'
+          ? 'bg-[var(--color-cta)] border-transparent text-[var(--color-cta-fg)]'
           : variant === 'gold'
           ? 'bg-[var(--color-gold)] border-transparent text-[var(--color-ink)]'
           : 'bg-[var(--color-card)] border-[var(--color-border-strong)] text-[var(--color-ink)]'
@@ -23,7 +23,7 @@ function StatCard({ label, value, sub, variant = 'default' }: {
       )}
       <p
         className={`text-xs font-semibold uppercase tracking-widest mb-3 ${
-          variant === 'dark' ? 'text-white/60' : 'text-[var(--color-ink-muted)]'
+          variant === 'dark' ? 'text-[var(--color-cta-fg-60)]' : 'text-[var(--color-ink-muted)]'
         }`}
       >
         {label}
@@ -31,7 +31,7 @@ function StatCard({ label, value, sub, variant = 'default' }: {
       <p
         className={`font-display text-3xl font-bold leading-none mb-1 ${
           variant === 'dark'
-            ? 'text-white'
+            ? 'text-[var(--color-cta-fg)]'
             : variant === 'gold'
             ? 'text-[var(--color-ink)]'
             : 'text-[var(--color-ink)]'
@@ -42,7 +42,7 @@ function StatCard({ label, value, sub, variant = 'default' }: {
       {sub && (
         <p
           className={`text-xs mt-2 ${
-            variant === 'dark' ? 'text-white/50' : 'text-[var(--color-ink-muted)]'
+            variant === 'dark' ? 'text-[var(--color-cta-fg-50)]' : 'text-[var(--color-ink-muted)]'
           }`}
         >
           {sub}

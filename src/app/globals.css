@@ -19,6 +19,10 @@
     --color-accent: #1a1f2e;
     --color-gold: #c8a96e;
     --color-gold-light: #f0e8d8;
+    --color-cta: #0d0f14;
+    --color-cta-fg: #ffffff;
+    --color-cta-fg-60: rgba(255,255,255,0.6);
+    --color-cta-fg-50: rgba(255,255,255,0.5);
     --color-blue: #2563eb;
     --color-blue-light: #dbeafe;
     --color-danger: #c0392b;
@@ -71,6 +75,10 @@
     --color-accent: #f0ede8;
     --color-gold: #c8a96e;
     --color-gold-light: rgba(200,169,110,0.12);
+    --color-cta: #c8a96e;
+    --color-cta-fg: #0f1117;
+    --color-cta-fg-60: rgba(15,17,23,0.6);
+    --color-cta-fg-50: rgba(15,17,23,0.5);
     --color-blue: #3b82f6;
     --color-blue-light: rgba(59,130,246,0.15);
     --color-danger: #e05c4b;
@@ -83,7 +91,7 @@
     --card-foreground: var(--color-ink);
     --popover: var(--color-card);
     --popover-foreground: var(--color-ink);
-    --primary: var(--color-ink);
+    --primary: var(--color-gold);
     --primary-foreground: #0f1117;
     --secondary: var(--color-surface-alt);
     --secondary-foreground: var(--color-ink);

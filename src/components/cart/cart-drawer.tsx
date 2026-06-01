@@ -223,7 +223,7 @@ export function CartDrawer({ open, onOpenChange, onCountChange, tenantSlug }: Ca
             </div>
             <button
               onClick={goToCheckout}
-              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
             >
               Finalizar pedido →
             </button>

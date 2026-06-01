@@ -55,10 +55,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Logo */}
         <div className="px-5 py-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[var(--color-ink)] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[var(--color-cta)] text-[var(--color-cta-fg)] flex items-center justify-center shrink-0">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="7" cy="6" r="2.5" stroke="white" strokeWidth="1.5"/>
-                <path d="M1.5 12c0-2.761 2.239-4.5 5.5-4.5s5.5 1.739 5.5 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="7" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M1.5 12c0-2.761 2.239-4.5 5.5-4.5s5.5 1.739 5.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
             <span className="font-bold text-sm text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-display)' }}>FotoSaaS</span>

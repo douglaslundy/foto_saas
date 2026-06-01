@@ -164,7 +164,7 @@ export default function CarrinhoPage() {
 
             <a
               href={checkoutHref}
-              className="mt-4 block w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold text-center leading-[44px] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+              className="mt-4 block w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold text-center leading-[44px] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
             >
               Prosseguir para pagamento
             </a>

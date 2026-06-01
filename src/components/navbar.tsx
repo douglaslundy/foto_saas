@@ -40,10 +40,10 @@ export function Navbar({ userName, userRole }: NavbarProps) {
     >
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-[var(--color-ink)] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[var(--color-cta)] text-[var(--color-cta-fg)] flex items-center justify-center">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="7" r="3" stroke="white" strokeWidth="1.5"/>
-            <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="8" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
         <span className="font-display font-bold text-base tracking-tight text-[var(--color-ink)]">

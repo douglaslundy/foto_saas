@@ -106,7 +106,7 @@ export function SettingsForm({
             <button
               type="submit"
               disabled={nameLoading}
-              className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+              className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
             >
               {nameLoading ? 'Salvando...' : 'Salvar nome'}
             </button>
@@ -159,7 +159,7 @@ export function SettingsForm({
             <button
               type="submit"
               disabled={passLoading}
-              className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+              className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
             >
               {passLoading ? 'Alterando...' : 'Alterar senha'}
             </button>

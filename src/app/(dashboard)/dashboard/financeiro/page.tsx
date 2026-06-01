@@ -42,7 +42,7 @@ function StatCard({ label, value, sub, variant = 'default' }: {
 }) {
   return (
     <div className={`relative overflow-hidden rounded-[var(--radius)] p-6 border ${
-      variant === 'dark' ? 'bg-[var(--color-ink)] border-transparent' :
+      variant === 'dark' ? 'bg-[var(--color-cta)] border-transparent' :
       variant === 'gold' ? 'bg-[var(--color-gold)] border-transparent' :
       'bg-[var(--color-card)] border-[var(--color-border-strong)]'
     }`} style={{ boxShadow: 'var(--shadow-sm)' }}>
@@ -50,9 +50,9 @@ function StatCard({ label, value, sub, variant = 'default' }: {
         <div className="absolute bottom-0 right-0 w-24 h-24 rounded-full translate-x-8 translate-y-8 border"
           style={{ background: 'rgba(200,169,110,0.12)', borderColor: 'rgba(200,169,110,0.2)' }} />
       )}
-      <p className={`text-xs font-semibold uppercase tracking-widest mb-3 ${variant === 'dark' ? 'text-white/60' : 'text-[var(--color-ink-muted)]'}`}>{label}</p>
-      <p className={`font-display text-3xl font-bold leading-none mb-1 ${variant === 'dark' ? 'text-white' : 'text-[var(--color-ink)]'}`}>{value}</p>
-      {sub && <p className={`text-xs mt-2 ${variant === 'dark' ? 'text-white/50' : 'text-[var(--color-ink-muted)]'}`}>{sub}</p>}
+      <p className={`text-xs font-semibold uppercase tracking-widest mb-3 ${variant === 'dark' ? 'text-[var(--color-cta-fg-60)]' : 'text-[var(--color-ink-muted)]'}`}>{label}</p>
+      <p className={`font-display text-3xl font-bold leading-none mb-1 ${variant === 'dark' ? 'text-[var(--color-cta-fg)]' : 'text-[var(--color-ink)]'}`}>{value}</p>
+      {sub && <p className={`text-xs mt-2 ${variant === 'dark' ? 'text-[var(--color-cta-fg-50)]' : 'text-[var(--color-ink-muted)]'}`}>{sub}</p>}
     </div>
   )
 }

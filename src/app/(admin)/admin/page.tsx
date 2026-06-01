@@ -14,7 +14,7 @@ function StatCard({
     <div
       className={`relative overflow-hidden rounded-[var(--radius)] p-6 border ${
         variant === 'dark'
-          ? 'bg-[var(--color-ink)] border-transparent'
+          ? 'bg-[var(--color-cta)] border-transparent'
           : 'bg-[var(--color-card)] border-[var(--color-border-strong)]'
       }`}
       style={{ boxShadow: 'var(--shadow-sm)' }}
@@ -27,14 +27,14 @@ function StatCard({
       )}
       <p
         className={`text-xs font-semibold uppercase tracking-widest mb-2 ${
-          variant === 'dark' ? 'text-white/60' : 'text-[var(--color-ink-muted)]'
+          variant === 'dark' ? 'text-[var(--color-cta-fg-60)]' : 'text-[var(--color-ink-muted)]'
         }`}
       >
         {label}
       </p>
       <p
         className={`font-bold text-3xl ${
-          variant === 'dark' ? 'text-white' : 'text-[var(--color-ink)]'
+          variant === 'dark' ? 'text-[var(--color-cta-fg)]' : 'text-[var(--color-ink)]'
         }`}
         style={{ fontFamily: 'var(--font-display)' }}
       >
