@@ -36,10 +36,10 @@ export function StatusToggleButton({
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`px-4 py-2 rounded text-sm font-medium border transition-colors disabled:opacity-50 ${
+      className={`px-4 py-2 rounded-[var(--radius-sm)] text-sm font-semibold border transition-all duration-200 disabled:opacity-50 hover:-translate-y-0.5 ${
         isActive
-          ? 'text-red-600 border-red-200 hover:bg-red-50'
-          : 'text-green-600 border-green-200 hover:bg-green-50'
+          ? 'text-[var(--color-danger)] border-[var(--color-danger)]/30 hover:bg-[var(--color-danger)]/8'
+          : 'text-[var(--color-success)] border-[var(--color-success)]/30 hover:bg-[var(--color-success)]/8'
       }`}
     >
       {loading ? 'Aguarde...' : isActive ? 'Suspender conta' : 'Reativar conta'}
