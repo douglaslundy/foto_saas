@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { createClient } from '@/lib/supabase/client'
 
 interface NavbarProps {
   userName: string
@@ -24,6 +25,13 @@ function getInitials(name: string) {
 
 export function Navbar({ userName, userRole }: NavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <nav
@@ -77,6 +85,13 @@ export function Navbar({ userName, userRole }: NavbarProps) {
           <span className="hidden md:block text-sm text-[var(--color-ink-soft)] max-w-[120px] truncate">{userName}</span>
         </div>
         <ThemeToggle />
+        <button
+          onClick={handleLogout}
+          className="px-3 py-1.5 rounded-md text-sm font-medium text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-danger)] transition-all duration-200"
+          title="Sair"
+        >
+          Sair
+        </button>
       </div>
     </nav>
   )
