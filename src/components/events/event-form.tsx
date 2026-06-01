@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { slugify } from '@/lib/slug'
 
@@ -20,6 +16,12 @@ type EventFormValues = {
   price_cents?: number
   facial_recognition_enabled?: boolean
 }
+
+const inputClass =
+  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)]'
+
+const labelClass =
+  'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
 export function EventForm({
   defaultValues,
@@ -93,135 +95,218 @@ export function EventForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
-      {/* Title */}
-      <div className="space-y-1.5">
-        <Label htmlFor="title">Título *</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Nome do evento"
-          required
-        />
-      </div>
+    <form onSubmit={handleSubmit}>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
+        {/* Left column — main fields */}
+        <div
+          className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+          style={{ boxShadow: 'var(--shadow-sm)' }}
+        >
+          <div className="px-6 py-5 border-b border-[var(--color-border-strong)]">
+            <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">
+              Informações Básicas
+            </h2>
+            <p className="text-[var(--color-ink-muted)] text-sm mt-0.5">
+              Dados principais do evento ou ensaio
+            </p>
+          </div>
 
-      {/* Slug */}
-      <div className="space-y-1.5">
-        <Label htmlFor="slug">Slug *</Label>
-        <Input
-          id="slug"
-          value={slug}
-          onChange={(e) => { setSlug(e.target.value); setSlugManual(true) }}
-          placeholder="meu-evento"
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          URL pública: /[tenant]/{type === 'event' ? 'evento' : 'ensaio'}/{slug || '…'}
-        </p>
-      </div>
-
-      {/* Type */}
-      <div className="space-y-1.5">
-        <Label>Tipo *</Label>
-        <div className="flex gap-6">
-          {(['event', 'session'] as const).map((t) => (
-            <label key={t} className="flex items-center gap-2 cursor-pointer">
+          <div className="p-6 space-y-5">
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className={labelClass}>
+                Título *
+              </label>
               <input
-                type="radio"
-                value={t}
-                checked={type === t}
-                onChange={() => setType(t)}
-              />
-              <span className="text-sm">{t === 'event' ? 'Evento' : 'Ensaio'}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Date */}
-      <div className="space-y-1.5">
-        <Label htmlFor="event_date">Data do evento</Label>
-        <Input
-          id="event_date"
-          type="date"
-          value={eventDate}
-          onChange={(e) => setEventDate(e.target.value)}
-        />
-      </div>
-
-      {/* Description */}
-      <div className="space-y-1.5">
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descrição opcional"
-          rows={3}
-        />
-      </div>
-
-      {/* Price */}
-      <div className="space-y-1.5">
-        <Label htmlFor="price">Preço (R$)</Label>
-        <Input
-          id="price"
-          type="number"
-          step="0.01"
-          min="0"
-          value={priceDisplay}
-          onChange={(e) => setPriceDisplay(e.target.value)}
-        />
-      </div>
-
-      {/* Event-only settings */}
-      {type === 'event' && (
-        <div className="space-y-4 rounded-lg border p-4">
-          <p className="text-sm font-medium text-muted-foreground">Configurações do evento</p>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Acesso público</p>
-              <p className="text-xs text-muted-foreground">Clientes acessam sem senha</p>
-            </div>
-            <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-          </div>
-
-          {!isPublic && (
-            <div className="space-y-1.5">
-              <Label htmlFor="password">
-                {mode === 'create' ? 'Senha de acesso' : 'Nova senha (vazio = manter a atual)'}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Senha do evento"
+                id="title"
+                className={inputClass}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Nome do evento"
+                required
               />
             </div>
-          )}
 
-          <div className="flex items-center justify-between">
+            {/* Slug */}
             <div>
-              <p className="text-sm font-medium">Reconhecimento facial</p>
-              <p className="text-xs text-muted-foreground">Clientes buscam fotos com selfie</p>
+              <label htmlFor="slug" className={labelClass}>
+                Slug *
+              </label>
+              <input
+                id="slug"
+                className={inputClass}
+                value={slug}
+                onChange={(e) => {
+                  setSlug(e.target.value)
+                  setSlugManual(true)
+                }}
+                placeholder="meu-evento"
+                required
+              />
+              <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+                URL pública: /[tenant]/{type === 'event' ? 'evento' : 'ensaio'}/{slug || '…'}
+              </p>
             </div>
-            <Switch checked={facialEnabled} onCheckedChange={setFacialEnabled} />
+
+            {/* Type + Date in 2 cols */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Type */}
+              <div>
+                <p className={labelClass}>Tipo *</p>
+                <div className="flex gap-6 h-11 items-center">
+                  {(['event', 'session'] as const).map((t) => (
+                    <label key={t} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        value={t}
+                        checked={type === t}
+                        onChange={() => setType(t)}
+                        className="accent-[var(--color-gold)]"
+                      />
+                      <span className="text-sm text-[var(--color-ink)]">
+                        {t === 'event' ? 'Evento' : 'Ensaio'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label htmlFor="event_date" className={labelClass}>
+                  Data do evento
+                </label>
+                <input
+                  id="event_date"
+                  type="date"
+                  className={inputClass}
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className={labelClass}>
+                Descrição
+              </label>
+              <textarea
+                id="description"
+                rows={3}
+                className={`${inputClass} h-auto py-3 resize-none`}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descrição opcional"
+              />
+            </div>
+
+            {/* Price */}
+            <div>
+              <label htmlFor="price" className={labelClass}>
+                Preço (R$)
+              </label>
+              <input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                className={inputClass}
+                value={priceDisplay}
+                onChange={(e) => setPriceDisplay(e.target.value)}
+              />
+            </div>
+
+            {/* Local */}
+            {/* (placeholder for future local field — not in current schema) */}
+
+            {/* Event-only settings */}
+            {type === 'event' && (
+              <div
+                className="rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] p-4 space-y-4"
+                style={{ background: 'var(--color-surface-alt)' }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)]">
+                  Configurações do evento
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-ink)]">Acesso público</p>
+                    <p className="text-xs text-[var(--color-ink-muted)]">
+                      Clientes acessam sem senha
+                    </p>
+                  </div>
+                  <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                </div>
+
+                {!isPublic && (
+                  <div>
+                    <label htmlFor="password" className={labelClass}>
+                      {mode === 'create' ? 'Senha de acesso' : 'Nova senha (vazio = manter a atual)'}
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      className={inputClass}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Senha do evento"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-ink)]">
+                      Reconhecimento facial
+                    </p>
+                    <p className="text-xs text-[var(--color-ink-muted)]">
+                      Clientes buscam fotos com selfie
+                    </p>
+                  </div>
+                  <Switch checked={facialEnabled} onCheckedChange={setFacialEnabled} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        {/* Right column — sidebar */}
+        <div
+          className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+          style={{ boxShadow: 'var(--shadow-sm)' }}
+        >
+          <div className="px-6 py-5 border-b border-[var(--color-border-strong)]">
+            <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">
+              Publicação
+            </h2>
+          </div>
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Salvando...' : mode === 'create' ? 'Criar evento' : 'Salvar alterações'}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancelar
-        </Button>
+          <div className="p-6 space-y-4">
+            {error && (
+              <p className="text-sm font-medium" style={{ color: 'var(--color-danger)' }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-[var(--radius-sm)] bg-[var(--color-ink)] text-white font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+            >
+              {loading ? 'Salvando...' : mode === 'create' ? 'Criar evento' : 'Salvar alterações'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="w-full h-11 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-[var(--color-ink)] font-semibold text-sm hover:bg-[var(--color-surface-alt)] transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
     </form>
   )
