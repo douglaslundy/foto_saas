@@ -54,6 +54,23 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
         <p>Valor: <strong>${formatBRL(data.totalCents)}</strong></p>
       `,
     })
+  } else if (data.type === 'client_invite') {
+    await transport.sendMail({
+      from: FROM,
+      to: data.to,
+      subject: `Acesso ao portal de fotos — ${data.studioName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+          <h2 style="font-size:22px;margin-bottom:8px;">Bem-vindo(a)${data.name ? `, ${data.name}` : ''}!</h2>
+          <p style="color:#666;margin-bottom:24px;"><strong>${data.studioName}</strong> criou um acesso para você no portal de fotos.</p>
+          <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin-bottom:24px;">
+            <p style="margin:0 0 8px 0;"><strong>E-mail:</strong> ${data.to}</p>
+            <p style="margin:0;"><strong>Senha temporária:</strong> <code style="background:#e0e0e0;padding:2px 8px;border-radius:4px;">${data.tempPassword}</code></p>
+          </div>
+          <a href="${data.loginUrl}" style="display:inline-block;background:#0d0f14;color:white;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:600;">Acessar portal →</a>
+        </div>
+      `,
+    })
   } else if (data.type === 'order_delivery') {
     const subject = 'Suas fotos estão prontas para download!'
     await transport.sendMail({

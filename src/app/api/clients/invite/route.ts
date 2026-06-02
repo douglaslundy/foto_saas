@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { emailQueue } from '@/lib/queues/email-queue'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -97,39 +98,16 @@ export async function POST(request: NextRequest) {
   const loginUrl = `${appUrl}/${tenant?.slug}/login`
 
   try {
-    const { Queue } = await import('bullmq')
-    const { default: Redis } = await import('ioredis')
-    const connection = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null })
-    const emailQueue = new Queue('email', { connection })
-    await emailQueue.add('client-invite', {
+    await emailQueue.add('client_invite', {
+      type: 'client_invite',
       to: email,
-      subject: `Acesso ao portal de fotos — ${tenant?.name ?? 'FotoSaaS'}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
-          <h2 style="font-size:22px;margin-bottom:8px;">Bem-vindo(a)${name ? `, ${name}` : ''}!</h2>
-          <p style="color:#666;margin-bottom:24px;">
-            <strong>${tenant?.name ?? 'Seu fotógrafo'}</strong> criou um acesso para você no portal de fotos.
-          </p>
-          <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin-bottom:24px;">
-            <p style="margin:0 0 8px 0;"><strong>E-mail:</strong> ${email}</p>
-            <p style="margin:0;"><strong>Senha temporária:</strong>
-              <code style="background:#e0e0e0;padding:2px 8px;border-radius:4px;font-size:15px;">${tempPassword}</code>
-            </p>
-          </div>
-          <a href="${loginUrl}"
-            style="display:inline-block;background:#0d0f14;color:white;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:600;">
-            Acessar portal →
-          </a>
-          <p style="color:#999;font-size:12px;margin-top:24px;">
-            Ou acesse: <a href="${loginUrl}">${loginUrl}</a>
-          </p>
-        </div>
-      `,
+      name: name ?? undefined,
+      tempPassword,
+      loginUrl,
+      studioName: tenant?.name ?? 'FotoSaaS',
     })
-    await connection.quit()
   } catch (emailErr) {
     console.error('[invite client] email queue error:', emailErr)
-    // Não falha a request — conta criada, email é best-effort
   }
 
   return NextResponse.json({

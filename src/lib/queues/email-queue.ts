@@ -24,6 +24,14 @@ export type EmailJobData =
       orderId: string
       orderPageUrl: string
     }
+  | {
+      type: 'client_invite'
+      to: string
+      name?: string
+      tempPassword: string
+      loginUrl: string
+      studioName: string
+    }
 
 export const emailQueue = new Queue<EmailJobData>('email', {
   connection,
