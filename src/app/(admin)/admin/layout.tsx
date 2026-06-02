@@ -5,10 +5,7 @@ import Link from 'next/link'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const adminClient = createAdminClient()
@@ -22,94 +19,53 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (profile?.role !== 'admin') redirect('/dashboard')
 
   const navLinks = [
-    { href: '/admin', label: 'Dashboard', icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <rect x="9" y="9" width="5.5" height="5.5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      </svg>
-    )},
-    { href: '/admin/tenants', label: 'Tenants', icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M2 14V6l6-4 6 4v8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        <rect x="5.5" y="9" width="2" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.3"/>
-        <rect x="8.5" y="9" width="2" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.3"/>
-      </svg>
-    )},
-    { href: '/admin/repasses', label: 'Repasses', icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M2 5h12M2 8h8M2 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="12" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M12 9.5v3M10.5 11h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-      </svg>
-    )},
-    { href: '/admin/configuracoes', label: 'Configurações', icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    )},
+    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin/tenants', label: 'Fotógrafos' },
+    { href: '/admin/repasses', label: 'Repasses' },
+    { href: '/admin/configuracoes', label: 'Configurações' },
   ]
 
   return (
-    <div className="min-h-screen flex bg-[var(--color-surface)]">
-      {/* Sidebar */}
-      <aside
-        className="w-60 shrink-0 border-r border-[var(--color-border-strong)] bg-[var(--color-card)] flex flex-col"
-        style={{ minHeight: '100vh' }}
-      >
-        {/* Logo */}
-        <div className="px-5 py-4 border-b border-[var(--color-border)]">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[var(--color-cta)] text-[var(--color-cta-fg)] flex items-center justify-center shrink-0">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="7" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M1.5 12c0-2.761 2.239-4.5 5.5-4.5s5.5 1.739 5.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <span className="font-bold text-sm text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-display)' }}>FotoSaaS</span>
-            <span className="ml-auto text-[9px] font-bold uppercase tracking-widest bg-[var(--color-danger)]/10 text-[var(--color-danger)] px-1.5 py-0.5 rounded">
-              Admin
-            </span>
+    <div className="min-h-screen bg-[#f9fafb]">
+      {/* Header escuro — diferencia admin do dashboard */}
+      <header className="sticky top-0 z-50 h-14 bg-[#111827] border-b border-[#1f2937] flex items-center px-6 gap-6">
+        <Link href="/admin" className="flex items-center gap-2 shrink-0 mr-2">
+          <div className="w-6 h-6 rounded bg-[#2563eb] flex items-center justify-center">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="7" r="3" stroke="white" strokeWidth="1.5"/>
+              <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
           </div>
-        </div>
+          <span className="font-semibold text-sm text-white">FotoSaaS</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white">
+            Admin
+          </span>
+        </Link>
 
-        {/* Nav */}
-        <nav className="flex-1 p-3 space-y-0.5">
-          <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">
-            Principal
-          </p>
-          {navLinks.map((item) => (
+        <nav className="flex items-center gap-1 flex-1">
+          {navLinks.map((link) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)] transition-colors"
+              key={link.href}
+              href={link.href}
+              className="px-3 py-1.5 rounded-md text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             >
-              <span className="text-[var(--color-ink-muted)]">{item.icon}</span>
-              <span>{item.label}</span>
+              {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* Bottom user section */}
-        <div className="p-3 border-t border-[var(--color-border)]">
-          <div className="px-3 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-surface-alt)]">
-            <p className="text-xs font-medium text-[var(--color-ink)] truncate">
-              {profile?.name ?? user.email}
-            </p>
-            <Link
-              href="/dashboard"
-              className="text-[10px] text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors mt-0.5 block"
-            >
-              Ir para Dashboard →
-            </Link>
-          </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-sm text-white/60">{profile?.name ?? user.email}</span>
+          <Link
+            href="/dashboard"
+            className="px-3 py-1.5 rounded-md text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Dashboard →
+          </Link>
         </div>
-      </aside>
+      </header>
 
-      {/* Main */}
-      <main className="flex-1 p-8 min-w-0">
+      <main className="max-w-[1200px] mx-auto px-6 py-8">
         {children}
       </main>
     </div>
