@@ -54,6 +54,28 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
         <p>Valor: <strong>${formatBRL(data.totalCents)}</strong></p>
       `,
     })
+  } else if (data.type === 'order_delivery') {
+    const subject = 'Suas fotos estão prontas para download!'
+    await transport.sendMail({
+      from: FROM,
+      to: data.to,
+      subject,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+          <h2 style="font-size:22px;margin-bottom:8px;">Suas fotos estão prontas!</h2>
+          <p style="color:#666;margin-bottom:24px;">
+            Suas fotos foram processadas e estão disponíveis para download.
+          </p>
+          <a href="${data.orderPageUrl}"
+            style="display:inline-block;background:#0d0f14;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">
+            Ver meus downloads &rarr;
+          </a>
+          <p style="color:#999;font-size:12px;margin-top:24px;">
+            Ou acesse: <a href="${data.orderPageUrl}">${data.orderPageUrl}</a>
+          </p>
+        </div>
+      `,
+    })
   }
 }
 

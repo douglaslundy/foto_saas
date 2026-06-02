@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type OrderRow = {
   id: string
@@ -20,23 +21,46 @@ const statusLabel: Record<string, string> = {
   pending: 'Pendente',
   cancelled: 'Cancelado',
   refunded: 'Reembolsado',
+  delivered: 'Entregue',
 }
 
 const statusClass: Record<string, string> = {
   paid: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
   pending: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
   cancelled: 'bg-red-50 text-red-600 border border-red-200',
-  refunded: 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)] border border-[var(--color-border-strong)]',
+  refunded:
+    'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)] border border-[var(--color-border-strong)]',
+  delivered: 'bg-blue-50 text-blue-700 border border-blue-200',
 }
 
 export function OrdersTable({ orders }: OrdersTableProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
+  const [delivering, setDelivering] = useState<string | null>(null)
 
   const filtered = orders.filter(
     (o) =>
       o.client_email.toLowerCase().includes(search.toLowerCase()) ||
       o.id.toLowerCase().includes(search.toLowerCase())
   )
+
+  async function handleDeliver(orderId: string) {
+    if (!confirm('Enviar fotos por email para o cliente?')) return
+    setDelivering(orderId)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/deliver`, { method: 'POST' })
+      const data = (await res.json()) as { ok?: boolean; error?: string; message?: string }
+      if (!res.ok) {
+        alert(data.error ?? 'Erro ao entregar fotos.')
+      } else {
+        router.refresh()
+      }
+    } catch {
+      alert('Erro de rede. Tente novamente.')
+    } finally {
+      setDelivering(null)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -56,13 +80,14 @@ export function OrdersTable({ orders }: OrdersTableProps) {
       >
         {/* Table header */}
         <div className="bg-[var(--color-surface-alt)] border-b border-[var(--color-border-strong)]">
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
             <span>E-mail</span>
             <span>Pedido</span>
             <span>Valor</span>
             <span>Pagamento</span>
             <span>Status</span>
             <span>Data</span>
+            <span>Ação</span>
           </div>
         </div>
 
@@ -98,10 +123,12 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             filtered.map((order) => (
               <div
                 key={order.id}
-                className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-[var(--color-surface)] transition-colors"
+                className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 items-center hover:bg-[var(--color-surface)] transition-colors"
               >
                 <p className="text-sm text-[var(--color-ink)] truncate">{order.client_email}</p>
-                <p className="font-mono text-xs text-[var(--color-ink-muted)]">{order.id.slice(0, 8)}</p>
+                <p className="font-mono text-xs text-[var(--color-ink-muted)]">
+                  {order.id.slice(0, 8)}
+                </p>
                 <p className="font-display text-sm font-semibold text-[var(--color-ink)]">
                   {(order.total_cents / 100).toLocaleString('pt-BR', {
                     style: 'currency',
@@ -122,6 +149,23 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                 <p className="text-sm text-[var(--color-ink-muted)]">
                   {new Date(order.created_at).toLocaleDateString('pt-BR')}
                 </p>
+                {/* Delivery action */}
+                <div className="shrink-0">
+                  {order.status === 'paid' && (
+                    <button
+                      onClick={() => handleDeliver(order.id)}
+                      disabled={delivering === order.id}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-blue)]/10 text-[var(--color-blue)] hover:bg-[var(--color-blue)]/20 transition-colors disabled:opacity-40"
+                    >
+                      {delivering === order.id ? 'Enviando...' : 'Entregar fotos'}
+                    </button>
+                  )}
+                  {order.status === 'delivered' && (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)]">
+                      Entregue
+                    </span>
+                  )}
+                </div>
               </div>
             ))
           )}

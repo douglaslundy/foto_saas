@@ -18,6 +18,12 @@ export type EmailJobData =
       clientEmail: string
       studioName?: string
     }
+  | {
+      type: 'order_delivery'
+      to: string
+      orderId: string
+      orderPageUrl: string
+    }
 
 export const emailQueue = new Queue<EmailJobData>('email', {
   connection,
