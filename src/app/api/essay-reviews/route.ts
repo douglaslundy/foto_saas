@@ -102,11 +102,15 @@ export async function POST(request: NextRequest) {
       email_confirm: true,
     })
     if (createError) {
-      // If already exists, find by email
+      // If already exists, find by email in users table
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existingList } = await (admin as any).auth.admin.listUsers()
+      const { data: existingUsers } = await (admin as any)
+        .from('users')
+        .select('id')
+        .eq('email', newClient.email)
+        .limit(1)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const existing = (existingList?.users ?? []).find((u: any) => u.email === newClient.email)
+      const existing = (existingUsers as any[] | null)?.[0]
       if (!existing) return NextResponse.json({ error: 'Erro ao criar conta do cliente.' }, { status: 500 })
       resolvedClientId = existing.id
     } else {
