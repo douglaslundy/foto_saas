@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { revalidateTag } from 'next/cache'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -54,6 +55,8 @@ export async function PUT(request: NextRequest) {
     stripe_publishable_key?: string
     mercadopago_access_token?: string
     auto_approve_sub_events?: string
+    platform_name?: string
+    platform_favicon_url?: string
   }
   try {
     body = await request.json()
@@ -69,6 +72,8 @@ export async function PUT(request: NextRequest) {
     'stripe_publishable_key',
     'mercadopago_access_token',
     'auto_approve_sub_events',
+    'platform_name',
+    'platform_favicon_url',
   ] as const
 
   for (const key of keys) {
@@ -78,13 +83,20 @@ export async function PUT(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (adminClient as any)
       .from('system_settings')
-      .update({ value, updated_at: new Date().toISOString() })
-      .eq('key', key)
+      .upsert(
+        { key, value, updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      )
 
     if (error) {
       console.error(`[PUT /api/admin/settings] key=${key}`, error)
       return NextResponse.json({ error: `Erro ao salvar ${key}.` }, { status: 500 })
     }
+  }
+
+  // Invalidate platform config cache if branding settings were saved
+  if ('platform_name' in body || 'platform_favicon_url' in body) {
+    revalidateTag('platform-config')
   }
 
   return NextResponse.json({ ok: true })

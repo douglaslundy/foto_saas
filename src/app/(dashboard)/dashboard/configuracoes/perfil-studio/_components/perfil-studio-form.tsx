@@ -10,6 +10,7 @@ interface PerfilStudioFormProps {
     primary_color: string | null
     bio: string | null
     logo_storage_path: string | null
+    favicon_url: string | null
   }
 }
 
@@ -35,6 +36,8 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [faviconUrl, setFaviconUrl] = useState(initial.favicon_url ?? '')
+  const [faviconUploading, setFaviconUploading] = useState(false)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
@@ -66,6 +69,24 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
     }
   }
 
+  async function handleFaviconUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFaviconUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/tenant/favicon', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok) setFaviconUrl(data.url)
+      else alert('Erro: ' + (data.error ?? 'Falha no upload'))
+    } catch {
+      alert('Erro de conexão.')
+    } finally {
+      setFaviconUploading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -78,6 +99,7 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
           bio: bio || null,
           primary_color: primaryColor || null,
           custom_domain: customDomain || null,
+          favicon_url: faviconUrl || null,
         }),
       })
       if (!res.ok) {
@@ -213,6 +235,44 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
             />
             <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
               Configure seu DNS para apontar para o servidor antes de salvar.
+            </p>
+          </div>
+
+          {/* Favicon */}
+          <div>
+            <label className={labelClass}>Favicon do portal</label>
+            {faviconUrl && (
+              <div className="mb-2 flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={faviconUrl} alt="Favicon" className="w-8 h-8 object-contain border border-[var(--color-border)] rounded" />
+                <span className="text-xs text-[var(--color-ink-muted)]">Favicon atual</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs text-[var(--color-ink-muted)] mb-1 block">Upload (PNG, ICO, SVG, JPG — máx. 512 KB)</label>
+                <input
+                  type="file"
+                  accept=".png,.ico,.svg,.jpg,.jpeg"
+                  onChange={handleFaviconUpload}
+                  disabled={faviconUploading}
+                  className="text-sm text-[var(--color-ink-soft)] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[var(--color-surface-alt)] file:text-[var(--color-ink)] hover:file:opacity-80 disabled:opacity-50"
+                />
+                {faviconUploading && <p className="text-xs text-[var(--color-ink-muted)] mt-1">Fazendo upload…</p>}
+              </div>
+              <div>
+                <label className="text-xs text-[var(--color-ink-muted)] mb-1 block">ou URL externa</label>
+                <input
+                  type="url"
+                  value={faviconUrl}
+                  onChange={(e) => setFaviconUrl(e.target.value)}
+                  placeholder="https://exemplo.com/favicon.ico"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
+              Ícone exibido na aba do navegador para visitantes do seu portal.
             </p>
           </div>
         </div>

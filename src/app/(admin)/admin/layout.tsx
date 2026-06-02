@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getPlatformConfig } from '@/lib/platform-config'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -17,6 +18,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .single() as { data: { role: string; name: string | null } | null }
 
   if (profile?.role !== 'admin') redirect('/dashboard')
+
+  const { platformName } = await getPlatformConfig()
 
   // Count pending registrations for badge
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,7 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="font-semibold text-sm text-white">FotoSaaS</span>
+          <span className="font-semibold text-sm text-white">{platformName}</span>
           <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white">
             Admin
           </span>

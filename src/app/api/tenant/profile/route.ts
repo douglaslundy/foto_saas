@@ -29,7 +29,7 @@ export async function GET() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant, error } = await (admin as any)
     .from('tenants')
-    .select('name, slug, custom_domain, primary_color, bio')
+    .select('name, slug, custom_domain, primary_color, bio, favicon_url')
     .eq('id', profile.tenant_id)
     .single()
 
@@ -53,11 +53,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { name, custom_domain, primary_color, bio } = body as {
+  const { name, custom_domain, primary_color, bio, favicon_url } = body as {
     name?: string
     custom_domain?: string | null
     primary_color?: string | null
     bio?: string | null
+    favicon_url?: string | null
   }
 
   // Build update payload with only allowed fields
@@ -71,6 +72,7 @@ export async function PATCH(request: Request) {
   if (custom_domain !== undefined) updates.custom_domain = custom_domain || null
   if (primary_color !== undefined) updates.primary_color = primary_color || null
   if (bio !== undefined) updates.bio = bio || null
+  if (favicon_url !== undefined) updates.favicon_url = favicon_url || null
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
@@ -82,7 +84,7 @@ export async function PATCH(request: Request) {
     .from('tenants')
     .update(updates)
     .eq('id', profile.tenant_id)
-    .select('name, slug, custom_domain, primary_color, bio')
+    .select('name, slug, custom_domain, primary_color, bio, favicon_url')
     .single()
 
   if (error) {

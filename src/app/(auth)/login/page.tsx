@@ -1,7 +1,10 @@
 import { Suspense } from 'react'
 import { LoginForm } from './_components/login-form'
+import { getPlatformConfig } from '@/lib/platform-config'
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { platformName } = await getPlatformConfig()
+
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       {/* Left — imagem/branding */}
@@ -13,7 +16,7 @@ export default function LoginPage() {
               <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="font-semibold text-white">FotoSaaS</span>
+          <span className="font-semibold text-white">{platformName}</span>
         </div>
         <div>
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
@@ -36,7 +39,7 @@ export default function LoginPage() {
                   <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className="font-semibold text-[#111827]">FotoSaaS</span>
+              <span className="font-semibold text-[#111827]">{platformName}</span>
             </div>
             <h2 className="text-2xl font-bold text-[#111827] mb-1">Bem-vindo de volta</h2>
             <p className="text-sm text-[#6b7280]">Entre com suas credenciais para continuar</p>

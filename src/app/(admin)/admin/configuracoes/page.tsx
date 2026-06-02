@@ -38,6 +38,8 @@ export default async function ConfiguracoesPage() {
     stripe_publishable_key: settingsMap['stripe_publishable_key'] ?? '',
     mercadopago_access_token: settingsMap['mercadopago_access_token'] ?? '',
     auto_approve_sub_events: settingsMap['auto_approve_sub_events'] ?? 'false',
+    platform_name: settingsMap['platform_name'] ?? '',
+    platform_favicon_url: settingsMap['platform_favicon_url'] ?? '',
   }
 
   return (

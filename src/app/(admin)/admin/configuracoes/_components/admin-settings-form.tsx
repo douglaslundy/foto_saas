@@ -8,6 +8,8 @@ type Settings = {
   stripe_publishable_key: string
   mercadopago_access_token: string
   auto_approve_sub_events: string
+  platform_name: string
+  platform_favicon_url: string
 }
 
 export function AdminSettingsForm({ initialSettings }: { initialSettings: Settings }) {
@@ -15,11 +17,32 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [faviconUploading, setFaviconUploading] = useState(false)
+  const [faviconError, setFaviconError] = useState<string | null>(null)
 
   function handleChange(key: keyof Settings, value: string) {
     setValues((prev) => ({ ...prev, [key]: value }))
     setSaved(false)
     setError(null)
+  }
+
+  async function handleFaviconFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFaviconUploading(true)
+    setFaviconError(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/admin/platform/favicon', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) { setFaviconError(data.error ?? 'Erro ao fazer upload.'); return }
+      setValues((prev) => ({ ...prev, platform_favicon_url: data.url }))
+    } catch {
+      setFaviconError('Erro de conexão.')
+    } finally {
+      setFaviconUploading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -50,6 +73,82 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
+      {/* Section 0 — Identidade */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+          <h2
+            className="text-lg font-semibold text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Identidade da Plataforma
+          </h2>
+        </div>
+        <div className="px-6 py-5 space-y-5">
+          {/* Nome */}
+          <div>
+            <label htmlFor="platform_name" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+              Nome da plataforma
+            </label>
+            <input
+              id="platform_name"
+              type="text"
+              value={values.platform_name}
+              onChange={(e) => handleChange('platform_name', e.target.value)}
+              placeholder="FotoSaaS"
+              className="w-full max-w-xs rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent"
+            />
+            <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
+              Aparece no cabeçalho do admin, login e homepage.
+            </p>
+          </div>
+
+          {/* Favicon */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+              Favicon global
+            </label>
+            {values.platform_favicon_url && (
+              <div className="mb-2 flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={values.platform_favicon_url} alt="Favicon atual" className="w-8 h-8 object-contain border border-[var(--color-border)] rounded" />
+                <span className="text-xs text-[var(--color-ink-muted)]">Favicon atual</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs font-medium text-[var(--color-ink-muted)] mb-1 block">Upload de arquivo (PNG, ICO, SVG, JPG — máx. 512 KB)</label>
+                <input
+                  type="file"
+                  accept=".png,.ico,.svg,.jpg,.jpeg"
+                  onChange={handleFaviconFileUpload}
+                  disabled={faviconUploading}
+                  className="text-sm text-[var(--color-ink)] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[var(--color-surface-alt)] file:text-[var(--color-ink)] hover:file:opacity-80 disabled:opacity-50"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--color-ink-muted)]">ou</span>
+              </div>
+              <div>
+                <label htmlFor="platform_favicon_url" className="text-xs font-medium text-[var(--color-ink-muted)] mb-1 block">URL externa</label>
+                <input
+                  id="platform_favicon_url"
+                  type="url"
+                  value={values.platform_favicon_url}
+                  onChange={(e) => handleChange('platform_favicon_url', e.target.value)}
+                  placeholder="https://exemplo.com/favicon.ico"
+                  className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
+                />
+              </div>
+              {faviconUploading && <p className="text-xs text-[var(--color-ink-muted)]">Fazendo upload…</p>}
+              {faviconError && <p className="text-xs text-[var(--color-danger)]">{faviconError}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Section 1 — Commission */}
       <div
         className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"

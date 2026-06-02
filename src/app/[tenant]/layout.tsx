@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
@@ -5,8 +6,25 @@ import Link from 'next/link'
 import { CartButton } from '@/components/cart/cart-button'
 import { CookieConsent } from '@/components/ui/cookie-consent'
 import { TenantFooter } from '@/components/portal/tenant-footer'
+import { getPlatformConfig, getTenantFavicon } from '@/lib/platform-config'
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenant: string }>
+}): Promise<Metadata> {
+  const { tenant: slug } = await params
+  const [tenantFavicon, globalConfig] = await Promise.all([
+    getTenantFavicon(slug),
+    getPlatformConfig(),
+  ])
+  const faviconUrl = tenantFavicon ?? globalConfig.faviconUrl
+  return {
+    icons: faviconUrl ? { icon: faviconUrl } : undefined,
+  }
+}
 
 export default async function TenantLayout({
   children,
