@@ -15,19 +15,31 @@ export default async function TenantHomePage({ params }: Props) {
 
   const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
-  // Resolve tenant
-  const query = adminClient.from('tenants').select('id, name, slug, status, bio, banner_image_path, banner_title, banner_subtitle, banner_mode')
+  // Resolve tenant — colunas base (sempre existem)
+  const query = adminClient.from('tenants').select('id, name, slug, status, bio, banner_image_path, banner_title, banner_subtitle')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
     : await query.eq('slug', slug).single()
 
   if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
-  const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null; banner_image_path: string | null; banner_title: string | null; banner_subtitle: string | null; banner_mode: string }
+  const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null; banner_image_path: string | null; banner_title: string | null; banner_subtitle: string | null }
+
+  // Tentar buscar banner_mode (coluna nova — pode não existir em instâncias sem migration)
+  let bannerMode = 'static'
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: modeRow } = await (adminClient as any)
+      .from('tenants')
+      .select('banner_mode')
+      .eq('id', tenantData.id)
+      .single()
+    if (modeRow?.banner_mode) bannerMode = modeRow.banner_mode
+  } catch { /* migration ainda não aplicada — usar modo static */ }
 
   // Fetch carousel slides if mode is carousel
   let carouselSlides: CarouselSlide[] = []
-  if (tenantData.banner_mode === 'carousel') {
+  if (bannerMode === 'carousel') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bImgs } = await (adminClient as any)
       .from('banner_images')
@@ -76,7 +88,7 @@ export default async function TenantHomePage({ params }: Props) {
             'radial-gradient(ellipse 60% 50% at 30% 20%, rgba(200,169,110,0.15), transparent)',
         }}
       >
-        {tenantData.banner_mode === 'carousel' && carouselSlides.length > 0 ? (
+        {bannerMode === 'carousel' && carouselSlides.length > 0 ? (
           <CarouselBanner slides={carouselSlides} className="absolute inset-0" />
         ) : tenantData.banner_image_path ? (
           <div

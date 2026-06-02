@@ -19,27 +19,30 @@ export default async function TenantLayout({
   const customDomain = headersList.get('x-custom-domain')
 
   const supabase = createAdminClient()
-  const query = supabase.from('tenants').select('id, name, slug, status, logo_storage_path, footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
+  // Colunas base — sempre existem
+  const query = supabase.from('tenants').select('id, name, slug, status, logo_storage_path')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
     : await query.eq('slug', slug).single()
 
   if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
-  const tenantRecord = tenant as {
-    id: string
-    name: string
-    slug: string
-    status: string
-    logo_storage_path: string | null
-    footer_text: string | null
-    footer_address: string | null
-    footer_phone: string | null
-    footer_whatsapp: string | null
-    footer_instagram: string | null
-    footer_facebook: string | null
-    footer_email: string | null
-  }
+  const tenantBase = tenant as { id: string; name: string; slug: string; status: string; logo_storage_path: string | null }
+
+  // Colunas de rodapé — adicionadas pela migration 0008, podem não existir ainda
+  type FooterFields = { footer_text: string | null; footer_address: string | null; footer_phone: string | null; footer_whatsapp: string | null; footer_instagram: string | null; footer_facebook: string | null; footer_email: string | null }
+  let footerData: FooterFields = { footer_text: null, footer_address: null, footer_phone: null, footer_whatsapp: null, footer_instagram: null, footer_facebook: null, footer_email: null }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: footerRow } = await (supabase as any)
+      .from('tenants')
+      .select('footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
+      .eq('id', tenantBase.id)
+      .single()
+    if (footerRow) footerData = footerRow as FooterFields
+  } catch { /* migration ainda não aplicada */ }
+
+  const tenantRecord = { ...tenantBase, ...footerData }
 
   const logoUrl = tenantRecord.logo_storage_path
     ? `${STORAGE_URL}/${tenantRecord.logo_storage_path}`
