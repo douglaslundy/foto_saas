@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import { LoginForm } from './_components/login-form'
 import { getPlatformConfig } from '@/lib/platform-config'
 
+export const dynamic = 'force-dynamic'
+
 export default async function LoginPage() {
   const { platformName } = await getPlatformConfig()
 

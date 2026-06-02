@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getPlatformConfig } from '@/lib/platform-config'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const { platformName } = await getPlatformConfig()
 
