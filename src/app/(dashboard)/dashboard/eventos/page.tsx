@@ -11,6 +11,7 @@ type EventItem = {
   type: 'event' | 'session'
   event_date: string | null
   status: string
+  cover_image_path?: string | null
 }
 
 export default async function EventosPage() {
@@ -42,7 +43,7 @@ export default async function EventosPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: events } = (await (adminClient as any)
     .from('events')
-    .select('id, title, slug, type, event_date, status')
+    .select('id, title, slug, type, event_date, status, cover_image_path')
     .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: false })
     .range(0, 49)) as { data: EventItem[] | null }

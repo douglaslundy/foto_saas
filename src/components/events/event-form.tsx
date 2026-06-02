@@ -15,6 +15,7 @@ type EventFormValues = {
   is_public?: boolean
   price_cents?: number
   facial_recognition_enabled?: boolean
+  cover_image_path?: string | null
 }
 
 const inputClass =
@@ -47,6 +48,12 @@ export function EventForm({
   const [slugManual, setSlugManual] = useState(mode === 'edit')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    defaultValues?.cover_image_path
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public/${defaultValues.cover_image_path}`
+      : null
+  )
 
   useEffect(() => {
     if (!slugManual && title) {
@@ -85,6 +92,21 @@ export function EventForm({
         setError((data as { error?: string }).error ?? 'Erro ao salvar evento')
         return
       }
+
+      // Upload de capa se selecionada
+      const eventId = mode === 'create'
+        ? (data as { id?: string }).id
+        : defaultValues?.id
+      if (coverFile && eventId) {
+        const coverFormData = new FormData()
+        coverFormData.append('cover_image', coverFile)
+        try {
+          await fetch(`/api/events/${eventId}/cover`, { method: 'PUT', body: coverFormData })
+        } catch {
+          // non-critical — event was saved, cover upload failure is acceptable
+        }
+      }
+
       router.push('/dashboard/eventos')
       router.refresh()
     } catch {
@@ -289,6 +311,32 @@ export function EventForm({
                 {error}
               </p>
             )}
+
+            {/* Imagem de Capa */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-muted)] mb-1.5">
+                Imagem de Capa
+              </label>
+              {coverPreview && (
+                <div className="mb-2 rounded-[var(--radius-sm)] overflow-hidden h-32 bg-[var(--color-surface-alt)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverPreview} alt="Capa" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    setCoverFile(f)
+                    setCoverPreview(URL.createObjectURL(f))
+                  }
+                }}
+                className="w-full text-sm text-[var(--color-ink-muted)] file:mr-3 file:py-2 file:px-4 file:rounded-[var(--radius-sm)] file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-surface-alt)] file:text-[var(--color-ink)] hover:file:bg-[var(--color-surface)] cursor-pointer"
+              />
+              <p className="text-xs text-[var(--color-ink-muted)] mt-1">Recomendado: 1200×600px (JPG, PNG ou WebP)</p>
+            </div>
 
             <button
               type="submit"

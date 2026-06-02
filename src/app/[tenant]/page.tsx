@@ -47,7 +47,7 @@ export default async function TenantHomePage({ params }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: events } = (await (adminClient as any)
     .from('events')
-    .select('id, title, slug, type, event_date, created_at')
+    .select('id, title, slug, type, event_date, created_at, cover_image_path')
     .eq('tenant_id', tenantData.id)
     .eq('status', 'published')
     .order('event_date', { ascending: false })
@@ -59,6 +59,7 @@ export default async function TenantHomePage({ params }: Props) {
       type: 'event' | 'session'
       event_date: string | null
       created_at: string
+      cover_image_path?: string | null
     }[] | null
   }
 

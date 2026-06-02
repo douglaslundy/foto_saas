@@ -12,6 +12,7 @@ type EventItem = {
   type: 'event' | 'session'
   event_date: string | null
   status: string
+  cover_image_path?: string | null
 }
 
 export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?: string }) {
@@ -53,8 +54,24 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
       {/* Gold top accent line */}
       <div
         className="absolute top-0 left-0 right-0 h-[3px]"
-        style={{ background: 'var(--color-gold)' }}
+        style={{ background: 'var(--color-gold)', zIndex: 1 }}
       />
+
+      {/* Área de capa */}
+      <div className="-mx-6 -mt-6 h-36 bg-gradient-to-br from-[var(--color-surface-alt)] to-[var(--color-border)] relative overflow-hidden rounded-t-[var(--radius)]">
+        {event.cover_image_path ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public/${event.cover_image_path}`}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center opacity-20 text-5xl">
+            {event.type === 'event' ? '📅' : '📷'}
+          </div>
+        )}
+      </div>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3 pt-1">

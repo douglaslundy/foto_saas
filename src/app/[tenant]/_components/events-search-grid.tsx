@@ -10,6 +10,7 @@ type PublicEvent = {
   type: 'event' | 'session'
   event_date: string | null
   created_at: string
+  cover_image_path?: string | null
 }
 
 export function EventsSearchGrid({
@@ -66,21 +67,30 @@ export function EventsSearchGrid({
                 className="group rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg block"
                 style={{ boxShadow: 'var(--shadow-sm)' }}
               >
-                {/* Cover placeholder */}
+                {/* Cover */}
                 <div className="aspect-video bg-[var(--color-surface-alt)] overflow-hidden flex items-center justify-center">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="opacity-30"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
+                  {event.cover_image_path ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public/${event.cover_image_path}`}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="opacity-30"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
                 </div>
                 <div className="p-5">
                   <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-gold)] mb-2 block">
