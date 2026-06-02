@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#c8a96e] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="7" r="3" stroke="#0d0f14" strokeWidth="1.5" />
               <path
