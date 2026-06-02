@@ -169,7 +169,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     .single() as { data: { email: string; name: string } | null }
 
   if (photographerData) {
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/dashboard/eventos/${review.event_id}/fotos`
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/dashboard/eventos/${review.event_id}/fotos`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: clientProfile } = await (admin as any)
       .from('users').select('name').eq('id', user.id).single() as
