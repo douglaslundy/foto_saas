@@ -87,10 +87,17 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await (admin as any).storage.from('photos-public').remove(publicPaths)
   }
 
+  // Anular referências em order_items (sem ON DELETE CASCADE) para permitir exclusão
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin as any).from('order_items').update({ photo_id: null }).eq('photo_id', id)
+
   // Remove do banco
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin as any).from('photos').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: 'Erro ao deletar foto.' }, { status: 500 })
+  if (error) {
+    console.error('[DELETE /api/photos]', error)
+    return NextResponse.json({ error: 'Erro ao deletar foto.' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }
