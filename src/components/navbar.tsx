@@ -38,7 +38,7 @@ export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2 shrink-0 mr-2">
         <div className="w-7 h-7 rounded-lg bg-[#2563eb] flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="8" cy="7" r="3" stroke="white" strokeWidth="1.5"/>
             <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
@@ -70,7 +70,7 @@ export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
           <Link
             href="/dashboard/aprovacoes"
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              pathname.startsWith('/dashboard/aprovacoes')
+              pathname === '/dashboard/aprovacoes' || pathname.startsWith('/dashboard/aprovacoes/')
                 ? 'bg-[#eff6ff] text-[#2563eb]'
                 : 'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]'
             }`}
