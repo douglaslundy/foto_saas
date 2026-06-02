@@ -18,11 +18,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (profile?.role !== 'admin') redirect('/dashboard')
 
+  // Count pending registrations for badge
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count: pendingRegistrations } = await (adminClient as any)
+    .from('tenants')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'pending') as { count: number | null }
+
   const navLinks = [
-    { href: '/admin', label: 'Dashboard' },
-    { href: '/admin/tenants', label: 'Fotógrafos' },
-    { href: '/admin/repasses', label: 'Repasses' },
-    { href: '/admin/configuracoes', label: 'Configurações' },
+    { href: '/admin', label: 'Dashboard', badge: 0 },
+    { href: '/admin/tenants', label: 'Fotógrafos', badge: 0 },
+    { href: '/admin/cadastros', label: 'Cadastros', badge: pendingRegistrations ?? 0 },
+    { href: '/admin/repasses', label: 'Repasses', badge: 0 },
+    { href: '/admin/configuracoes', label: 'Configurações', badge: 0 },
   ]
 
   return (
@@ -47,9 +55,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link
               key={link.href}
               href={link.href}
-              className="px-3 py-1.5 rounded-md text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="px-3 py-1.5 rounded-md text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1.5"
             >
               {link.label}
+              {link.badge > 0 && (
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  {link.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
