@@ -27,7 +27,6 @@
     /* Aliases para compatibilidade com componentes existentes */
     --color-surface: var(--color-bg);
     --color-surface-alt: var(--color-bg-alt);
-    --color-border-strong: #d1d5db;
     --color-gold: #2563eb;
     --color-gold-light: #eff6ff;
     --color-cta: #2563eb;
