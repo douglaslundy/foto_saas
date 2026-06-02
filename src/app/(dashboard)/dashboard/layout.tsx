@@ -6,7 +6,6 @@ import { Navbar } from '@/components/navbar'
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
@@ -15,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // @ts-expect-error: profile type is not properly inferred from placeholder Database type
+  // @ts-expect-error: profile type
   if (!profile || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
     redirect('/login')
   }
@@ -35,9 +34,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : 0
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
+    <div className="min-h-screen bg-[#f9fafb]">
       <Navbar userName={userName} userRole={userRole} pendingCount={pendingCount} />
-      <main className="max-w-[1200px] mx-auto px-6 py-10">
+      <main className="max-w-[1200px] mx-auto px-6 py-8">
         {children}
       </main>
     </div>
