@@ -86,3 +86,76 @@ export async function sendSaleNotification({
     console.error('[email] sendSaleNotification failed:', err)
   }
 }
+
+export async function sendEssayReviewLink({
+  to,
+  clientName,
+  reviewLink,
+  sessionTitle,
+  studioName,
+}: {
+  to: string
+  clientName: string
+  reviewLink: string
+  sessionTitle: string
+  studioName?: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: `${studioName ?? 'FotoSaaS'} — Selecione suas fotos do ensaio`,
+      html: `
+        <h2>Olá, ${clientName}!</h2>
+        <p>Seu ensaio <strong>${sessionTitle}</strong> está pronto para seleção.</p>
+        <p>Clique no botão abaixo para visualizar e selecionar suas fotos favoritas. O link expira em <strong>72 horas</strong>.</p>
+        <p style="margin: 24px 0;">
+          <a href="${reviewLink}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+            Selecionar minhas fotos
+          </a>
+        </p>
+        <p style="color:#6b7280;font-size:12px;">Se o botão não funcionar, copie e cole este link: ${reviewLink}</p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendEssayReviewLink failed:', err)
+  }
+}
+
+export async function sendEssaySubmitted({
+  to,
+  clientName,
+  sessionTitle,
+  selectedCount,
+  dashboardUrl,
+  studioName,
+}: {
+  to: string
+  clientName: string
+  sessionTitle: string
+  selectedCount: number
+  dashboardUrl: string
+  studioName?: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: `${clientName} selecionou fotos — ${sessionTitle}`,
+      html: `
+        <h2>Seleção recebida!</h2>
+        <p><strong>${clientName}</strong> acabou de selecionar as fotos do ensaio <strong>${sessionTitle}</strong>.</p>
+        <p>Total selecionado: <strong>${selectedCount} foto${selectedCount !== 1 ? 's' : ''}</strong></p>
+        <p style="margin: 24px 0;">
+          <a href="${dashboardUrl}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+            Ver seleção no dashboard
+          </a>
+        </p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendEssaySubmitted failed:', err)
+  }
+}
