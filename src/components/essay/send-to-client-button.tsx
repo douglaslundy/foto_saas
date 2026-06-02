@@ -20,8 +20,10 @@ export function SendToClientButton({ eventId, hasActiveReview, canResend, review
     if (!reviewId) return
     setResending(true)
     try {
-      await fetch(`/api/essay-reviews/${reviewId}/resend`, { method: 'POST' })
-      setResendDone(true)
+      const res = await fetch(`/api/essay-reviews/${reviewId}/resend`, { method: 'POST' })
+      if (res.ok) setResendDone(true)
+    } catch {
+      // silently fail — user can try again
     } finally {
       setResending(false)
     }

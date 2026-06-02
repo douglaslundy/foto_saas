@@ -38,8 +38,14 @@ export function SendToClientModal({ eventId, onClose, onSent }: Props) {
       setSearching(true)
       try {
         const res = await fetch(`/api/clients/search?q=${encodeURIComponent(q)}`)
-        const data = await res.json()
-        setResults(data.clients ?? [])
+        if (res.ok) {
+          const data = await res.json()
+          setResults(data.clients ?? [])
+        } else {
+          setResults([])
+        }
+      } catch {
+        setResults([])
       } finally {
         setSearching(false)
       }
