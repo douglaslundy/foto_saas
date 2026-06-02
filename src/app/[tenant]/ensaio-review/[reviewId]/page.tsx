@@ -11,7 +11,7 @@ export default async function EnsaioReviewPage({ params }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!user?.id) {
     redirect(`/${tenantSlug}/login?redirect=/${tenantSlug}/ensaio-review/${reviewId}`)
   }
 
