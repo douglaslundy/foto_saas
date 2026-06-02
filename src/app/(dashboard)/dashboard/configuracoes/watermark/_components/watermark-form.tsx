@@ -32,7 +32,7 @@ const POSITION_OPTIONS = [
 ]
 
 const inputClass =
-  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)]'
+  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] placeholder:text-[var(--color-ink-muted)]'
 const labelClass =
   'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
@@ -159,7 +159,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                     />
                     <div className={`h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-all ${
                       type === opt.value
-                        ? 'border-[var(--color-gold)] bg-[var(--color-gold)]'
+                        ? 'border-[var(--color-blue)] bg-[var(--color-blue)]'
                         : 'border-[var(--color-border-strong)] bg-[var(--color-surface)]'
                     }`}>
                       {type === opt.value && (
@@ -197,7 +197,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                   max={200}
                   value={fontSize}
                   onChange={e => setFontSize(Number(e.target.value))}
-                  className="h-11 px-4 w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)]"
+                  className="h-11 px-4 w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                 />
               </div>
 
@@ -256,7 +256,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                   step={5}
                   value={imageSizePercent}
                   onChange={e => setImageSizePercent(Number(e.target.value))}
-                  className="w-full accent-[var(--color-gold)] mt-1"
+                  className="w-full accent-[var(--color-blue)] mt-1"
                 />
                 <div className="flex justify-between text-xs text-[var(--color-ink-muted)] mt-1">
                   <span>5% (pequeno)</span>
@@ -296,7 +296,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
               step={0.1}
               value={opacity}
               onChange={e => setOpacity(Number(e.target.value))}
-              className="w-full accent-[var(--color-gold)] mt-1"
+              className="w-full accent-[var(--color-blue)] mt-1"
             />
             <div className="flex justify-between text-xs text-[var(--color-ink-muted)] mt-1">
               <span>0 (transparente)</span>

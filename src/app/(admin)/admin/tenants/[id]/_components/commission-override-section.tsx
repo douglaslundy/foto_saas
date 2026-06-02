@@ -76,10 +76,10 @@ export function CommissionOverrideSection({ tenantId, currentOverride, globalRat
           </div>
           {currentOverride !== null && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-gold)] mb-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-blue)] mb-1">
                 Override Atual
               </p>
-              <p className="text-2xl font-bold text-[var(--color-gold)]" style={{ fontFamily: 'var(--font-display)' }}>
+              <p className="text-2xl font-bold text-[var(--color-blue)]" style={{ fontFamily: 'var(--font-display)' }}>
                 {currentOverride}%
               </p>
             </div>
@@ -106,7 +106,7 @@ export function CommissionOverrideSection({ tenantId, currentOverride, globalRat
                 setError(null)
               }}
               placeholder={`${globalRate} (global)`}
-              className="w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent"
+              className="w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
             />
             <button
               type="button"

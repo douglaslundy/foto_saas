@@ -70,7 +70,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
         placeholder="Buscar por e-mail ou ID do pedido..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)]/40 transition-shadow"
+        className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)]/40 transition-shadow"
       />
 
       {/* Table card */}

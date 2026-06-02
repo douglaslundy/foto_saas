@@ -106,7 +106,8 @@ export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: Photo
   }
 
   async function handleFiles(files: FileList | File[]) {
-    const fileArray = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    const ALLOWED_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'])
+    const fileArray = Array.from(files)
     if (fileArray.length === 0) return
 
     const startIndex = uploads.length
@@ -119,7 +120,19 @@ export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: Photo
     const completedIds: string[] = []
 
     for (let i = 0; i < fileArray.length; i++) {
-      const id = await uploadSingleFile(fileArray[i], startIndex + i)
+      const file = fileArray[i]
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+      if (!ALLOWED_EXTS.has(ext)) {
+        const isRaw = ['cr2', 'cr3', 'cr32', 'nef', 'arw', 'dng', 'raf', 'orf', 'rw2', 'raw'].includes(ext)
+        setFileStatus(startIndex + i, {
+          status: 'error',
+          error: isRaw
+            ? `RAW (.${ext}) não suportado — converta para JPG antes de enviar`
+            : `Formato .${ext} não suportado. Use JPG, PNG, WEBP ou HEIC`,
+        })
+        continue
+      }
+      const id = await uploadSingleFile(file, startIndex + i)
       if (id) completedIds.push(id)
     }
 
@@ -167,7 +180,7 @@ export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: Photo
           Arraste fotos ou clique para selecionar
         </p>
         <p className="text-[var(--color-ink-muted)] text-sm mb-4">
-          JPG, PNG, WEBP, HEIC · Máx. 50 MB por foto
+          JPG, PNG, WEBP, HEIC · Máx. 50 MB · RAW não suportado
         </p>
         <button
           type="button"

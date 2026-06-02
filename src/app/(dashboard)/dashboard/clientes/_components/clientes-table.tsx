@@ -26,7 +26,7 @@ const statusLabel: Record<string, string> = {
 
 const statusClass: Record<string, string> = {
   paid: 'text-[var(--color-success)] bg-[var(--color-success)]/10',
-  pending: 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40',
+  pending: 'text-amber-600 bg-amber-100',
   cancelled: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10',
   refunded: 'text-[var(--color-ink-muted)] bg-[var(--color-surface-alt)]',
 }

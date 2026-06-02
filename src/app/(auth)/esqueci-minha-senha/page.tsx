@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
         style={{
           background: '#0d0f14',
           backgroundImage:
-            'radial-gradient(ellipse 60% 50% at 30% 20%, rgba(200,169,110,0.18), transparent), repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(255,255,255,0.03) 47px, rgba(255,255,255,0.03) 48px), repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(255,255,255,0.03) 47px, rgba(255,255,255,0.03) 48px)',
+            'radial-gradient(ellipse 60% 50% at 30% 20%, rgba(37,99,235,0.18), transparent), repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(255,255,255,0.03) 47px, rgba(255,255,255,0.03) 48px), repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(255,255,255,0.03) 47px, rgba(255,255,255,0.03) 48px)',
         }}
       >
         {/* Logo */}
@@ -80,11 +80,11 @@ export default function ForgotPasswordPage() {
           {sent ? (
             /* Success state */
             <div>
-              <div className="w-12 h-12 rounded-full bg-[var(--color-gold-light)] flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-full bg-[var(--color-blue-light)] flex items-center justify-center mb-6">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path
                     d="M4 10l4.5 4.5L16 6"
-                    stroke="var(--color-gold)"
+                    stroke="var(--color-blue)"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
               </p>
               <a
                 href="/login"
-                className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+                className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-blue)] transition-colors"
               >
                 ← Voltar ao login
               </a>
@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="seu@email.com"
-                    className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.15)]"
+                    className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)]"
                   />
                 </div>
 
@@ -156,7 +156,7 @@ export default function ForgotPasswordPage() {
                 <div className="text-center">
                   <a
                     href="/login"
-                    className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+                    className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-blue)] transition-colors"
                   >
                     ← Voltar ao login
                   </a>

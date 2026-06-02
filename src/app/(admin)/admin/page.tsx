@@ -22,7 +22,7 @@ function StatCard({
       {variant === 'dark' && (
         <div
           className="absolute bottom-0 right-0 w-20 h-20 rounded-full translate-x-6 translate-y-6"
-          style={{ background: 'rgba(200,169,110,0.12)' }}
+          style={{ background: 'rgba(37,99,235,0.12)' }}
         />
       )}
       <p
@@ -110,7 +110,7 @@ export default async function AdminDashboardPage() {
           </h2>
           <Link
             href="/admin/tenants"
-            className="text-xs font-medium text-[var(--color-gold)] hover:underline"
+            className="text-xs font-medium text-[var(--color-blue)] hover:underline"
           >
             Ver todos →
           </Link>

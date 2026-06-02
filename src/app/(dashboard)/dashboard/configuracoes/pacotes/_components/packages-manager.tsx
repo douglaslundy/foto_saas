@@ -17,7 +17,7 @@ interface PackagesManagerProps {
 }
 
 const inputClass =
-  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)]'
+  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] placeholder:text-[var(--color-ink-muted)]'
 const labelClass =
   'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
@@ -158,7 +158,7 @@ export default function PackagesManager({ initialPackages }: PackagesManagerProp
                     <td className="px-4 py-3 font-medium text-[var(--color-ink)]">{pkg.name}</td>
                     <td className="px-4 py-3 text-[var(--color-ink-soft)]">{pkg.min_quantity} fotos</td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-gold)] text-white">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-blue)] text-white">
                         {pkg.discount_percent}% off
                       </span>
                     </td>
@@ -167,7 +167,7 @@ export default function PackagesManager({ initialPackages }: PackagesManagerProp
                         type="button"
                         onClick={() => handleToggleActive(pkg)}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                          pkg.active ? 'bg-[var(--color-gold)]' : 'bg-[var(--color-border-strong)]'
+                          pkg.active ? 'bg-[var(--color-blue)]' : 'bg-[var(--color-border-strong)]'
                         }`}
                       >
                         <span
@@ -269,7 +269,7 @@ export default function PackagesManager({ initialPackages }: PackagesManagerProp
                   />
                   <div
                     className={`h-5 w-9 rounded-full transition-colors ${
-                      form.active ? 'bg-[var(--color-gold)]' : 'bg-[var(--color-border-strong)]'
+                      form.active ? 'bg-[var(--color-blue)]' : 'bg-[var(--color-border-strong)]'
                     }`}
                   >
                     <span

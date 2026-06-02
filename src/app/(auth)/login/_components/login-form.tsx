@@ -48,7 +48,7 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           placeholder="seu@email.com"
-          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.15)]"
+          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)]"
         />
       </div>
 
@@ -67,7 +67,7 @@ export function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           placeholder="••••••••"
-          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.15)]"
+          className="w-full h-12 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm font-body transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.15)]"
         />
       </div>
 
@@ -75,7 +75,7 @@ export function LoginForm() {
       <div className="flex justify-end mb-6">
         <a
           href="/esqueci-minha-senha"
-          className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+          className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-blue)] transition-colors"
         >
           Esqueceu a senha?
         </a>

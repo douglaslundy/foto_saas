@@ -29,7 +29,7 @@ export default async function TenantsPage() {
     },
     pending: {
       label: 'Pendente',
-      className: 'bg-[var(--color-gold-light)] text-[var(--color-gold)]',
+      className: 'bg-[var(--color-blue-light)] text-[var(--color-blue)]',
     },
   }
 

@@ -98,7 +98,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               value={values.platform_name}
               onChange={(e) => handleChange('platform_name', e.target.value)}
               placeholder="FotoSaaS"
-              className="w-full max-w-xs rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent"
+              className="w-full max-w-xs rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
             />
             <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
               Aparece no cabeçalho do admin, login e homepage.
@@ -139,7 +139,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
                   value={values.platform_favicon_url}
                   onChange={(e) => handleChange('platform_favicon_url', e.target.value)}
                   placeholder="https://exemplo.com/favicon.ico"
-                  className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
+                  className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
                 />
               </div>
               {faviconUploading && <p className="text-xs text-[var(--color-ink-muted)]">Fazendo upload…</p>}
@@ -177,7 +177,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               max={100}
               value={values.global_commission_percent}
               onChange={(e) => handleChange('global_commission_percent', e.target.value)}
-              className="w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent"
+              className="w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
             />
             <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
               Taxa padrão cobrada em todas as vendas. Pode ser sobrescrita por fotógrafo.
@@ -201,14 +201,14 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
         </div>
         <div className="px-6 py-5 space-y-5">
           {/* Warning banner */}
-          <div className="flex items-start gap-3 rounded-[var(--radius-sm)] border border-[var(--color-gold)]/40 bg-[var(--color-gold)]/8 px-4 py-3">
+          <div className="flex items-start gap-3 rounded-[var(--radius-sm)] border border-[var(--color-blue)]/40 bg-[var(--color-blue)]/8 px-4 py-3">
             <svg
               width="16"
               height="16"
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden="true"
-              className="mt-0.5 shrink-0 text-[var(--color-gold)]"
+              className="mt-0.5 shrink-0 text-[var(--color-blue)]"
             >
               <path
                 d="M8 2L14.5 13.5H1.5L8 2Z"
@@ -219,7 +219,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               <path d="M8 6.5V9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
             </svg>
-            <p className="text-xs font-medium text-[var(--color-gold)]">
+            <p className="text-xs font-medium text-[var(--color-blue)]">
               Atenção: estas chaves são sensíveis. Não compartilhe com ninguém.
             </p>
           </div>
@@ -238,7 +238,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               value={values.stripe_secret_key}
               onChange={(e) => handleChange('stripe_secret_key', e.target.value)}
               placeholder="sk_live_..."
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
             />
           </div>
 
@@ -256,7 +256,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               value={values.stripe_publishable_key}
               onChange={(e) => handleChange('stripe_publishable_key', e.target.value)}
               placeholder="pk_live_..."
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
             />
           </div>
 
@@ -274,7 +274,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               value={values.mercadopago_access_token}
               onChange={(e) => handleChange('mercadopago_access_token', e.target.value)}
               placeholder="APP_USR-..."
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
             />
           </div>
         </div>
@@ -301,7 +301,7 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               onChange={(e) =>
                 handleChange('auto_approve_sub_events', e.target.checked ? 'true' : 'false')
               }
-              className="mt-0.5 w-4 h-4 accent-[var(--color-gold)]"
+              className="mt-0.5 w-4 h-4 accent-[var(--color-blue)]"
             />
             <div>
               <p className="text-sm font-medium text-[var(--color-ink)]">

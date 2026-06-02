@@ -244,6 +244,18 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
                 {photo.status === 'ready' && photo.public_storage_path ? (
                   <>
                     <img src={getPhotoUrl(photo.public_storage_path) ?? ''} alt="" className="w-full h-full object-cover hover:opacity-90 transition-opacity" draggable="false" onContextMenu={(e) => e.preventDefault()} />
+                    {!isManager && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectMode(true); toggleSelect(photo.id) }}
+                        className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-opacity ${isSelected ? 'opacity-100 bg-[#2563eb]' : selectMode ? 'opacity-100 bg-white/80' : 'opacity-0 group-hover:opacity-100 bg-white/80'}`}
+                        aria-label="Selecionar foto"
+                      >
+                        {isSelected
+                          ? <span className="text-white text-[11px] leading-none font-bold">✓</span>
+                          : <span className="text-gray-500 text-[11px] leading-none font-bold">○</span>
+                        }
+                      </button>
+                    )}
                     {selectMode && (
                       <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center z-10 pointer-events-none ${isSelected ? `${checkboxSelected} text-white` : 'bg-white/80 border-gray-400'}`}>
                         {isSelected && <span className="text-[10px] leading-none font-bold">✓</span>}

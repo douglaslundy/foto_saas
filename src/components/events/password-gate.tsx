@@ -74,7 +74,7 @@ export function PasswordGate({
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Senha do evento"
             autoFocus
-            className="w-full h-11 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] transition-all duration-200"
+            className="w-full h-11 px-4 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all duration-200"
           />
 
           {error && (

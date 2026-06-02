@@ -18,7 +18,7 @@ type Payout = {
 type Tenant = { id: string; name: string; slug: string }
 
 const inputClass =
-  'h-10 px-3 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent'
+  'h-10 px-3 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent'
 
 export function PayoutsTable({ payouts, tenants }: { payouts: Payout[]; tenants: Tenant[] }) {
   const router = useRouter()
@@ -176,7 +176,7 @@ export function PayoutsTable({ payouts, tenants }: { payouts: Payout[]; tenants:
             <h2 className="text-lg font-semibold text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-display)' }}>
               Repasses Pendentes
             </h2>
-            <span className="text-xs font-bold bg-[var(--color-gold)] text-[var(--color-ink)] px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold bg-[var(--color-blue)] text-[var(--color-ink)] px-2 py-0.5 rounded-full">
               {pending.length}
             </span>
           </div>
