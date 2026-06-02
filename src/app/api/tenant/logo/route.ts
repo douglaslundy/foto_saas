@@ -7,7 +7,6 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/jpg',
   'image/png',
   'image/webp',
-  'image/svg+xml',
 ])
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2MB
@@ -18,7 +17,6 @@ function getExtension(mimeType: string): string {
     'image/jpg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
-    'image/svg+xml': 'svg',
   }
   return map[mimeType] ?? 'jpg'
 }
@@ -45,7 +43,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 
-  if (!profile?.tenant_id) {
+  if (
+    !profile?.tenant_id ||
+    !['photographer', 'admin'].includes(profile.role)
+  ) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
   // 4. Validate MIME type
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return NextResponse.json(
-      { error: 'Formato de arquivo não suportado. Use JPG, PNG, WEBP ou SVG.' },
+      { error: 'Formato de arquivo não suportado. Use JPG, PNG ou WEBP.' },
       { status: 400 }
     )
   }

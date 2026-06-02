@@ -147,6 +147,34 @@ describe('POST /api/tenant/logo', () => {
     expect(body.error.toLowerCase()).toContain('formato')
   })
 
+  it('returns 403 when user has no tenant_id', async () => {
+    setupMocks({ profile: { tenant_id: null as unknown as string, role: 'photographer' } })
+
+    const file = makeFile('logo.png', 'image/png')
+    const fd = makeFormData(file)
+    const req = new NextRequest('http://localhost/api/tenant/logo', {
+      method: 'POST',
+      body: fd,
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 500 when DB update fails after successful upload', async () => {
+    setupMocks({ updateError: { message: 'DB write failed' } })
+
+    const file = makeFile('logo.png', 'image/png')
+    const fd = makeFormData(file)
+    const req = new NextRequest('http://localhost/api/tenant/logo', {
+      method: 'POST',
+      body: fd,
+    })
+
+    const res = await POST(req)
+    expect(res.status).toBe(500)
+  })
+
   it('returns 200 with logoUrl containing logos/{tenantId} on success', async () => {
     const { storageMock } = setupMocks()
 
