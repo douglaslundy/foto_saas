@@ -159,3 +159,105 @@ export async function sendEssaySubmitted({
     console.error('[email] sendEssaySubmitted failed:', err)
   }
 }
+
+export async function sendRegistrationNotification({
+  to,
+  studioName,
+  photographerName,
+  email,
+  city,
+  phone,
+  cpfCnpj,
+}: {
+  to: string
+  studioName: string
+  photographerName: string
+  email: string
+  city: string
+  phone: string
+  cpfCnpj: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: `Novo pedido de cadastro — ${studioName}`,
+      html: `
+        <h2>Novo pedido de cadastro</h2>
+        <p><strong>Estúdio:</strong> ${studioName}</p>
+        <p><strong>Fotógrafo:</strong> ${photographerName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Cidade:</strong> ${city}</p>
+        <p><strong>Telefone:</strong> ${phone}</p>
+        <p><strong>CPF/CNPJ:</strong> ${cpfCnpj}</p>
+        <p style="margin-top:16px">
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/admin/cadastros"
+             style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
+            Revisar no painel admin
+          </a>
+        </p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendRegistrationNotification failed:', err)
+  }
+}
+
+export async function sendRegistrationApproved({
+  to,
+  photographerName,
+  loginUrl,
+}: {
+  to: string
+  photographerName: string
+  loginUrl: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: 'Seu cadastro foi aprovado!',
+      html: `
+        <h2>Parabéns, ${photographerName}!</h2>
+        <p>Seu cadastro foi aprovado. Acesse agora o painel do seu estúdio:</p>
+        <p style="margin-top:16px">
+          <a href="${loginUrl}"
+             style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
+            Entrar no painel
+          </a>
+        </p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendRegistrationApproved failed:', err)
+  }
+}
+
+export async function sendRegistrationRejected({
+  to,
+  photographerName,
+  notes,
+}: {
+  to: string
+  photographerName: string
+  notes?: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: 'Atualização sobre seu cadastro',
+      html: `
+        <h2>Olá, ${photographerName}</h2>
+        <p>Infelizmente não foi possível aprovar seu cadastro no momento.</p>
+        ${notes ? `<p><strong>Motivo:</strong> ${notes}</p>` : ''}
+        <p>Se tiver dúvidas, entre em contato conosco.</p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendRegistrationRejected failed:', err)
+  }
+}
