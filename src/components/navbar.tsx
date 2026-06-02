@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { createClient } from '@/lib/supabase/client'
 
 interface NavbarProps {
@@ -12,7 +11,7 @@ interface NavbarProps {
 }
 
 const navLinks = [
-  { href: '/dashboard', label: 'Início' },
+  { href: '/dashboard', label: 'Início', exact: true },
   { href: '/dashboard/eventos', label: 'Eventos' },
   { href: '/dashboard/financeiro', label: 'Financeiro' },
   { href: '/dashboard/clientes', label: 'Clientes' },
@@ -35,35 +34,32 @@ export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
   }
 
   return (
-    <nav
-      className="sticky top-0 z-50 h-[60px] flex items-center px-6 gap-8 border-b border-[var(--color-border)]"
-      style={{ background: 'rgba(var(--color-surface-rgb), 0.92)', backdropFilter: 'blur(16px)' }}
-    >
+    <nav className="sticky top-0 z-50 h-14 flex items-center px-6 gap-6 border-b border-[#e5e7eb] bg-white">
       {/* Logo */}
-      <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-[var(--color-cta)] text-[var(--color-cta-fg)] flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <Link href="/dashboard" className="flex items-center gap-2 shrink-0 mr-2">
+        <div className="w-7 h-7 rounded-lg bg-[#2563eb] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="3" stroke="white" strokeWidth="1.5"/>
+            <path d="M2 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
-        <span className="font-display font-bold text-base tracking-tight text-[var(--color-ink)]">
-          FotoSaaS
-        </span>
+        <span className="font-semibold text-sm text-[#111827]">FotoSaaS</span>
       </Link>
 
       {/* Nav links */}
       <div className="flex items-center gap-1 flex-1">
         {navLinks.map((link) => {
-          const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href))
+          const isActive = link.exact
+            ? pathname === link.href
+            : pathname === link.href || pathname.startsWith(link.href + '/')
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)]'
-                  : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)]'
+                  ? 'bg-[#eff6ff] text-[#2563eb]'
+                  : 'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]'
               }`}
             >
               {link.label}
@@ -73,15 +69,15 @@ export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
         {userRole === 'photographer' && (
           <Link
             href="/dashboard/aprovacoes"
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center ${
-              pathname === '/dashboard/aprovacoes' || pathname.startsWith('/dashboard/aprovacoes')
-                ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)]'
-                : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)]'
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              pathname.startsWith('/dashboard/aprovacoes')
+                ? 'bg-[#eff6ff] text-[#2563eb]'
+                : 'text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827]'
             }`}
           >
             Aprovações
             {pendingCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-gold)] text-[var(--color-ink)] text-[10px] font-bold leading-none">
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#2563eb] text-white text-[10px] font-bold">
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
             )}
@@ -92,21 +88,22 @@ export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
       {/* Right side */}
       <div className="flex items-center gap-3 shrink-0">
         {userRole === 'admin' && (
-          <Link href="/admin" className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-[var(--color-gold-light)] text-[var(--color-gold)] border border-[var(--color-gold)]/30">
-            Painel Admin
+          <Link
+            href="/admin"
+            className="hidden sm:flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#111827] text-white hover:bg-[#1f2937] transition-colors"
+          >
+            Admin
           </Link>
         )}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--color-surface-alt)] border border-[var(--color-border-strong)] flex items-center justify-center text-xs font-semibold font-display text-[var(--color-ink)]">
+          <div className="w-7 h-7 rounded-full bg-[#eff6ff] border border-[#bfdbfe] flex items-center justify-center text-[11px] font-semibold text-[#2563eb]">
             {getInitials(userName)}
           </div>
-          <span className="hidden md:block text-sm text-[var(--color-ink-soft)] max-w-[120px] truncate">{userName}</span>
+          <span className="hidden md:block text-sm text-[#374151] max-w-[120px] truncate">{userName}</span>
         </div>
-        <ThemeToggle />
         <button
           onClick={handleLogout}
-          className="px-3 py-1.5 rounded-md text-sm font-medium text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-danger)] transition-all duration-200"
-          title="Sair"
+          className="px-3 py-1.5 rounded-md text-sm font-medium text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#dc2626] transition-colors"
         >
           Sair
         </button>
