@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import SiteForm from './_components/site-form'
+import { BannerManager } from './_components/banner-manager'
 
 export const metadata = { title: 'Configurações do Site' }
 
@@ -30,7 +31,7 @@ export default async function SitePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
     .from('tenants')
-    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url')
+    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url, banner_mode')
     .eq('id', profile.tenant_id)
     .single()
 
@@ -62,17 +63,20 @@ export default async function SitePage() {
           ))}
         </div>
 
-        {/* Form card */}
-        <SiteForm
-          tenantId={profile.tenant_id}
-          initial={{
-            banner_image_path: tenant?.banner_image_path ?? null,
-            banner_title: tenant?.banner_title ?? '',
-            banner_subtitle: tenant?.banner_subtitle ?? '',
-            banner_cta_text: tenant?.banner_cta_text ?? '',
-            banner_cta_url: tenant?.banner_cta_url ?? '',
-          }}
-        />
+        {/* Form cards */}
+        <div className="space-y-6">
+          <BannerManager initialMode={(tenant?.banner_mode ?? 'static') as 'static' | 'carousel'} />
+          <SiteForm
+            tenantId={profile.tenant_id}
+            initial={{
+              banner_image_path: tenant?.banner_image_path ?? null,
+              banner_title: tenant?.banner_title ?? '',
+              banner_subtitle: tenant?.banner_subtitle ?? '',
+              banner_cta_text: tenant?.banner_cta_text ?? '',
+              banner_cta_url: tenant?.banner_cta_url ?? '',
+            }}
+          />
+        </div>
       </div>
     </div>
   )

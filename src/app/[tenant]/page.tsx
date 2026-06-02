@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import { EventsSearchGrid } from './_components/events-search-grid'
+import { CarouselBanner, type CarouselSlide } from '@/components/portal/carousel-banner'
 
 type Props = { params: Promise<{ tenant: string }> }
 
@@ -12,15 +13,35 @@ export default async function TenantHomePage({ params }: Props) {
 
   const adminClient = createAdminClient()
 
+  const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+
   // Resolve tenant
-  const query = adminClient.from('tenants').select('id, name, slug, status, bio')
+  const query = adminClient.from('tenants').select('id, name, slug, status, bio, banner_image_path, banner_title, banner_subtitle, banner_mode')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
     : await query.eq('slug', slug).single()
 
   if (!tenant || (tenant as { status: string }).status !== 'active') notFound()
 
-  const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null }
+  const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null; banner_image_path: string | null; banner_title: string | null; banner_subtitle: string | null; banner_mode: string }
+
+  // Fetch carousel slides if mode is carousel
+  let carouselSlides: CarouselSlide[] = []
+  if (tenantData.banner_mode === 'carousel') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: bImgs } = await (adminClient as any)
+      .from('banner_images')
+      .select('id, storage_path, title, subtitle')
+      .eq('tenant_id', tenantData.id)
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+    carouselSlides = (bImgs ?? []).map((b: { id: string; storage_path: string; title: string | null; subtitle: string | null }) => ({
+      id: b.id,
+      url: `${STORAGE_URL}/${b.storage_path}`,
+      title: b.title,
+      subtitle: b.subtitle,
+    }))
+  }
 
   // Fetch published events
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +75,20 @@ export default async function TenantHomePage({ params }: Props) {
             'radial-gradient(ellipse 60% 50% at 30% 20%, rgba(200,169,110,0.15), transparent)',
         }}
       >
+        {tenantData.banner_mode === 'carousel' && carouselSlides.length > 0 ? (
+          <CarouselBanner slides={carouselSlides} className="absolute inset-0" />
+        ) : tenantData.banner_image_path ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${STORAGE_URL}/${tenantData.banner_image_path})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-accent)] via-[var(--color-ink-soft)] to-[var(--color-ink)]" />
+        )}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
           {/* Logo/avatar do tenant */}
           <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-white/30 flex items-center justify-center mb-6 text-3xl font-bold text-white">
