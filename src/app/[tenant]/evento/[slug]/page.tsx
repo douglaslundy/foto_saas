@@ -118,71 +118,51 @@ export default async function EventoPage({ params }: Props) {
   const photoCount = count ?? 0
 
   const content = (
-    <div className="min-h-screen bg-[var(--color-surface)]">
-      {/* Imersive header */}
-      <div
-        className="relative h-64 overflow-hidden flex flex-col justify-end"
-        style={{
-          background: '#0d0f14',
-          backgroundImage:
-            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,169,110,0.12), transparent)',
-        }}
-      >
-        <a
-          href={`/${tenantSlug}`}
-          className="absolute top-5 left-6 text-white/70 hover:text-white text-sm flex items-center gap-1 transition-colors"
-        >
-          ← Voltar
-        </a>
-        <div className="px-6 pb-8">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-gold)] mb-2 block">
-            Evento
-          </span>
-          <h1 className="text-3xl font-bold text-white">{event.title}</h1>
-          {event.event_date && (
-            <p className="text-white/60 text-sm mt-1">
-              {new Date(event.event_date).toLocaleDateString('pt-BR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                timeZone: 'UTC',
-              })}
-            </p>
+    <div className="min-h-screen bg-white">
+      {/* Breadcrumb + info */}
+      <div className="border-b border-[#e5e7eb] bg-white px-6 py-4">
+        <div className="max-w-6xl mx-auto">
+          <a
+            href={`/${tenantSlug}`}
+            className="text-sm text-[#6b7280] hover:text-[#111827] transition-colors inline-flex items-center gap-1 mb-3"
+          >
+            ← Voltar
+          </a>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-[#111827]">{event.title}</h1>
+              {event.event_date && (
+                <p className="text-sm text-[#6b7280] mt-0.5">
+                  {new Date(event.event_date).toLocaleDateString('pt-BR', {
+                    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+                  })}
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-[#6b7280] shrink-0">{photoCount} fotos</p>
+          </div>
+          {event.description && (
+            <p className="text-sm text-[#6b7280] mt-2">{event.description}</p>
           )}
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Sticky action bar */}
-        <div
-          className="sticky top-0 z-10 -mx-6 px-6 py-3 mb-6 flex items-center justify-between border-b border-[var(--color-border)]"
-          style={{
-            background: 'rgba(245,244,240,0.92)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <p className="text-sm text-[var(--color-ink-muted,#6b6b6b)]">
-            {photoCount} {photoCount === 1 ? 'foto' : 'fotos'}
-          </p>
+      {/* Busca facial */}
+      {event.facial_recognition_enabled && (
+        <div className="bg-[#eff6ff] border-b border-[#bfdbfe] px-6 py-3">
+          <div className="max-w-6xl mx-auto">
+            <EventoPageClient
+              eventId={event.id}
+              initialPhotos={photos ?? []}
+              total={photoCount}
+              isManager={isManager}
+            />
+          </div>
         </div>
+      )}
 
-        {/* Description */}
-        {event.description && (
-          <p className="text-[var(--color-ink-muted,#6b6b6b)] text-sm mb-6">{event.description}</p>
-        )}
-
-        {/* Facial search island */}
-        {event.facial_recognition_enabled && (
-          <EventoPageClient
-            eventId={event.id}
-            initialPhotos={photos ?? []}
-            total={photoCount}
-            isManager={isManager}
-          />
-        )}
-
-        {/* Photo grid (no facial search) */}
+      {/* Grid de fotos */}
+      <div className="max-w-6xl mx-auto px-6 py-6">
         {!event.facial_recognition_enabled && (
           <PhotoGrid
             initialPhotos={photos ?? []}
