@@ -40,6 +40,14 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
     setPhotos((prev) => prev.filter((p) => !idSet.has(p.id)))
   }
 
+  async function handleSetCover(publicStoragePath: string) {
+    await fetch(`/api/events/${eventId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cover_image_path: publicStoragePath }),
+    })
+  }
+
   function handleReprocess(photoId: string) {
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, status: 'pending' } : p)))
   }
@@ -99,6 +107,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
           onDelete={handleDelete}
           onBulkDelete={handleBulkDelete}
           onReprocess={handleReprocess}
+          onSetCover={handleSetCover}
         />
       </div>
     </div>

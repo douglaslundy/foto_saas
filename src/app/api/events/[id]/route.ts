@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
-  const { title, slug, type, event_date, description, is_public, password, price_cents, facial_recognition_enabled } =
+  const { title, slug, type, event_date, description, is_public, password, price_cents, facial_recognition_enabled, cover_image_path } =
     body as {
       title?: string
       slug?: string
@@ -77,6 +77,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       password?: string
       price_cents?: number
       facial_recognition_enabled?: boolean
+      cover_image_path?: string | null
     }
 
   // If slug is changing, check uniqueness
@@ -108,6 +109,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (price_cents !== undefined) updateData.price_cents = price_cents
   if (facial_recognition_enabled !== undefined) updateData.facial_recognition_enabled = facial_recognition_enabled
   if (password) updateData.password_hash = await hash(password, 10)
+  if (cover_image_path !== undefined) updateData.cover_image_path = cover_image_path
 
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

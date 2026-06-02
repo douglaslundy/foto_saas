@@ -100,10 +100,12 @@ export function EventForm({
       if (coverFile && eventId) {
         const coverFormData = new FormData()
         coverFormData.append('cover_image', coverFile)
-        try {
-          await fetch(`/api/events/${eventId}/cover`, { method: 'PUT', body: coverFormData })
-        } catch {
-          // non-critical — event was saved, cover upload failure is acceptable
+        const coverRes = await fetch(`/api/events/${eventId}/cover`, { method: 'PUT', body: coverFormData })
+        if (!coverRes.ok) {
+          const coverErr = await coverRes.json().catch(() => ({})) as { error?: string }
+          setError(`Evento salvo, mas falha ao salvar capa: ${coverErr.error ?? 'tente novamente'}`)
+          setLoading(false)
+          return
         }
       }
 

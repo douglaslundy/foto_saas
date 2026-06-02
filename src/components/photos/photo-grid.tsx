@@ -16,6 +16,7 @@ interface PhotoGridProps {
   onDelete: (photoId: string) => void
   onBulkDelete: (photoIds: string[]) => void
   onReprocess: (photoId: string) => void
+  onSetCover?: (path: string) => Promise<void>
 }
 
 type ViewMode = 'grid' | 'list'
@@ -40,13 +41,24 @@ function getInitialViewMode(): ViewMode {
   try { return localStorage.getItem('fotosaas_view_mode') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
 }
 
-export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onReprocess }: PhotoGridProps) {
+export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onReprocess, onSetCover }: PhotoGridProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [reprocessing, setReprocessing] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [settingCover, setSettingCover] = useState<string | null>(null)
+
+  async function handleSetCover(photoId: string, path: string) {
+    if (!onSetCover) return
+    setSettingCover(photoId)
+    try {
+      await onSetCover(path)
+    } finally {
+      setSettingCover(null)
+    }
+  }
 
   function toggleSelect(id: string) {
     setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -153,6 +165,12 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
                 )}
                 {!selectMode && (
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    {onSetCover && photo.status === 'ready' && photo.public_storage_path && (
+                      <button onClick={(e) => { e.stopPropagation(); handleSetCover(photo.id, photo.public_storage_path!) }} disabled={settingCover === photo.id}
+                        className="px-2 py-1 rounded bg-[#2563eb] text-white text-[10px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50" title="Definir como capa do evento">
+                        {settingCover === photo.id ? '…' : 'Capa'}
+                      </button>
+                    )}
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting}
                       className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-colors disabled:opacity-50" title="Excluir">
                       {isDeleting ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
