@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { FotosManager } from '@/components/photos/fotos-manager'
+import { SendToClientButton } from '@/components/essay/send-to-client-button'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -12,6 +13,28 @@ type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
+}
+
+type EssayReview = {
+  id: string
+  status: string
+  magic_link_expires_at: string
+  submitted_at: string | null
+  selected_photo_ids: string[]
+}
+
+const REVIEW_STATUS_LABEL: Record<string, string> = {
+  pending_selection: 'Aguardando seleção do cliente',
+  submitted: 'Seleção recebida',
+  in_progress: 'Em tratamento',
+  delivered: 'Entregue',
+}
+
+const REVIEW_STATUS_COLOR: Record<string, string> = {
+  pending_selection: 'bg-yellow-100 text-yellow-800',
+  submitted: 'bg-blue-100 text-blue-800',
+  in_progress: 'bg-purple-100 text-purple-800',
+  delivered: 'bg-green-100 text-green-800',
 }
 
 export default async function FotosEventoPage({ params }: Props) {
@@ -33,14 +56,14 @@ export default async function FotosEventoPage({ params }: Props) {
     redirect('/login')
   }
 
-  const [eventResult, photosResult] = await Promise.all([
+  const [eventResult, photosResult, reviewResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('events')
-      .select('id, title, slug, status')
+      .select('id, title, slug, status, type')
       .eq('id', id)
       .eq('tenant_id', profile.tenant_id)
-      .single() as Promise<{ data: { id: string; title: string; slug: string; status: string } | null }>,
+      .single() as Promise<{ data: { id: string; title: string; slug: string; status: string; type: string } | null }>,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('photos')
@@ -48,22 +71,32 @@ export default async function FotosEventoPage({ params }: Props) {
       .eq('event_id', id)
       .eq('tenant_id', profile.tenant_id)
       .order('created_at', { ascending: false }) as Promise<{ data: Photo[] | null }>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('essay_reviews')
+      .select('id, status, magic_link_expires_at, submitted_at, selected_photo_ids')
+      .eq('event_id', id)
+      .eq('tenant_id', profile.tenant_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle() as Promise<{ data: EssayReview | null }>,
   ])
 
   const event = eventResult.data
   const photos = photosResult.data ?? []
+  const review = reviewResult.data
   if (!event) notFound()
+
+  const isSession = event.type === 'session'
+  const isLinkExpired = review?.status === 'pending_selection' &&
+    new Date(review.magic_link_expires_at) < new Date()
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-[var(--color-ink-muted)]">
-        <Link
-          href="/dashboard/eventos"
-          className="hover:text-[var(--color-ink)] transition-colors"
-        >
+        <Link href="/dashboard/eventos" className="hover:text-[var(--color-ink)] transition-colors">
           Eventos
         </Link>
         <span>/</span>
@@ -72,22 +105,37 @@ export default async function FotosEventoPage({ params }: Props) {
         <span>Fotos</span>
       </nav>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--color-ink)]">
             {event.title}
           </h1>
           <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-gold-light)] text-[var(--color-gold)] border border-[var(--color-gold)]/30">
             {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
           </span>
+          {review && (
+            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${REVIEW_STATUS_COLOR[review.status] ?? 'bg-gray-100 text-gray-700'}`}>
+              {REVIEW_STATUS_LABEL[review.status] ?? review.status}
+              {review.status === 'submitted' && ` (${review.selected_photo_ids?.length ?? 0} fotos)`}
+            </span>
+          )}
         </div>
-        <Link
-          href={`/dashboard/eventos/${id}/editar`}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors"
-        >
-          ← Voltar ao Evento
-        </Link>
+        <div className="flex items-center gap-2">
+          {isSession && (
+            <SendToClientButton
+              eventId={id}
+              hasActiveReview={!!review && !isLinkExpired && review.status === 'pending_selection'}
+              canResend={!!review && isLinkExpired}
+              reviewId={review?.id}
+            />
+          )}
+          <Link
+            href={`/dashboard/eventos/${id}/editar`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors"
+          >
+            ← Voltar ao Evento
+          </Link>
+        </div>
       </div>
 
       <FotosManager eventId={id} initialPhotos={photos} storageBase={storageBase} />
