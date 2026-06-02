@@ -52,7 +52,7 @@ export async function POST(_request: NextRequest, { params }: Props) {
     { data: { title: string } | null }
 
   if (!clientData || !tenant || !event) {
-    return NextResponse.json({ error: 'Dados insuficientes para reenvio.' }, { status: 500 })
+    return NextResponse.json({ error: 'Dados do review incompletos.' }, { status: 404 })
   }
 
   const newExpiresAt = new Date(Date.now() + MAGIC_LINK_TTL_SECONDS * 1000).toISOString()

@@ -130,6 +130,14 @@ export default async function FinanceiroPage() {
   const chartData = Array.from(monthMap.entries()).map(([month, revenue]) => ({ month, revenue }))
   const recentOrders = tenantOrders.slice(0, 10)
 
+  // Fetch sub-photographer internal commission rates
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: subMembers } = await (adminClient as any)
+    .from('users')
+    .select('id, email, internal_commission_percent')
+    .eq('tenant_id', profile.tenant_id)
+    .eq('role', 'sub_photographer')
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -174,6 +182,28 @@ export default async function FinanceiroPage() {
         <StatCard label="Total de Pedidos" value={totalOrders} sub="pedidos realizados" />
         <StatCard label="Ticket Médio" value={avgTicket > 0 ? `R$ ${avgTicket.toFixed(2)}` : '—'} sub="por pedido" />
       </div>
+
+      {/* Sub-photographer internal rates */}
+      {subMembers && subMembers.length > 0 && (
+        <div
+          className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-6 py-4"
+          style={{ boxShadow: 'var(--shadow-sm)' }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">
+            Taxas Internas da Equipe
+          </p>
+          <div className="flex flex-wrap gap-6">
+            {(subMembers as { id: string; email: string; internal_commission_percent: number | null }[]).map((m) => (
+              <div key={m.id} className="text-sm">
+                <span className="text-[var(--color-ink)]">{m.email}</span>
+                <span className="ml-2 font-semibold text-[var(--color-gold)]">
+                  {m.internal_commission_percent ?? 0}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Revenue Chart */}
       <div className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>

@@ -9,6 +9,8 @@ type Member = {
   email: string
   role: string
   created_at: string
+  can_create_events: boolean
+  internal_commission_percent: number | null
 }
 
 async function getProfile() {
@@ -38,7 +40,7 @@ export default async function EquipePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: members } = (await (adminClient as any)
     .from('users')
-    .select('id, email, role, created_at')
+    .select('id, email, role, created_at, can_create_events, internal_commission_percent')
     .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: true })) as { data: Member[] | null }
 

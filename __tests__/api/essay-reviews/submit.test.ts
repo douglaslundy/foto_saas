@@ -21,6 +21,14 @@ jest.mock('@/lib/payments/stripe', () => ({
   }),
 }))
 
+jest.mock('@/lib/payments/mercadopago', () => ({
+  createMercadoPagoPix: jest.fn().mockResolvedValue({
+    pixQrCode: 'qr_code_string',
+    pixQrCodeBase64: 'base64_string',
+    paymentId: 'mp_test_123',
+  }),
+}))
+
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'

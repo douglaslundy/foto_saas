@@ -9,6 +9,8 @@ type Member = {
   email: string
   role: string
   created_at: string
+  can_create_events: boolean
+  internal_commission_percent: number | null
 }
 
 interface MemberListProps {
@@ -28,6 +30,8 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
   const [editing, setEditing] = useState<string | null>(null)
   const [editRole, setEditRole] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
+  const [editRate, setEditRate] = useState<Record<string, string>>({})
+  const [editingRate, setEditingRate] = useState<string | null>(null)
 
   async function handleRemove(memberId: string) {
     if (!confirm('Remover este colaborador da equipe?')) return
@@ -85,6 +89,36 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
     }
   }
 
+  async function handleTogglePermission(memberId: string, canCreate: boolean) {
+    try {
+      const res = await fetch(`/api/team/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ can_create_events: canCreate }),
+      })
+      if (res.ok) router.refresh()
+    } catch {
+      // silent
+    }
+  }
+
+  async function saveRate(memberId: string) {
+    const raw = editRate[memberId]
+    if (raw === undefined) { setEditingRate(null); return }
+    const rate = parseInt(raw, 10)
+    if (isNaN(rate) || rate < 0 || rate > 100) return
+    try {
+      const res = await fetch(`/api/team/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ internal_commission_percent: rate }),
+      })
+      if (res.ok) { setEditingRate(null); router.refresh() }
+    } catch {
+      // silent
+    }
+  }
+
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="px-4 py-3 border-b">
@@ -92,12 +126,52 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
       </div>
       <div className="divide-y">
         {members.map((m) => (
-          <div key={m.id} className="px-4 py-3 flex items-center justify-between text-sm gap-3">
-            <div className="min-w-0">
+          <div key={m.id} className="px-4 py-3 flex items-start justify-between text-sm gap-3">
+            <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{m.email}</p>
               <p className="text-xs text-muted-foreground">
                 Desde {new Date(m.created_at).toLocaleDateString('pt-BR')}
               </p>
+              {m.role === 'sub_photographer' && (
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                  {/* Toggle permissão */}
+                  <button
+                    onClick={() => handleTogglePermission(m.id, !m.can_create_events)}
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-colors ${
+                      m.can_create_events
+                        ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]'
+                        : 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)]'
+                    }`}
+                  >
+                    {m.can_create_events ? '✓ Pode criar eventos' : '✗ Sem permissão de eventos'}
+                  </button>
+                  {/* Taxa interna */}
+                  {editingRate === m.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editRate[m.id] ?? (m.internal_commission_percent ?? '').toString()}
+                        onChange={(e) => setEditRate((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                        className="w-16 h-7 px-2 text-xs rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)]"
+                        placeholder="0"
+                      />
+                      <span className="text-xs text-[var(--color-ink-muted)]">% taxa</span>
+                      <button onClick={() => saveRate(m.id)} className="text-xs text-[var(--color-success)] font-semibold hover:underline">Salvar</button>
+                      <button onClick={() => setEditingRate(null)} className="text-xs text-[var(--color-ink-muted)] hover:underline">Cancelar</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setEditingRate(m.id)}
+                      className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
+                    >
+                      Taxa: {m.internal_commission_percent ?? 0}%
+                      <span className="ml-1 text-[var(--color-gold)]">(editar)</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {editing === m.id ? (

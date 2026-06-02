@@ -20,11 +20,6 @@ export async function PATCH(
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
-  const { role } = body as { role?: string }
-  if (!role || !['photographer', 'sub_photographer'].includes(role)) {
-    return NextResponse.json({ error: 'Role inválido.' }, { status: 400 })
-  }
-
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: callerProfile } = await (adminClient as any)
@@ -52,8 +47,25 @@ export async function PATCH(
     return NextResponse.json({ error: 'Membro não encontrado.' }, { status: 404 })
   }
 
+  // Build updates dynamically
+  const updates: Record<string, unknown> = {}
+
+  if (body.role && ['sub_photographer', 'photographer'].includes(body.role as string)) {
+    updates.role = body.role
+  }
+  if (typeof body.can_create_events === 'boolean') {
+    updates.can_create_events = body.can_create_events
+  }
+  if (typeof body.internal_commission_percent === 'number') {
+    updates.internal_commission_percent = body.internal_commission_percent
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Nenhum campo para atualizar.' }, { status: 400 })
+  }
+
   // Prevent demoting if this member is the only photographer
-  if (member.role === 'photographer' && role === 'sub_photographer') {
+  if (updates.role && member.role === 'photographer' && updates.role === 'sub_photographer') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count } = await (adminClient as any)
       .from('users')
@@ -70,20 +82,18 @@ export async function PATCH(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: updated, error: updateError } = await (adminClient as any)
+  const { error: updateError } = await (adminClient as any)
     .from('users')
-    .update({ role })
+    .update(updates)
     .eq('id', memberId)
     .eq('tenant_id', callerProfile.tenant_id)
-    .select()
-    .single() as { data: { id: string; email: string; role: string } | null; error: unknown }
 
   if (updateError) {
     console.error('[PATCH /api/team/:id]', updateError)
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 
-  return NextResponse.json(updated)
+  return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(
