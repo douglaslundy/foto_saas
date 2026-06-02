@@ -19,12 +19,18 @@ export function ApprovalQueue({ events }: { events: PendingEvent[] }) {
   async function handleAction(id: string, action: 'approve' | 'reject') {
     setProcessing(id)
     try {
-      await fetch(`/api/events/${id}/approve`, {
+      const res = await fetch(`/api/events/${id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        alert(data.error ?? 'Erro ao processar aprovação.')
+      }
       router.refresh()
+    } catch {
+      alert('Erro de rede. Tente novamente.')
     } finally {
       setProcessing(null)
     }

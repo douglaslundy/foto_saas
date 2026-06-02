@@ -49,7 +49,15 @@ export async function POST(request: NextRequest, { params }: Props) {
   const newStatus = body.action === 'approve' ? 'draft' : 'archived'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin as any).from('events').update({ status: newStatus }).eq('id', id)
+  const { error: updateError } = await (admin as any)
+    .from('events')
+    .update({ status: newStatus })
+    .eq('id', id)
+
+  if (updateError) {
+    console.error('[POST /api/events/approve]', updateError)
+    return NextResponse.json({ error: 'Erro ao atualizar evento.' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true, status: newStatus })
 }
