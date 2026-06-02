@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { tenant_id, amount_cents, period_start, period_end, note } = body
-  if (!tenant_id || !amount_cents || !period_start || !period_end) {
+  if (!tenant_id || !amount_cents || amount_cents <= 0 || !period_start || !period_end) {
     return NextResponse.json({ error: 'Campos obrigatórios: tenant_id, amount_cents, period_start, period_end.' }, { status: 400 })
   }
 
