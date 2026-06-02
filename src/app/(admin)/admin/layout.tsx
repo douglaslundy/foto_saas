@@ -37,6 +37,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <rect x="8.5" y="9" width="2" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.3"/>
       </svg>
     )},
+    { href: '/admin/repasses', label: 'Repasses', icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2 5h12M2 8h8M2 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="12" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M12 9.5v3M10.5 11h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    )},
     { href: '/admin/configuracoes', label: 'Configurações', icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5"/>
