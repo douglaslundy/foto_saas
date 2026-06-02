@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { CartButton } from '@/components/cart/cart-button'
 import { CookieConsent } from '@/components/ui/cookie-consent'
 import { TenantFooter } from '@/components/portal/tenant-footer'
@@ -19,7 +20,6 @@ export default async function TenantLayout({
   const customDomain = headersList.get('x-custom-domain')
 
   const supabase = createAdminClient()
-  // Colunas base — sempre existem
   const query = supabase.from('tenants').select('id, name, slug, status, logo_storage_path')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
@@ -29,7 +29,6 @@ export default async function TenantLayout({
 
   const tenantBase = tenant as { id: string; name: string; slug: string; status: string; logo_storage_path: string | null }
 
-  // Colunas de rodapé — adicionadas pela migration 0008, podem não existir ainda
   type FooterFields = { footer_text: string | null; footer_address: string | null; footer_phone: string | null; footer_whatsapp: string | null; footer_instagram: string | null; footer_facebook: string | null; footer_email: string | null }
   let footerData: FooterFields = { footer_text: null, footer_address: null, footer_phone: null, footer_whatsapp: null, footer_instagram: null, footer_facebook: null, footer_email: null }
   try {
@@ -43,34 +42,32 @@ export default async function TenantLayout({
   } catch { /* migration ainda não aplicada */ }
 
   const tenantRecord = { ...tenantBase, ...footerData }
-
   const logoUrl = tenantRecord.logo_storage_path
     ? `${STORAGE_URL}/${tenantRecord.logo_storage_path}`
     : null
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface,var(--background))]">
-      {/* Top navigation bar */}
-      <nav
-        className="sticky top-0 z-40 border-b border-[var(--color-border)]"
-        style={{ background: 'rgba(var(--color-surface-rgb), 0.92)', backdropFilter: 'blur(12px)' }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <nav className="sticky top-0 z-40 h-16 bg-white border-b border-[#e5e7eb] flex items-center px-6">
+        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+          <Link href={`/${tenantRecord.slug}`} className="flex items-center gap-3">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logoUrl}
-                alt={tenantRecord.name}
-                className="h-10 w-auto object-contain"
-              />
+              <img src={logoUrl} alt={tenantRecord.name} className="h-9 w-auto object-contain" />
             ) : (
-              <span className="text-lg font-bold text-[var(--color-ink)]">
-                {tenantRecord.name}
-              </span>
+              <span className="text-base font-bold text-[#111827]">{tenantRecord.name}</span>
             )}
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/${tenantRecord.slug}/minha-conta`}
+              className="text-sm text-[#6b7280] hover:text-[#111827] transition-colors hidden sm:block"
+            >
+              Minha Conta
+            </Link>
+            <CartButton tenantSlug={tenantRecord.slug} />
           </div>
-          <CartButton tenantSlug={tenantRecord.slug} />
         </div>
       </nav>
       <main>{children}</main>
