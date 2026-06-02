@@ -56,16 +56,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Imagem obrigatória.' }, { status: 400 })
   }
 
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    return NextResponse.json({ error: 'Formato inválido. Use JPG, PNG ou WebP.' }, { status: 400 })
+  }
+
   const admin = createAdminClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count } = await (admin as any)
+  const { data: maxRow } = await (admin as any)
     .from('banner_images')
-    .select('id', { count: 'exact', head: true })
+    .select('sort_order')
     .eq('tenant_id', profile.tenant_id)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-  const sortOrder = (count ?? 0) as number
-  const ext = file.type.includes('png') ? 'png' : 'jpg'
+  const sortOrder = maxRow ? (maxRow.sort_order as number) + 1 : 0
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
   const storagePath = `banners/${profile.tenant_id}/carousel_${Date.now()}.${ext}`
 
   const buffer = new Uint8Array(await file.arrayBuffer())

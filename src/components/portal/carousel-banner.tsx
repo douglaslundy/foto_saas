@@ -53,17 +53,20 @@ export function CarouselBanner({ slides, className = '' }: CarouselBannerProps) 
       {slides.length > 1 && (
         <>
           <button onClick={prev} aria-label="Anterior"
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors z-10 text-lg">
+            style={{ background: 'rgba(0,0,0,0.35)' }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hover:opacity-80 text-white flex items-center justify-center transition-opacity z-10 text-lg">
             ‹
           </button>
           <button onClick={next} aria-label="Próximo"
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors z-10 text-lg">
+            style={{ background: 'rgba(0,0,0,0.35)' }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hover:opacity-80 text-white flex items-center justify-center transition-opacity z-10 text-lg">
             ›
           </button>
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {slides.map((_, i) => (
               <button key={i} onClick={() => setCurrent(i)} aria-label={`Slide ${i + 1}`}
-                className={`h-2 rounded-full transition-all ${i === current ? 'bg-white w-4' : 'bg-white/50 w-2'}`} />
+                style={{ background: i === current ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)' }}
+                className={`h-2 rounded-full transition-all ${i === current ? 'w-4' : 'w-2'}`} />
             ))}
           </div>
         </>

@@ -23,6 +23,7 @@ export function BannerManager({ initialMode }: BannerManagerProps) {
   const [banners, setBanners] = useState<BannerItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -67,6 +68,10 @@ export function BannerManager({ initialMode }: BannerManagerProps) {
         setTitle('')
         setSubtitle('')
         if (fileRef.current) fileRef.current.value = ''
+        setUploadError(null)
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        setUploadError(data.error ?? 'Erro ao enviar imagem.')
       }
     } finally {
       setUploading(false)
@@ -74,18 +79,33 @@ export function BannerManager({ initialMode }: BannerManagerProps) {
   }
 
   async function toggleActive(id: string, active: boolean) {
-    await fetch(`/api/tenant/banners/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active }),
-    })
+    // Optimistic update
     setBanners((prev) => prev.map((b) => b.id === id ? { ...b, active } : b))
+    try {
+      const res = await fetch(`/api/tenant/banners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active }),
+      })
+      if (!res.ok) {
+        // Revert on failure
+        setBanners((prev) => prev.map((b) => b.id === id ? { ...b, active: !active } : b))
+      }
+    } catch {
+      setBanners((prev) => prev.map((b) => b.id === id ? { ...b, active: !active } : b))
+    }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Remover esta imagem do carrossel?')) return
-    await fetch(`/api/tenant/banners/${id}`, { method: 'DELETE' })
-    setBanners((prev) => prev.filter((b) => b.id !== id))
+    try {
+      const res = await fetch(`/api/tenant/banners/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setBanners((prev) => prev.filter((b) => b.id !== id))
+      }
+    } catch {
+      // silently ignore network errors on delete
+    }
   }
 
   return (
@@ -140,6 +160,9 @@ export function BannerManager({ initialMode }: BannerManagerProps) {
                 className="px-5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity">
                 {uploading ? 'Enviando...' : '+ Adicionar ao carrossel'}
               </button>
+              {uploadError && (
+                <p className="text-sm text-[var(--color-danger)]">{uploadError}</p>
+              )}
             </form>
           </div>
 
