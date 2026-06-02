@@ -33,6 +33,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .eq('status', 'pending_approval')).count) ?? 0)
     : 0
 
+  // Block pending/rejected photographers from accessing dashboard
+  if (profileWithName?.role === 'photographer' && profileWithName?.tenant_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: tenant } = await (adminClient as any)
+      .from('tenants')
+      .select('status')
+      .eq('id', profileWithName.tenant_id)
+      .single() as { data: { status: string } | null }
+
+    if (tenant?.status === 'pending') redirect('/conta-em-analise')
+    if (tenant?.status === 'rejected') redirect('/conta-rejeitada')
+  }
+
   return (
     <div className="min-h-screen bg-[#f9fafb]">
       <Navbar userName={userName} userRole={userRole} pendingCount={pendingCount} />
