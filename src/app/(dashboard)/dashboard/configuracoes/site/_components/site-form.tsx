@@ -8,6 +8,13 @@ interface BannerConfig {
   banner_subtitle: string
   banner_cta_text: string
   banner_cta_url: string
+  footer_text: string
+  footer_address: string
+  footer_phone: string
+  footer_whatsapp: string
+  footer_instagram: string
+  footer_facebook: string
+  footer_email: string
 }
 
 interface SiteFormProps {
@@ -26,6 +33,13 @@ export default function SiteForm({ tenantId, initial }: SiteFormProps) {
   const [bannerCtaText, setBannerCtaText] = useState(initial.banner_cta_text)
   const [bannerCtaUrl, setBannerCtaUrl] = useState(initial.banner_cta_url)
   const [imagePath, setImagePath] = useState(initial.banner_image_path)
+  const [footerText, setFooterText] = useState(initial.footer_text ?? '')
+  const [footerAddress, setFooterAddress] = useState(initial.footer_address ?? '')
+  const [footerPhone, setFooterPhone] = useState(initial.footer_phone ?? '')
+  const [footerWhatsapp, setFooterWhatsapp] = useState(initial.footer_whatsapp ?? '')
+  const [footerInstagram, setFooterInstagram] = useState(initial.footer_instagram ?? '')
+  const [footerFacebook, setFooterFacebook] = useState(initial.footer_facebook ?? '')
+  const [footerEmail, setFooterEmail] = useState(initial.footer_email ?? '')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -58,6 +72,13 @@ export default function SiteForm({ tenantId, initial }: SiteFormProps) {
       if (file) {
         formData.append('banner_image', file)
       }
+      formData.append('footer_text', footerText)
+      formData.append('footer_address', footerAddress)
+      formData.append('footer_phone', footerPhone)
+      formData.append('footer_whatsapp', footerWhatsapp)
+      formData.append('footer_instagram', footerInstagram)
+      formData.append('footer_facebook', footerFacebook)
+      formData.append('footer_email', footerEmail)
 
       const res = await fetch('/api/tenant/site', {
         method: 'PUT',
@@ -83,6 +104,7 @@ export default function SiteForm({ tenantId, initial }: SiteFormProps) {
   void tenantId
 
   return (
+    <div className="space-y-6">
     <div
       className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
       style={{ boxShadow: 'var(--shadow-sm)' }}
@@ -193,6 +215,57 @@ export default function SiteForm({ tenantId, initial }: SiteFormProps) {
           </button>
         </div>
       </form>
+    </div>
+
+    {/* Seção Rodapé */}
+    <div className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+      <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+        <h2 className="text-lg font-semibold text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-display)' }}>
+          Rodapé do Site
+        </h2>
+        <p className="text-xs text-[var(--color-ink-muted)] mt-1">
+          Informações exibidas no rodapé do seu portal público.
+        </p>
+      </div>
+      <div className="px-6 py-5 space-y-4">
+        <div>
+          <label className={labelClass}>Texto do rodapé</label>
+          <textarea
+            value={footerText}
+            onChange={(e) => setFooterText(e.target.value)}
+            rows={3}
+            className={inputClass + ' h-auto py-2.5 resize-none'}
+            placeholder="Breve texto sobre seu trabalho..."
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Endereço</label>
+            <input type="text" value={footerAddress} onChange={(e) => setFooterAddress(e.target.value)} className={inputClass} placeholder="Cidade, Estado" />
+          </div>
+          <div>
+            <label className={labelClass}>Telefone</label>
+            <input type="tel" value={footerPhone} onChange={(e) => setFooterPhone(e.target.value)} className={inputClass} placeholder="(11) 99999-9999" />
+          </div>
+          <div>
+            <label className={labelClass}>WhatsApp</label>
+            <input type="tel" value={footerWhatsapp} onChange={(e) => setFooterWhatsapp(e.target.value)} className={inputClass} placeholder="(11) 99999-9999" />
+          </div>
+          <div>
+            <label className={labelClass}>E-mail de contato</label>
+            <input type="email" value={footerEmail} onChange={(e) => setFooterEmail(e.target.value)} className={inputClass} placeholder="contato@seusite.com" />
+          </div>
+          <div>
+            <label className={labelClass}>Instagram</label>
+            <input type="text" value={footerInstagram} onChange={(e) => setFooterInstagram(e.target.value)} className={inputClass} placeholder="@seuusuario" />
+          </div>
+          <div>
+            <label className={labelClass}>Facebook</label>
+            <input type="text" value={footerFacebook} onChange={(e) => setFooterFacebook(e.target.value)} className={inputClass} placeholder="facebook.com/suapagina" />
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
   )
 }

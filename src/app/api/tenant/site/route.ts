@@ -22,7 +22,7 @@ export async function GET() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
     .from('tenants')
-    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url')
+    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url, footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
     .eq('id', profile.tenant_id)
     .single()
 
@@ -47,6 +47,12 @@ export async function PUT(request: NextRequest) {
   if (typeof bannerSubtitle === 'string') updates.banner_subtitle = bannerSubtitle
   if (typeof bannerCtaText === 'string') updates.banner_cta_text = bannerCtaText
   if (typeof bannerCtaUrl === 'string') updates.banner_cta_url = bannerCtaUrl
+
+  const footerFields = ['footer_text', 'footer_address', 'footer_phone', 'footer_whatsapp', 'footer_instagram', 'footer_facebook', 'footer_email'] as const
+  for (const field of footerFields) {
+    const val = formData.get(field)
+    if (typeof val === 'string') updates[field] = val
+  }
 
   // Handle optional image upload
   const imageFile = formData.get('banner_image')
@@ -74,7 +80,7 @@ export async function PUT(request: NextRequest) {
     .from('tenants')
     .update(updates)
     .eq('id', profile.tenant_id)
-    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url')
+    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url, footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

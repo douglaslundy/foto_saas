@@ -31,7 +31,7 @@ export default async function SitePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
     .from('tenants')
-    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url, banner_mode')
+    .select('banner_image_path, banner_title, banner_subtitle, banner_cta_text, banner_cta_url, banner_mode, footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
     .eq('id', profile.tenant_id)
     .single()
 
@@ -74,6 +74,13 @@ export default async function SitePage() {
               banner_subtitle: tenant?.banner_subtitle ?? '',
               banner_cta_text: tenant?.banner_cta_text ?? '',
               banner_cta_url: tenant?.banner_cta_url ?? '',
+              footer_text: tenant?.footer_text ?? '',
+              footer_address: tenant?.footer_address ?? '',
+              footer_phone: tenant?.footer_phone ?? '',
+              footer_whatsapp: tenant?.footer_whatsapp ?? '',
+              footer_instagram: tenant?.footer_instagram ?? '',
+              footer_facebook: tenant?.footer_facebook ?? '',
+              footer_email: tenant?.footer_email ?? '',
             }}
           />
         </div>

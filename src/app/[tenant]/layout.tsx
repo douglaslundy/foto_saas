@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import { CartButton } from '@/components/cart/cart-button'
 import { CookieConsent } from '@/components/ui/cookie-consent'
+import { TenantFooter } from '@/components/portal/tenant-footer'
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
@@ -18,7 +19,7 @@ export default async function TenantLayout({
   const customDomain = headersList.get('x-custom-domain')
 
   const supabase = createAdminClient()
-  const query = supabase.from('tenants').select('id, name, slug, status, logo_storage_path')
+  const query = supabase.from('tenants').select('id, name, slug, status, logo_storage_path, footer_text, footer_address, footer_phone, footer_whatsapp, footer_instagram, footer_facebook, footer_email')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
     : await query.eq('slug', slug).single()
@@ -31,6 +32,13 @@ export default async function TenantLayout({
     slug: string
     status: string
     logo_storage_path: string | null
+    footer_text: string | null
+    footer_address: string | null
+    footer_phone: string | null
+    footer_whatsapp: string | null
+    footer_instagram: string | null
+    footer_facebook: string | null
+    footer_email: string | null
   }
 
   const logoUrl = tenantRecord.logo_storage_path
@@ -63,6 +71,7 @@ export default async function TenantLayout({
         </div>
       </nav>
       <main>{children}</main>
+      <TenantFooter data={tenantRecord} />
       <CookieConsent />
     </div>
   )
