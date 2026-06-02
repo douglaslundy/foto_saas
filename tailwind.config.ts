@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -9,72 +8,35 @@ const config = {
     './src/**/*.{ts,tsx}',
   ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
       colors: {
-        border: "var(--color-border-strong)",
-        input: "var(--color-border-strong)",
-        ring: "var(--color-gold)",
-        background: "var(--color-surface)",
-        foreground: "var(--color-ink)",
-        primary: {
-          DEFAULT: "var(--color-ink)",
-          foreground: "var(--primary-foreground)",
-        },
-        secondary: {
-          DEFAULT: "var(--color-surface-alt)",
-          foreground: "var(--color-ink)",
-        },
-        destructive: {
-          DEFAULT: "var(--color-danger)",
-          foreground: "#ffffff",
-        },
-        muted: {
-          DEFAULT: "var(--color-surface-alt)",
-          foreground: "var(--color-ink-muted)",
-        },
-        accent: {
-          DEFAULT: "var(--color-surface-alt)",
-          foreground: "var(--color-ink)",
-        },
-        popover: {
-          DEFAULT: "var(--color-card)",
-          foreground: "var(--color-ink)",
-        },
-        card: {
-          DEFAULT: "var(--color-card)",
-          foreground: "var(--color-ink)",
-        },
-        gold: "var(--color-gold)",
-        "gold-light": "var(--color-gold-light)",
-        ink: "var(--color-ink)",
-        "ink-soft": "var(--color-ink-soft)",
-        "ink-muted": "var(--color-ink-muted)",
-        surface: "var(--color-surface)",
-        "surface-alt": "var(--color-surface-alt)",
-        success: "var(--color-success)",
-        danger: "var(--color-danger)",
+        border: "#e5e7eb",
+        input: "#d1d5db",
+        ring: "#2563eb",
+        background: "#ffffff",
+        foreground: "#111827",
+        primary: { DEFAULT: "#2563eb", foreground: "#ffffff" },
+        secondary: { DEFAULT: "#f9fafb", foreground: "#111827" },
+        destructive: { DEFAULT: "#dc2626", foreground: "#ffffff" },
+        muted: { DEFAULT: "#f9fafb", foreground: "#6b7280" },
+        accent: { DEFAULT: "#f9fafb", foreground: "#111827" },
+        popover: { DEFAULT: "#ffffff", foreground: "#111827" },
+        card: { DEFAULT: "#ffffff", foreground: "#111827" },
       },
       fontFamily: {
-        display: ["var(--font-display)", "Georgia", "serif"],
-        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "var(--radius-sm)",
-        sm: "6px",
-        pill: "var(--radius-pill)",
+        lg: "8px",
+        md: "6px",
+        sm: "4px",
       },
       boxShadow: {
-        sm: "var(--shadow-sm)",
-        md: "var(--shadow-md)",
-        lg: "var(--shadow-lg)",
+        sm: "0 1px 3px rgba(0,0,0,0.08)",
+        md: "0 4px 12px rgba(0,0,0,0.12)",
+        lg: "0 8px 24px rgba(0,0,0,0.16)",
       },
     },
   },

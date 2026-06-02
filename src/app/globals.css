@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,139 +6,90 @@
 
 @layer base {
   :root {
-    /* FotoSaaS Design System — Light Mode */
-    --color-surface-rgb: 245, 244, 240;
-    --color-ink: #0d0f14;
-    --color-ink-soft: #3a3d4a;
-    --color-ink-muted: #7c8199;
-    --color-surface: #f5f4f0;
-    --color-surface-alt: #eceae4;
+    --color-bg: #ffffff;
+    --color-bg-alt: #f9fafb;
     --color-card: #ffffff;
-    --color-border: rgba(13,15,20,0.08);
-    --color-border-strong: rgba(13,15,20,0.15);
-    --color-accent: #1a1f2e;
-    --color-gold: #c8a96e;
-    --color-gold-light: #f0e8d8;
-    --color-cta: #0d0f14;
+    --color-border: #e5e7eb;
+    --color-border-strong: #d1d5db;
+    --color-ink: #111827;
+    --color-ink-soft: #374151;
+    --color-ink-muted: #6b7280;
+    --color-ink-disabled: #9ca3af;
+    --color-blue: #2563eb;
+    --color-blue-hover: #1d4ed8;
+    --color-blue-light: #eff6ff;
+    --color-blue-border: #bfdbfe;
+    --color-success: #16a34a;
+    --color-warning: #ca8a04;
+    --color-danger: #dc2626;
+    --color-admin-header: #111827;
+
+    /* Aliases para compatibilidade com componentes existentes */
+    --color-surface: var(--color-bg);
+    --color-surface-alt: var(--color-bg-alt);
+    --color-border-strong: #d1d5db;
+    --color-gold: #2563eb;
+    --color-gold-light: #eff6ff;
+    --color-cta: #2563eb;
     --color-cta-fg: #ffffff;
     --color-cta-fg-60: rgba(255,255,255,0.6);
-    --color-cta-fg-50: rgba(255,255,255,0.5);
-    --color-blue: #2563eb;
-    --color-blue-light: #dbeafe;
-    --color-danger: #c0392b;
-    --color-success: #27ae60;
+    --color-accent: #111827;
 
-    /* Radius + shadow + transition */
-    --radius: 14px;
-    --radius-sm: 8px;
+    --radius: 8px;
+    --radius-sm: 6px;
     --radius-pill: 999px;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
-    --shadow-lg: 0 20px 48px rgba(0,0,0,0.16), 0 8px 16px rgba(0,0,0,0.08);
-    --transition: 0.2s ease;
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+    --transition: 0.15s ease;
 
-    /* Shadcn/ui compat aliases */
-    --background: var(--color-surface);
-    --foreground: var(--color-ink);
-    --card: var(--color-card);
-    --card-foreground: var(--color-ink);
-    --popover: var(--color-card);
-    --popover-foreground: var(--color-ink);
-    --primary: var(--color-ink);
+    /* Shadcn/ui compat */
+    --background: #ffffff;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
-    --secondary: var(--color-surface-alt);
-    --secondary-foreground: var(--color-ink);
-    --muted: var(--color-surface-alt);
-    --muted-foreground: var(--color-ink-muted);
-    --accent: var(--color-surface-alt);
-    --accent-foreground: var(--color-ink);
-    --destructive: var(--color-danger);
+    --secondary: #f9fafb;
+    --secondary-foreground: #111827;
+    --muted: #f9fafb;
+    --muted-foreground: #6b7280;
+    --accent: #f9fafb;
+    --accent-foreground: #111827;
+    --destructive: #dc2626;
     --destructive-foreground: #ffffff;
-    --border: var(--color-border-strong);
-    --input: var(--color-border-strong);
-    --ring: var(--color-gold);
+    --border: #e5e7eb;
+    --input: #d1d5db;
+    --ring: #2563eb;
   }
 
-  .dark {
-    /* FotoSaaS Design System — Dark Mode */
-    --color-surface-rgb: 15, 17, 23;
-    --color-ink: #f0ede8;
-    --color-ink-soft: #c2bfb8;
-    --color-ink-muted: #7a7870;
-    --color-surface: #0f1117;
-    --color-surface-alt: #181b22;
-    --color-card: #1c1f28;
-    --color-border: rgba(240,237,232,0.07);
-    --color-border-strong: rgba(240,237,232,0.13);
-    --color-accent: #f0ede8;
-    --color-gold: #c8a96e;
-    --color-gold-light: rgba(200,169,110,0.12);
-    --color-cta: #c8a96e;
-    --color-cta-fg: #0f1117;
-    --color-cta-fg-60: rgba(15,17,23,0.6);
-    --color-cta-fg-50: rgba(15,17,23,0.5);
-    --color-blue: #3b82f6;
-    --color-blue-light: rgba(59,130,246,0.15);
-    --color-danger: #e05c4b;
-    --color-success: #34d399;
-
-    /* Shadcn/ui compat aliases */
-    --background: var(--color-surface);
-    --foreground: var(--color-ink);
-    --card: var(--color-card);
-    --card-foreground: var(--color-ink);
-    --popover: var(--color-card);
-    --popover-foreground: var(--color-ink);
-    --primary: var(--color-gold);
-    --primary-foreground: #0f1117;
-    --secondary: var(--color-surface-alt);
-    --secondary-foreground: var(--color-ink);
-    --muted: var(--color-surface-alt);
-    --muted-foreground: var(--color-ink-muted);
-    --accent: var(--color-surface-alt);
-    --accent-foreground: var(--color-ink);
-    --destructive: var(--color-danger);
-    --destructive-foreground: #ffffff;
-    --border: var(--color-border-strong);
-    --input: var(--color-border-strong);
-    --ring: var(--color-gold);
-  }
-
-  * {
-    box-sizing: border-box;
-    @apply border-border;
-  }
+  * { box-sizing: border-box; }
 
   body {
-    font-family: var(--font-body);
-    background-color: var(--color-surface);
-    color: var(--color-ink);
-    transition: background-color 0.25s ease, color 0.25s ease;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    color: #111827;
   }
 }
 
 @layer utilities {
-  .font-display { font-family: var(--font-display); }
-  .font-body { font-family: var(--font-body); }
-  .text-ink { color: var(--color-ink); }
-  .text-ink-soft { color: var(--color-ink-soft); }
-  .text-ink-muted { color: var(--color-ink-muted); }
-  .text-gold { color: var(--color-gold); }
-  .bg-surface { background-color: var(--color-surface); }
-  .bg-surface-alt { background-color: var(--color-surface-alt); }
-  .bg-card-custom { background-color: var(--color-card); }
-  .bg-gold { background-color: var(--color-gold); }
-  .bg-gold-light { background-color: var(--color-gold-light); }
-  .border-gold { border-color: var(--color-gold); }
-  .shadow-fotosaas-sm { box-shadow: var(--shadow-sm); }
-  .shadow-fotosaas-md { box-shadow: var(--shadow-md); }
-  .shadow-fotosaas-lg { box-shadow: var(--shadow-lg); }
-  .radius-fotosaas { border-radius: var(--radius); }
-  .radius-fotosaas-sm { border-radius: var(--radius-sm); }
+  .font-display { font-family: 'Inter', system-ui, sans-serif; }
+  .font-body { font-family: 'Inter', system-ui, sans-serif; }
+  .text-ink { color: #111827; }
+  .text-ink-soft { color: #374151; }
+  .text-ink-muted { color: #6b7280; }
+  .text-blue { color: #2563eb; }
+  .bg-blue-light { background-color: #eff6ff; }
+  .border-blue { border-color: #2563eb; }
 }
