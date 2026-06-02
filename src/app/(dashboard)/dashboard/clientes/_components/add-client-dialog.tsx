@@ -46,12 +46,21 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
   const [valueStr, setValueStr] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('pix')
 
+  const [mode, setMode] = useState<'manual' | 'invite'>('invite')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null)
+
   function resetForm() {
     setEmail('')
     setEventId('')
     setValueStr('')
     setPaymentMethod('pix')
     setError(null)
+    setInviteName('')
+    setInviteEmail('')
+    setInviteMessage(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -91,6 +100,31 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
     }
   }
 
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setInviteLoading(true)
+    setInviteMessage(null)
+    try {
+      const res = await fetch('/api/clients/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, name: inviteName || undefined }),
+      })
+      const data = await res.json() as { message?: string; error?: string }
+      if (res.ok) {
+        setInviteMessage(`✅ ${data.message}`)
+        setInviteEmail('')
+        setInviteName('')
+      } else {
+        setInviteMessage(data.error ?? 'Erro ao enviar convite.')
+      }
+    } catch {
+      setInviteMessage('Erro de rede. Tente novamente.')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm() }}>
       <DialogTrigger asChild>
@@ -100,6 +134,61 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
         <DialogHeader>
           <DialogTitle>Cadastrar cliente</DialogTitle>
         </DialogHeader>
+        {/* Tabs de modo */}
+        <div className="flex gap-1 mb-5">
+          {(['invite', 'manual'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => { setMode(m); setInviteMessage(null) }}
+              className={`flex-1 py-2 text-sm font-semibold rounded-[var(--radius-sm)] transition-colors ${
+                mode === m
+                  ? 'bg-[var(--color-cta)] text-[var(--color-cta-fg)]'
+                  : 'bg-[var(--color-surface-alt)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'
+              }`}
+            >
+              {m === 'invite' ? '📧 Convidar por email' : '📋 Registrar pedido manual'}
+            </button>
+          ))}
+        </div>
+        {mode === 'invite' && (
+          <form onSubmit={handleInvite} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="invite-name">Nome do cliente</Label>
+              <Input
+                id="invite-name"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Nome completo (opcional)"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="invite-email">E-mail *</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="cliente@email.com"
+                required
+              />
+            </div>
+            {inviteMessage && (
+              <p className={`text-sm ${inviteMessage.startsWith('✅') ? 'text-[var(--color-success)]' : 'text-destructive'}`}>
+                {inviteMessage}
+              </p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Fechar
+              </Button>
+              <Button type="submit" disabled={inviteLoading}>
+                {inviteLoading ? 'Enviando...' : 'Enviar convite'}
+              </Button>
+            </div>
+          </form>
+        )}
+        {mode === 'manual' && (
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-1">
             <Label htmlFor="client-email">E-mail do cliente</Label>
@@ -170,6 +259,7 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   )
