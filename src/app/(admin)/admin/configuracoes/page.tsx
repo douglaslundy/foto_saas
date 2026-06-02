@@ -37,6 +37,7 @@ export default async function ConfiguracoesPage() {
     stripe_secret_key: settingsMap['stripe_secret_key'] ?? '',
     stripe_publishable_key: settingsMap['stripe_publishable_key'] ?? '',
     mercadopago_access_token: settingsMap['mercadopago_access_token'] ?? '',
+    auto_approve_sub_events: settingsMap['auto_approve_sub_events'] ?? 'false',
   }
 
   return (

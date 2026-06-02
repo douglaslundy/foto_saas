@@ -7,6 +7,7 @@ type Settings = {
   stripe_secret_key: string
   stripe_publishable_key: string
   mercadopago_access_token: string
+  auto_approve_sub_events: string
 }
 
 export function AdminSettingsForm({ initialSettings }: { initialSettings: Settings }) {
@@ -177,6 +178,42 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent font-mono"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Seção — Sub-fotógrafos */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+          <h2
+            className="text-lg font-semibold text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Sub-fotógrafos
+          </h2>
+        </div>
+        <div className="px-6 py-5">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={values.auto_approve_sub_events === 'true'}
+              onChange={(e) =>
+                handleChange('auto_approve_sub_events', e.target.checked ? 'true' : 'false')
+              }
+              className="mt-0.5 w-4 h-4 accent-[var(--color-gold)]"
+            />
+            <div>
+              <p className="text-sm font-medium text-[var(--color-ink)]">
+                Aprovação automática de eventos
+              </p>
+              <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                Quando ativado, eventos criados por sub-fotógrafos ficam como rascunho automaticamente,
+                sem necessidade de aprovação manual pelo fotógrafo.
+              </p>
+            </div>
+          </label>
         </div>
       </div>
 

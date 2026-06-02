@@ -53,6 +53,7 @@ export async function PUT(request: NextRequest) {
     stripe_secret_key?: string
     stripe_publishable_key?: string
     mercadopago_access_token?: string
+    auto_approve_sub_events?: string
   }
   try {
     body = await request.json()
@@ -67,6 +68,7 @@ export async function PUT(request: NextRequest) {
     'stripe_secret_key',
     'stripe_publishable_key',
     'mercadopago_access_token',
+    'auto_approve_sub_events',
   ] as const
 
   for (const key of keys) {

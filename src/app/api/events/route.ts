@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await getAuthProfile()
   if (auth instanceof NextResponse) return auth
-  const { profile } = auth
+  const { user, profile } = auth
 
   let body: Record<string, unknown>
   try {
@@ -108,6 +108,33 @@ export async function POST(request: NextRequest) {
 
   const adminClient = createAdminClient()
 
+  // Determinar status inicial baseado no role
+  let initialStatus = 'draft'
+
+  if (profile.role === 'sub_photographer') {
+    // Verificar permissão para criar eventos
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: userPerms } = await (adminClient as any)
+      .from('users')
+      .select('can_create_events')
+      .eq('id', user.id)
+      .single()
+
+    if (!userPerms?.can_create_events) {
+      return NextResponse.json({ error: 'Você não tem permissão para criar eventos.' }, { status: 403 })
+    }
+
+    // Verificar auto-aprovação
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: setting } = await (adminClient as any)
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'auto_approve_sub_events')
+      .single()
+
+    initialStatus = setting?.value === 'true' ? 'draft' : 'pending_approval'
+  }
+
   // Check slug uniqueness within tenant
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing } = (await (adminClient as any)
@@ -131,7 +158,7 @@ export async function POST(request: NextRequest) {
     title,
     slug,
     type,
-    status: 'draft',
+    status: initialStatus,
     is_public: type === 'event' ? (is_public ?? true) : false,
     price_cents: price_cents ?? 0,
     facial_recognition_enabled: type === 'event' ? (facial_recognition_enabled ?? false) : false,

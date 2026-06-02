@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 interface NavbarProps {
   userName: string
   userRole: 'admin' | 'photographer' | 'sub_photographer' | 'viewer'
+  pendingCount?: number
 }
 
 const navLinks = [
@@ -23,7 +24,7 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-export function Navbar({ userName, userRole }: NavbarProps) {
+export function Navbar({ userName, userRole, pendingCount = 0 }: NavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -69,6 +70,23 @@ export function Navbar({ userName, userRole }: NavbarProps) {
             </Link>
           )
         })}
+        {userRole === 'photographer' && (
+          <Link
+            href="/dashboard/aprovacoes"
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center ${
+              pathname === '/dashboard/aprovacoes' || pathname.startsWith('/dashboard/aprovacoes')
+                ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)]'
+                : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)]'
+            }`}
+          >
+            Aprovações
+            {pendingCount > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-gold)] text-[var(--color-ink)] text-[10px] font-bold leading-none">
+                {pendingCount > 9 ? '9+' : pendingCount}
+              </span>
+            )}
+          </Link>
+        )}
       </div>
 
       {/* Right side */}
