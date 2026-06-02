@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface PerfilStudioFormProps {
   initial: {
@@ -9,11 +9,14 @@ interface PerfilStudioFormProps {
     custom_domain: string | null
     primary_color: string | null
     bio: string | null
+    logo_storage_path: string | null
   }
 }
 
+const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
+
 const inputClass =
-  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)]'
+  'h-11 px-4 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] placeholder:text-[var(--color-ink-muted)]'
 const labelClass =
   'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
@@ -23,6 +26,45 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
   const [primaryColor, setPrimaryColor] = useState(initial.primary_color ?? '#3b82f6')
   const [customDomain, setCustomDomain] = useState(initial.custom_domain ?? '')
   const [loading, setLoading] = useState(false)
+
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    initial.logo_storage_path
+      ? `${STORAGE_URL}/${initial.logo_storage_path}`
+      : null
+  )
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    if (!file) return
+    setLogoFile(file)
+    setLogoPreview(URL.createObjectURL(file))
+  }
+
+  async function handleLogoUpload() {
+    if (!logoFile) return
+    setLogoUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('logo', logoFile)
+      const res = await fetch('/api/tenant/logo', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        alert('Erro ao fazer upload: ' + (data.error ?? 'Falha no upload'))
+      } else {
+        setLogoPreview(data.logoUrl)
+        setLogoFile(null)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      alert('Erro ao fazer upload: ' + message)
+    } finally {
+      setLogoUploading(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -59,6 +101,46 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
       <div className="px-6 py-5 border-b border-[var(--color-border-strong)]">
         <h2 className="font-display text-lg font-semibold text-[var(--color-ink)]">Dados do Estúdio</h2>
         <p className="text-[var(--color-ink-muted)] text-sm mt-0.5">Informações públicas do seu estúdio fotográfico</p>
+      </div>
+
+      {/* Logo upload section */}
+      <div className="px-6 py-5 border-b border-[var(--color-border-strong)]">
+        <p className={labelClass}>Logotipo do estúdio</p>
+        <div className="flex items-center gap-4">
+          {/* Preview box */}
+          <div
+            className="w-20 h-20 flex-shrink-0 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-bg-alt)] flex items-center justify-center overflow-hidden"
+          >
+            {logoPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoPreview} alt="Logo do estúdio" className="w-full h-full object-contain" />
+            ) : (
+              <span className="text-3xl select-none">🖼️</span>
+            )}
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-col gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="text-sm text-[var(--color-ink-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-[var(--radius-sm)] file:border file:border-[var(--color-border-strong)] file:text-xs file:font-medium file:bg-[var(--color-bg-alt)] file:text-[var(--color-ink-soft)] hover:file:bg-[var(--color-surface)] file:cursor-pointer"
+            />
+            <p className="text-xs text-[var(--color-ink-muted)]">JPG, PNG ou WEBP. Máximo 2 MB.</p>
+            {logoFile !== null && (
+              <button
+                type="button"
+                onClick={handleLogoUpload}
+                disabled={logoUploading}
+                className="self-start px-4 py-2 rounded-[var(--radius-sm)] bg-[var(--color-blue)] text-white text-xs font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 disabled:opacity-60"
+              >
+                {logoUploading ? 'Enviando...' : 'Enviar logotipo'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -99,7 +181,7 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Conte um pouco sobre seu estúdio..."
-              className="px-4 py-3 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-gold)] focus:shadow-[0_0_0_3px_rgba(200,169,110,0.12)] placeholder:text-[var(--color-ink-muted)] resize-y"
+              className="px-4 py-3 w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] placeholder:text-[var(--color-ink-muted)] resize-y"
             />
           </div>
 

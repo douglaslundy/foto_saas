@@ -23,7 +23,7 @@ async function getTenantProfile() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
     .from('tenants')
-    .select('name, slug, custom_domain, primary_color, bio')
+    .select('name, slug, custom_domain, primary_color, bio, logo_storage_path')
     .eq('id', profile.tenant_id)
     .single()
 
@@ -35,6 +35,7 @@ async function getTenantProfile() {
     custom_domain: string | null
     primary_color: string | null
     bio: string | null
+    logo_storage_path: string | null
   }
 }
 
