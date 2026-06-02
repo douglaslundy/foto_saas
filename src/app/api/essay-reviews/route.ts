@@ -17,7 +17,9 @@ export async function GET() {
     .from('users').select('tenant_id, role').eq('id', user.id).single() as
     { data: { tenant_id: string; role: string } | null }
 
-  if (!profile?.tenant_id) return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
+    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: reviews, error } = await (admin as any)
@@ -44,7 +46,9 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single() as { data: { tenant_id: string; role: string; name: string | null; email: string } | null }
 
-  if (!profile?.tenant_id) return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
+    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  }
 
   let body: {
     event_id?: string

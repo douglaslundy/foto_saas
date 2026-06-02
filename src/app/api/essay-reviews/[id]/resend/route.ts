@@ -21,7 +21,9 @@ export async function POST(_request: NextRequest, { params }: Props) {
     .from('users').select('tenant_id, role, name').eq('id', user.id).single() as
     { data: { tenant_id: string; role: string; name: string | null } | null }
 
-  if (!profile?.tenant_id) return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
+    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review } = await (admin as any)

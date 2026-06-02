@@ -95,6 +95,13 @@ function buildMockAdmin() {
           order: jest.fn().mockResolvedValue({ data: [], error: null }),
         }
       }
+      if (table === 'photos') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          in: jest.fn().mockResolvedValue({ data: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }], error: null }),
+        }
+      }
       return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null }) }
     }),
   }

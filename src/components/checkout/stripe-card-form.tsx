@@ -14,10 +14,11 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
 
 interface StripeCardFormInnerProps {
   orderId: string
+  returnUrl?: string
   onSuccess: () => void
 }
 
-function StripeCardFormInner({ orderId, onSuccess }: StripeCardFormInnerProps) {
+function StripeCardFormInner({ orderId, returnUrl, onSuccess }: StripeCardFormInnerProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [loading, setLoading] = useState(false)
@@ -33,7 +34,7 @@ function StripeCardFormInner({ orderId, onSuccess }: StripeCardFormInnerProps) {
     const { error: submitError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/pedido/${orderId}`,
+        return_url: returnUrl ?? `${window.location.origin}/pedido/${orderId}`,
       },
     })
 
@@ -59,13 +60,14 @@ function StripeCardFormInner({ orderId, onSuccess }: StripeCardFormInnerProps) {
 interface StripeCardFormProps {
   clientSecret: string
   orderId: string
+  returnUrl?: string
   onSuccess: () => void
 }
 
-export function StripeCardForm({ clientSecret, orderId, onSuccess }: StripeCardFormProps) {
+export function StripeCardForm({ clientSecret, orderId, returnUrl, onSuccess }: StripeCardFormProps) {
   return (
     <Elements stripe={stripePromise} options={{ clientSecret }}>
-      <StripeCardFormInner orderId={orderId} onSuccess={onSuccess} />
+      <StripeCardFormInner orderId={orderId} returnUrl={returnUrl} onSuccess={onSuccess} />
     </Elements>
   )
 }

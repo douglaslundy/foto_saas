@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { StripeCardForm } from '@/components/checkout/stripe-card-form'
 
 type Photo = {
   id: string
@@ -262,8 +263,27 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
     )
   }
 
-  // ── PIX payment screen ───────────────────────────────────────
+  // ── Payment screen ───────────────────────────────────────────
   if (step === 'payment' && paymentData) {
+    // Stripe card payment
+    if (paymentData.payment_method === 'stripe' && paymentData.stripe_client_secret) {
+      return (
+        <div className="max-w-md mx-auto">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Pagamento com cartão</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Total: <strong>R$ {((paymentData.total_cents ?? 0) / 100).toFixed(2).replace('.', ',')}</strong>
+          </p>
+          <StripeCardForm
+            clientSecret={paymentData.stripe_client_secret}
+            orderId={reviewId}
+            returnUrl={typeof window !== 'undefined' ? window.location.href : undefined}
+            onSuccess={() => setStep('done')}
+          />
+        </div>
+      )
+    }
+
+    // PIX payment
     return (
       <div className="max-w-md mx-auto text-center">
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Pagamento PIX</h1>

@@ -59,6 +59,25 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   if (!event) return NextResponse.json({ error: 'Evento não encontrado.' }, { status: 404 })
 
+  // Validate all photo IDs belong to this event and are ready
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: validPhotos } = await (admin as any)
+    .from('photos')
+    .select('id')
+    .eq('event_id', review.event_id)
+    .eq('status', 'ready')
+    .in('id', selected_photo_ids) as { data: { id: string }[] | null }
+
+  const validPhotoIds = (validPhotos ?? []).map((p) => p.id)
+  const verifiedIds = selected_photo_ids.filter((id) => validPhotoIds.includes(id))
+
+  if (verifiedIds.length === 0) {
+    return NextResponse.json({ error: 'Nenhuma foto válida selecionada.' }, { status: 400 })
+  }
+
+  // Use verified IDs for price calculation and storage
+  const verifiedPhotoIds = verifiedIds
+
   // Calculate total with package discount
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: packages } = await (admin as any)
@@ -69,8 +88,8 @@ export async function POST(request: NextRequest, { params }: Props) {
     .order('min_quantity', { ascending: false }) as
     { data: { name: string; min_quantity: number; discount_percent: number }[] | null }
 
-  const subtotal = (event.price_cents ?? 0) * selected_photo_ids.length
-  const matchedPackage = (packages ?? []).find((p) => selected_photo_ids.length >= p.min_quantity)
+  const subtotal = (event.price_cents ?? 0) * verifiedPhotoIds.length
+  const matchedPackage = (packages ?? []).find((p) => verifiedPhotoIds.length >= p.min_quantity)
   const discountCents = matchedPackage ? Math.round(subtotal * matchedPackage.discount_percent / 100) : 0
   const totalCents = subtotal - discountCents
 
@@ -119,17 +138,24 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   // Update review
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin as any)
+  const { error: updateError } = await (admin as any)
     .from('essay_reviews')
     .update({
       status: 'submitted',
-      selected_photo_ids,
+      selected_photo_ids: verifiedPhotoIds,
       notes: notes ?? null,
       submitted_at: new Date().toISOString(),
       payment_status: resolvedPaymentStatus,
       payment_intent_id: paymentIntentId,
     })
     .eq('id', review.id)
+
+  if (updateError) {
+    console.error('[submit] DB update failed after payment:', updateError)
+    return NextResponse.json({
+      error: 'Seleção registrada mas erro ao salvar. Entre em contato com o fotógrafo.',
+    }, { status: 500 })
+  }
 
   // Notify photographer
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +179,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       to: photographerData.email,
       clientName: clientProfile?.name ?? 'Cliente',
       sessionTitle: event.title,
-      selectedCount: selected_photo_ids.length,
+      selectedCount: verifiedPhotoIds.length,
       dashboardUrl,
     })
   }
