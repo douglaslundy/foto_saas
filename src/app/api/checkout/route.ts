@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
 
   if (paymentMethod === 'stripe') {
     const stripeKey = process.env.STRIPE_SECRET_KEY ?? ''
-    if (!stripeKey || stripeKey === 'placeholder' || stripeKey.startsWith('placeholder')) {
+    if (!stripeKey || stripeKey.includes('placeholder') || (!stripeKey.startsWith('sk_') && !stripeKey.startsWith('rk_'))) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
       return NextResponse.json(
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
   } else {
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN ?? ''
-    if (!mpToken || mpToken === 'placeholder' || mpToken.startsWith('placeholder')) {
+    if (!mpToken || mpToken.includes('placeholder') || (!mpToken.startsWith('APP_USR-') && !mpToken.startsWith('TEST-'))) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
       return NextResponse.json(
