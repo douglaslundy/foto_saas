@@ -12,6 +12,7 @@ type EventItem = {
   event_date: string | null
   status: string
   cover_image_path?: string | null
+  effectiveCover?: string | null
 }
 
 export default async function EventosPage() {
@@ -41,12 +42,32 @@ export default async function EventosPage() {
     .single()) as { data: { slug: string } | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: events } = (await (adminClient as any)
+  const { data: rawEvents } = (await (adminClient as any)
     .from('events')
     .select('id, title, slug, type, event_date, status, cover_image_path')
     .eq('tenant_id', profile.tenant_id)
     .order('created_at', { ascending: false })
     .range(0, 49)) as { data: EventItem[] | null }
+
+  // Para eventos sem capa, busca a primeira foto como fallback
+  const eventsWithoutCover = (rawEvents ?? []).filter(e => !e.cover_image_path).map(e => e.id)
+  const firstPhotos: Record<string, string> = {}
+  if (eventsWithoutCover.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: photos } = await (adminClient as any)
+      .from('photos')
+      .select('event_id, public_storage_path')
+      .in('event_id', eventsWithoutCover)
+      .eq('status', 'ready')
+      .not('public_storage_path', 'is', null)
+      .order('created_at', { ascending: true }) as { data: { event_id: string; public_storage_path: string }[] | null }
+    photos?.forEach(p => { if (!firstPhotos[p.event_id]) firstPhotos[p.event_id] = p.public_storage_path })
+  }
+
+  const events = (rawEvents ?? []).map(e => ({
+    ...e,
+    effectiveCover: e.cover_image_path || firstPhotos[e.id] || null,
+  }))
 
   return (
     <div>
@@ -103,7 +124,7 @@ export default async function EventosPage() {
           </div>
         ) : (
           events.map((event) => (
-            <EventCard key={event.id} event={event} tenantSlug={tenantRow?.slug} />
+            <EventCard key={event.id} event={{ ...event, cover_image_path: event.effectiveCover }} tenantSlug={tenantRow?.slug} />
           ))
         )}
       </div>

@@ -23,7 +23,7 @@ export default async function TenantHomePage({ params }: Props) {
   const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null; banner_image_path: string | null; banner_title: string | null; banner_subtitle: string | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: events } = (await (adminClient as any)
+  const { data: rawEvents } = (await (adminClient as any)
     .from('events')
     .select('id, title, slug, type, event_date, created_at, cover_image_path')
     .eq('tenant_id', tenantData.id)
@@ -35,6 +35,26 @@ export default async function TenantHomePage({ params }: Props) {
       event_date: string | null; created_at: string; cover_image_path?: string | null
     }[] | null
   }
+
+  // Para eventos sem capa, usa a primeira foto como fallback
+  const eventsWithoutCover = (rawEvents ?? []).filter(e => !e.cover_image_path).map(e => e.id)
+  const firstPhotos: Record<string, string> = {}
+  if (eventsWithoutCover.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: photos } = await (adminClient as any)
+      .from('photos')
+      .select('event_id, public_storage_path')
+      .in('event_id', eventsWithoutCover)
+      .eq('status', 'ready')
+      .not('public_storage_path', 'is', null)
+      .order('created_at', { ascending: true }) as { data: { event_id: string; public_storage_path: string }[] | null }
+    photos?.forEach(p => { if (!firstPhotos[p.event_id]) firstPhotos[p.event_id] = p.public_storage_path })
+  }
+
+  const events = (rawEvents ?? []).map(e => ({
+    ...e,
+    cover_image_path: e.cover_image_path || firstPhotos[e.id] || null,
+  }))
 
   const bannerUrl = tenantData.banner_image_path
     ? `${STORAGE_URL}/${tenantData.banner_image_path}`
