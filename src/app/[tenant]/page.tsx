@@ -2,7 +2,6 @@ import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import { EventsSearchGrid } from './_components/events-search-grid'
-import { CarouselBanner, type CarouselSlide } from '@/components/portal/carousel-banner'
 
 type Props = { params: Promise<{ tenant: string }> }
 
@@ -12,10 +11,8 @@ export default async function TenantHomePage({ params }: Props) {
   const customDomain = headersList.get('x-custom-domain')
 
   const adminClient = createAdminClient()
-
   const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
-  // Resolve tenant — colunas base (sempre existem)
   const query = adminClient.from('tenants').select('id, name, slug, status, bio, banner_image_path, banner_title, banner_subtitle')
   const { data: tenant } = customDomain
     ? await query.eq('custom_domain', customDomain).single()
@@ -25,37 +22,6 @@ export default async function TenantHomePage({ params }: Props) {
 
   const tenantData = tenant as { id: string; slug: string; name: string; bio: string | null; banner_image_path: string | null; banner_title: string | null; banner_subtitle: string | null }
 
-  // Tentar buscar banner_mode (coluna nova — pode não existir em instâncias sem migration)
-  let bannerMode = 'static'
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: modeRow } = await (adminClient as any)
-      .from('tenants')
-      .select('banner_mode')
-      .eq('id', tenantData.id)
-      .single()
-    if (modeRow?.banner_mode) bannerMode = modeRow.banner_mode
-  } catch { /* migration ainda não aplicada — usar modo static */ }
-
-  // Fetch carousel slides if mode is carousel
-  let carouselSlides: CarouselSlide[] = []
-  if (bannerMode === 'carousel') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: bImgs } = await (adminClient as any)
-      .from('banner_images')
-      .select('id, storage_path, title, subtitle')
-      .eq('tenant_id', tenantData.id)
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-    carouselSlides = (bImgs ?? []).map((b: { id: string; storage_path: string; title: string | null; subtitle: string | null }) => ({
-      id: b.id,
-      url: `${STORAGE_URL}/${b.storage_path}`,
-      title: b.title,
-      subtitle: b.subtitle,
-    }))
-  }
-
-  // Fetch published events
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: events } = (await (adminClient as any)
     .from('events')
@@ -65,66 +31,46 @@ export default async function TenantHomePage({ params }: Props) {
     .order('event_date', { ascending: false })
     .range(0, 49)) as {
     data: {
-      id: string
-      title: string
-      slug: string
-      type: 'event' | 'session'
-      event_date: string | null
-      created_at: string
-      cover_image_path?: string | null
+      id: string; title: string; slug: string; type: 'event' | 'session'
+      event_date: string | null; created_at: string; cover_image_path?: string | null
     }[] | null
   }
 
-  const tenantName = tenantData.name
+  const bannerUrl = tenantData.banner_image_path
+    ? `${STORAGE_URL}/${tenantData.banner_image_path}`
+    : null
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
-      {/* Hero section */}
-      <div
-        className="relative min-h-[380px] flex flex-col justify-between overflow-hidden"
-        style={{
-          background: '#0d0f14',
-          backgroundImage:
-            'radial-gradient(ellipse 60% 50% at 30% 20%, rgba(200,169,110,0.15), transparent)',
-        }}
-      >
-        {bannerMode === 'carousel' && carouselSlides.length > 0 ? (
-          <CarouselBanner slides={carouselSlides} className="absolute inset-0" />
-        ) : tenantData.banner_image_path ? (
+    <div className="min-h-screen bg-white">
+      {/* Banner */}
+      <div className="relative h-60 bg-[#111827] overflow-hidden">
+        {bannerUrl && (
           <div
             className="absolute inset-0"
-            style={{
-              backgroundImage: `url(${STORAGE_URL}/${tenantData.banner_image_path})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
+            style={{ backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
           />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-accent)] via-[var(--color-ink-soft)] to-[var(--color-ink)]" />
         )}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
-          {/* Logo/avatar do tenant */}
-          <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-white/30 flex items-center justify-center mb-6 text-3xl font-bold text-white">
-            {tenantName?.[0]?.toUpperCase() || '📷'}
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-3">{tenantName}</h1>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
+          <h1 className="text-3xl font-bold text-white">{tenantData.name}</h1>
           {tenantData.bio && (
-            <p className="text-white/60 text-base max-w-md">{tenantData.bio}</p>
+            <p className="text-white/70 text-sm mt-2 max-w-md">{tenantData.bio}</p>
           )}
         </div>
       </div>
 
-      {/* Eventos e Ensaios */}
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-6">Eventos e Ensaios</h2>
-
+      {/* Eventos */}
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-[#111827]">Eventos e Ensaios</h2>
+        </div>
         <EventsSearchGrid events={events ?? []} tenantSlug={tenantData.slug} />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--color-border)] py-8 text-center">
-        <p className="text-xs text-[var(--color-ink-muted)]">
-          © {new Date().getFullYear()} {tenantName} — powered by FotoSaaS
+      {/* Footer simples */}
+      <footer className="border-t border-[#e5e7eb] py-6 text-center">
+        <p className="text-xs text-[#9ca3af]">
+          © {new Date().getFullYear()} {tenantData.name}
         </p>
       </footer>
     </div>
