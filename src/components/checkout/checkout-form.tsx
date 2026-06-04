@@ -4,12 +4,11 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { StripeCardForm } from './stripe-card-form'
 import { PixDisplay } from './pix-display'
 
 type CheckoutState =
   | { step: 'form' }
-  | { step: 'stripe'; clientSecret: string; orderId: string }
+  | { step: 'redirect'; checkoutUrl: string; orderId: string }
   | { step: 'pix'; pixQrCode: string; pixQrCodeBase64: string; orderId: string }
   | { step: 'done'; orderId: string }
 
@@ -50,7 +49,12 @@ export function CheckoutForm({ initialEmail = '' }: CheckoutFormProps) {
       }
 
       if (paymentMethod === 'stripe') {
-        setState({ step: 'stripe', clientSecret: data.clientSecret as string, orderId: data.orderId as string })
+        const checkoutUrl = data.checkoutUrl as string | undefined
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl
+          return
+        }
+        setError('Não foi possível abrir o checkout do Mercado Pago.')
       } else {
         setState({
           step: 'pix',
@@ -65,16 +69,6 @@ export function CheckoutForm({ initialEmail = '' }: CheckoutFormProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  if (state.step === 'stripe') {
-    return (
-      <StripeCardForm
-        clientSecret={state.clientSecret}
-        orderId={state.orderId}
-        onSuccess={() => setState({ step: 'done', orderId: state.orderId })}
-      />
-    )
   }
 
   if (state.step === 'pix') {

@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getOrCreateCartSession } from '@/lib/cart-session'
-import { createStripePaymentIntent } from '@/lib/payments/stripe'
-import { createMercadoPagoPix } from '@/lib/payments/mercadopago'
-import { getMercadoPagoAccessToken } from '@/lib/payments/mercadopago-settings'
+import {
+  createMercadoPagoCheckoutPreference,
+  createMercadoPagoPix,
+  getMercadoPagoAccessToken,
+} from '@/lib/payments/mercadopago'
 
 type CartItem = {
   id: string
@@ -22,7 +24,6 @@ type PackageRow = {
 export async function POST(request: NextRequest) {
   const { sessionId } = await getOrCreateCartSession()
 
-  // Resolve logged-in user (if any) to attach to the order
   const serverSupabase = await createClient()
   const { data: { user: loggedInUser } } = await serverSupabase.auth.getUser()
   const clientUserId = loggedInUser?.id ?? null
@@ -64,7 +65,6 @@ export async function POST(request: NextRequest) {
   const items = cartItems as CartItem[]
   const subtotalCents = items.reduce((sum: number, i: CartItem) => sum + i.price_cents, 0)
 
-  // Determine applicable package discount
   let discountCents = 0
   let packageName: string | null = null
 
@@ -133,67 +133,70 @@ export async function POST(request: NextRequest) {
   }
 
   if (paymentMethod === 'stripe') {
-    const stripeKey = process.env.STRIPE_SECRET_KEY ?? ''
-    if (!stripeKey || stripeKey.includes('placeholder') || (!stripeKey.startsWith('sk_') && !stripeKey.startsWith('rk_'))) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (adminClient as any).from('orders').delete().eq('id', order.id)
-      return NextResponse.json(
-        { error: 'Pagamento com cartão não está configurado. Use PIX ou contate o suporte.' },
-        { status: 503 }
-      )
-    }
-
-    try {
-      const { paymentIntentId, clientSecret } = await createStripePaymentIntent({
-        amountCents: totalCents,
-        currency: 'brl',
-        metadata: { orderId: order.id },
-      })
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (adminClient as any)
-        .from('orders')
-        .update({ payment_provider_id: paymentIntentId })
-        .eq('id', order.id)
-
-      return NextResponse.json({ orderId: order.id, paymentMethod: 'stripe', clientSecret }, { status: 201 })
-    } catch (err) {
-      console.error('[POST /api/checkout] stripe error', err)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (adminClient as any).from('orders').delete().eq('id', order.id)
-      return NextResponse.json({ error: 'Erro ao processar pagamento com cartão. Tente PIX.' }, { status: 500 })
-    }
-  } else {
     const mpToken = await getMercadoPagoAccessToken()
     if (!mpToken) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
       return NextResponse.json(
-        { error: 'PIX não está configurado. Use cartão ou contate o suporte.' },
+        { error: 'Mercado Pago não está configurado. Use PIX ou contate o suporte.' },
         { status: 503 }
       )
     }
 
     try {
-      const { pixQrCode, pixQrCodeBase64, paymentId } = await createMercadoPagoPix({
+      const successUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/pedido/${order.id}`
+      const { checkoutUrl, preferenceId } = await createMercadoPagoCheckoutPreference({
         amountCents: totalCents,
         description: `Fotos - Pedido ${order.id}`,
         payerEmail: email,
         orderId: order.id,
+        successUrl,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any)
         .from('orders')
-        .update({ payment_provider_id: paymentId })
+        .update({ payment_provider_id: preferenceId })
         .eq('id', order.id)
 
-      return NextResponse.json({ orderId: order.id, paymentMethod: 'pix', pixQrCode, pixQrCodeBase64 }, { status: 201 })
+      return NextResponse.json({ orderId: order.id, paymentMethod: 'stripe', checkoutUrl }, { status: 201 })
     } catch (err) {
-      console.error('[POST /api/checkout] mercadopago error', err)
+      console.error('[POST /api/checkout] mercadopago checkout error', err)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
-      return NextResponse.json({ error: 'Erro ao gerar PIX. Tente novamente.' }, { status: 500 })
+      return NextResponse.json({ error: 'Erro ao processar pagamento com cartão. Tente PIX.' }, { status: 500 })
     }
+  }
+
+  const mpToken = await getMercadoPagoAccessToken()
+  if (!mpToken) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).from('orders').delete().eq('id', order.id)
+    return NextResponse.json(
+      { error: 'PIX não está configurado. Use cartão ou contate o suporte.' },
+      { status: 503 }
+    )
+  }
+
+  try {
+    const { pixQrCode, pixQrCodeBase64, paymentId } = await createMercadoPagoPix({
+      amountCents: totalCents,
+      description: `Fotos - Pedido ${order.id}`,
+      payerEmail: email,
+      orderId: order.id,
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from('orders')
+      .update({ payment_provider_id: paymentId })
+      .eq('id', order.id)
+
+    return NextResponse.json({ orderId: order.id, paymentMethod: 'pix', pixQrCode, pixQrCodeBase64 }, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/checkout] mercadopago error', err)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).from('orders').delete().eq('id', order.id)
+    return NextResponse.json({ error: 'Erro ao gerar PIX. Tente novamente.' }, { status: 500 })
   }
 }

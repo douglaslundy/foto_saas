@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { RevenueChart } from './_components/revenue-chart'
 import { getDashboardFallbackPath } from '@/lib/dashboard-access'
+import { syncMercadoPagoOrderByExternalReference } from '@/lib/payments/mercadopago'
 
 type OrderRow = {
   id: string
@@ -11,6 +12,12 @@ type OrderRow = {
   payment_method: string
   created_at: string
   status: string
+  order_items: { events: { tenant_id: string } | null }[]
+}
+
+type PendingOrderRow = {
+  id: string
+  payment_method: string
   order_items: { events: { tenant_id: string } | null }[]
 }
 
@@ -81,6 +88,32 @@ export default async function FinanceiroPage() {
   const override = tenantCommissionResult.data?.commission_override_percent
   const globalRate = parseInt(globalSettingResult.data?.value ?? '10', 10)
   const commissionPercent = override !== null && override !== undefined ? override : globalRate
+
+  // Reconcile recent pending orders before rendering the report so confirmed MP payments
+  // appear without waiting for a webhook retry.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: pendingOrders } = await (adminClient as any)
+    .from('orders')
+    .select('id, status, payment_method, order_items(event_id, events(tenant_id))')
+    .in('status', ['pending', 'processing'])
+    .order('created_at', { ascending: false })
+    .limit(100) as { data: PendingOrderRow[] | null }
+
+  await Promise.all(
+    (pendingOrders ?? [])
+      .filter((o) => o.order_items?.some((oi) => oi.events?.tenant_id === profile.tenant_id))
+      .map(async (o) => {
+        if (o.payment_method === 'manual') return
+        const syncStatus = await syncMercadoPagoOrderByExternalReference(o.id)
+        if (syncStatus === 'paid') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (adminClient as any)
+            .from('orders')
+            .update({ status: 'paid', paid_at: new Date().toISOString() })
+            .eq('id', o.id)
+        }
+      })
+  )
 
   // Fetch all paid orders with tenant info via joins
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

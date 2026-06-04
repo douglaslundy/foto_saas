@@ -80,7 +80,7 @@ export default async function TenantLayout({
           <div className="flex items-center gap-4">
             <Link
               href={`/${tenantRecord.slug}/minha-conta`}
-              className="text-sm text-[#6b7280] hover:text-[#111827] transition-colors hidden sm:block"
+              className="text-sm text-[#6b7280] hover:text-[#111827] transition-colors"
             >
               Minha Conta
             </Link>
