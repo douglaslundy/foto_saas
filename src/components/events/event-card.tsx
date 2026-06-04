@@ -29,11 +29,17 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
   async function handleDelete() {
     if (!confirm(`Excluir "${event.title}"? Esta ação não pode ser desfeita.`)) return
     setLoading('delete')
-    const res = await fetch(`/api/events/${event.id}`, { method: 'DELETE' })
-    if (res.ok || res.status === 204) { router.refresh() }
-    else {
-      const data = (await res.json().catch(() => ({}))) as { error?: string }
-      alert(data.error ?? 'Erro ao excluir evento')
+    try {
+      const res = await fetch(`/api/events/${event.id}`, { method: 'DELETE' })
+      if (res.ok || res.status === 204) {
+        router.refresh()
+      } else {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        alert(data.error ?? 'Erro ao excluir evento')
+      }
+    } catch {
+      alert('Erro de rede ao excluir evento.')
+    } finally {
       setLoading(null)
     }
   }

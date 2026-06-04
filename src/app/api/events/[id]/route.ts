@@ -144,6 +144,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     .delete()
     .eq('event_id', id)
 
+  // Order history must remain intact, so detach this event from order items before deleting it.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('order_items')
+    .update({ event_id: null })
+    .eq('event_id', id)
+
   // Fetch photo storage paths before deleting the photo rows.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos } = await (adminClient as any)
