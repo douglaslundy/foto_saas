@@ -63,6 +63,13 @@ export function LoginForm({ tenantSlug }: LoginFormProps) {
       .eq('id', user.id)
       .single()
 
+    if (profile && profile.role === 'client_inactive') {
+      await supabase.auth.signOut()
+      setError('Conta inativa. Entre em contato com o administrador.')
+      setLoading(false)
+      return
+    }
+
     if (profile && profile.role !== 'client') {
       // Not a client — sign out and reject
       await supabase.auth.signOut()

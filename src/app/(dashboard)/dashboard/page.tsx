@@ -106,10 +106,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Atalhos rápidos */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { icon: '＋', label: 'Novo Evento', href: '/dashboard/eventos/novo' },
           { icon: '↑', label: 'Enviar Fotos', href: '/dashboard/eventos' },
+          { icon: '🧾', label: 'Ver Pedidos', href: '/dashboard/pedidos' },
           { icon: '👥', label: 'Ver Clientes', href: '/dashboard/clientes' },
           { icon: '⚙', label: 'Configurações', href: '/dashboard/configuracoes' },
         ].map((item) => (

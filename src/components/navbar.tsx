@@ -13,6 +13,7 @@ interface NavbarProps {
 const navLinks = [
   { href: '/dashboard', label: 'Início', exact: true },
   { href: '/dashboard/eventos', label: 'Eventos' },
+  { href: '/dashboard/pedidos', label: 'Pedidos' },
   { href: '/dashboard/financeiro', label: 'Financeiro' },
   { href: '/dashboard/clientes', label: 'Clientes' },
   { href: '/dashboard/equipe', label: 'Equipe' },

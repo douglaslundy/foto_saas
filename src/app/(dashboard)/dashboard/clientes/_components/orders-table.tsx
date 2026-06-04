@@ -33,6 +33,14 @@ const statusClass: Record<string, string> = {
   delivered: 'bg-blue-50 text-blue-700 border border-blue-200',
 }
 
+const paymentLabel: Record<string, string> = {
+  paid: 'Pago',
+  pending: 'Pendente',
+  cancelled: 'Cancelado',
+  refunded: 'Reembolsado',
+  delivered: 'Pago',
+}
+
 export function OrdersTable({ orders }: OrdersTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -64,7 +72,6 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
       <input
         type="search"
         placeholder="Buscar por e-mail ou ID do pedido..."
@@ -73,12 +80,10 @@ export function OrdersTable({ orders }: OrdersTableProps) {
         className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)]/40 transition-shadow"
       />
 
-      {/* Table card */}
       <div
         className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
         style={{ boxShadow: 'var(--shadow-sm)' }}
       >
-        {/* Table header */}
         <div className="bg-[var(--color-surface-alt)] border-b border-[var(--color-border-strong)]">
           <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
             <span>E-mail</span>
@@ -91,7 +96,6 @@ export function OrdersTable({ orders }: OrdersTableProps) {
           </div>
         </div>
 
-        {/* Rows */}
         <div className="divide-y divide-[var(--color-border)]">
           {filtered.length === 0 ? (
             <div className="px-6 py-16 text-center">
@@ -136,7 +140,12 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                   })}
                 </p>
                 <p className="text-sm text-[var(--color-ink-muted)]">
-                  {order.payment_method === 'pix' ? 'PIX' : 'Cartão'}
+                  <span className="block font-semibold text-[var(--color-ink)]">
+                    {paymentLabel[order.status] ?? (order.status === 'paid' ? 'Pago' : 'Pendente')}
+                  </span>
+                  <span className="block text-xs text-[var(--color-ink-muted)]">
+                    {order.payment_method === 'pix' ? 'PIX' : 'Cartão'}
+                  </span>
                 </p>
                 <span
                   className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -149,7 +158,6 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                 <p className="text-sm text-[var(--color-ink-muted)]">
                   {new Date(order.created_at).toLocaleDateString('pt-BR')}
                 </p>
-                {/* Delivery action */}
                 <div className="shrink-0">
                   {order.status === 'paid' && (
                     <button
