@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PerfilStudioForm } from './_components/perfil-studio-form'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 async function getTenantProfile() {
   const supabase = await createClient()
@@ -18,7 +19,7 @@ async function getTenantProfile() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
@@ -27,7 +28,7 @@ async function getTenantProfile() {
     .eq('id', profile.tenant_id)
     .single()
 
-  if (!tenant) redirect('/login')
+  if (!tenant) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   return tenant as {
     name: string

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect, notFound } from 'next/navigation'
 import { EventForm } from '@/components/events/event-form'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -23,7 +24,7 @@ export default async function EditarEventoPage({ params }: Props) {
     .single()) as { data: { tenant_id: string; role: string } | null }
 
   if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
-    redirect('/login')
+    redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

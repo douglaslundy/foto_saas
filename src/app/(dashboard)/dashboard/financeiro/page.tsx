@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { RevenueChart } from './_components/revenue-chart'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type OrderRow = {
   id: string
@@ -28,7 +29,7 @@ async function getProfile() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   return profile as { tenant_id: string; role: string }
 }
 

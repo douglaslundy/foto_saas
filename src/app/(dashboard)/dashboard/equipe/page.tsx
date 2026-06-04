@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 import { InviteForm } from './_components/invite-form'
 import { MemberList } from './_components/member-list'
 
@@ -28,7 +29,7 @@ async function getProfile() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   return { profile: profile as { id: string; tenant_id: string; role: string } }
 }
 
@@ -42,6 +43,7 @@ export default async function EquipePage() {
     .from('users')
     .select('id, email, role, created_at, can_create_events, internal_commission_percent')
     .eq('tenant_id', profile.tenant_id)
+    .in('role', ['photographer', 'sub_photographer', 'admin'])
     .order('created_at', { ascending: true })) as { data: Member[] | null }
 
   return (

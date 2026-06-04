@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { EventCard } from '@/components/events/event-card'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type EventItem = {
   id: string
@@ -31,7 +32,7 @@ export default async function EventosPage() {
     .single()) as { data: { tenant_id: string; role: string } | null }
 
   if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
-    redirect('/login')
+    redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -12,6 +12,12 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function resolveRedirect(target: string | null): string {
+    if (!target) return '/dashboard'
+    if (target.startsWith('/')) return target
+    return `/${target.replace(/^\/+/, '')}`
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -26,7 +32,7 @@ export function LoginForm() {
       return
     }
 
-    const redirectTo = searchParams.get('redirect') ?? '/dashboard'
+    const redirectTo = resolveRedirect(searchParams.get('redirect'))
     router.push(redirectTo)
     router.refresh()
   }

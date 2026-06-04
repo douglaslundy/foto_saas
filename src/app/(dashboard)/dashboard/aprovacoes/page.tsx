@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { ApprovalQueue } from './_components/approval-queue'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type PendingEvent = {
   id: string
@@ -25,7 +26,7 @@ export default async function AprovacoesPage() {
     .eq('id', user.id)
     .single() as { data: { tenant_id: string; role: string } | null }
 
-  if (!profile || profile.role !== 'photographer') redirect('/dashboard')
+  if (!profile || profile.role !== 'photographer') redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   // Buscar eventos pendentes — sem join complexo; buscar separadamente se necessário
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

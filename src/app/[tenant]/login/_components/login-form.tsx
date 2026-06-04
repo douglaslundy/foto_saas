@@ -19,6 +19,12 @@ export function LoginForm({ tenantSlug }: LoginFormProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function resolveRedirect(target: string | null): string {
+    if (!target) return `/${tenantSlug}`
+    if (target.startsWith('/')) return target
+    return `/${tenantSlug}/${target.replace(/^\/+/, '')}`
+  }
+
   useEffect(() => {
     if (searchParams.get('registered') === '1') {
       setSuccess('Conta criada com sucesso! Faça login para continuar.')
@@ -65,7 +71,7 @@ export function LoginForm({ tenantSlug }: LoginFormProps) {
       return
     }
 
-    const redirectTo = searchParams.get('redirect') ?? `/${tenantSlug}`
+    const redirectTo = resolveRedirect(searchParams.get('redirect'))
     router.push(redirectTo)
     router.refresh()
   }

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import { AccountClient } from './_components/account-client'
 
 type Props = { params: Promise<{ tenant: string }> }
 
@@ -18,17 +19,15 @@ type Order = {
 export default async function MinhaContaPage({ params }: Props) {
   const { tenant: tenantSlug } = await params
 
-  // Auth guard
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect(`/${tenantSlug}/login?redirect=minha-conta`)
+    redirect(`/${tenantSlug}/login?redirect=/${tenantSlug}/minha-conta`)
   }
 
-  // Check role
   const adminClient = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (adminClient as any)
@@ -51,7 +50,6 @@ export default async function MinhaContaPage({ params }: Props) {
 
   const ordersData = (ordersRaw ?? []) as Omit<Order, 'item_count'>[]
 
-  // Fetch item counts per order
   const orders: Order[] = await Promise.all(
     ordersData.map(async (order) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,9 +81,9 @@ export default async function MinhaContaPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)]">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-2xl mx-auto px-6 py-12 space-y-10">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <h1 className="font-display text-3xl font-bold text-[var(--color-ink)] mb-1">
             Minha Conta
           </h1>
@@ -93,6 +91,13 @@ export default async function MinhaContaPage({ params }: Props) {
             Olá, <span className="font-medium text-[var(--color-ink)]">{profile.name}</span>
           </p>
         </div>
+
+        {/* Account settings (edit + logout) */}
+        <AccountClient
+          tenantSlug={tenantSlug}
+          initialName={profile.name ?? ''}
+          email={user.email ?? ''}
+        />
 
         {/* Orders */}
         <section>
@@ -156,7 +161,7 @@ export default async function MinhaContaPage({ params }: Props) {
         </section>
 
         {/* Back link */}
-        <div className="mt-8">
+        <div>
           <Link
             href={`/${tenantSlug}`}
             className="text-sm text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"

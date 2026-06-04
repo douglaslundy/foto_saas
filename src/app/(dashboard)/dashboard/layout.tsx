@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -14,9 +15,36 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // @ts-expect-error: profile type
-  if (!profile || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
-    redirect('/login')
+  // Avoid redirect loops if the authenticated account has no dashboard profile yet.
+  if (!profile || !['photographer', 'sub_photographer', 'admin'].includes((profile as { role?: string | null }).role ?? '')) {
+    if ((profile as { role?: string | null } | null)?.role === 'admin') {
+      redirect('/admin')
+    }
+
+    return (
+      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-lg border border-[#e5e7eb] bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-[#111827] mb-2">Acesso ao painel indisponível</h1>
+          <p className="text-sm text-[#6b7280] mb-6">
+            Sua conta está autenticada, mas o perfil do dashboard ainda não está configurado.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href={getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null)}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-md bg-[#2563eb] text-sm font-semibold text-white hover:bg-[#1d4ed8] transition-colors"
+            >
+              Continuar
+            </a>
+            <a
+              href="/api/auth/signout"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-[#e5e7eb] text-sm font-medium text-[#374151] hover:bg-[#f9fafb] transition-colors"
+            >
+              Sair
+            </a>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const profileWithName = profile as { name?: string; role?: string; tenant_id?: string } | null

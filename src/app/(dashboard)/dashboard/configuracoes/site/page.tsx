@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import SiteForm from './_components/site-form'
 import { BannerManager } from './_components/banner-manager'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 export const metadata = { title: 'Configurações do Site' }
 
@@ -26,7 +27,7 @@ export default async function SitePage() {
     .select('tenant_id')
     .eq('id', user.id)
     .single()
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)

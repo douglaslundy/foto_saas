@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import PackagesManager from './_components/packages-manager'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 export const metadata = { title: 'Pacotes' }
 
@@ -35,7 +36,7 @@ export default async function PacotesPage() {
     .select('tenant_id')
     .eq('id', user.id)
     .single()
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: packages } = await (admin as any)

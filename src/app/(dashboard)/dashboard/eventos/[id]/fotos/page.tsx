@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { FotosManager } from '@/components/photos/fotos-manager'
 import { SendToClientButton } from '@/components/essay/send-to-client-button'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -53,7 +54,7 @@ export default async function FotosEventoPage({ params }: Props) {
     .single()) as { data: { tenant_id: string; role: string } | null }
 
   if (!profile?.tenant_id || !['photographer', 'sub_photographer', 'admin'].includes(profile.role)) {
-    redirect('/login')
+    redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   }
 
   const [eventResult, photosResult, reviewResult] = await Promise.all([

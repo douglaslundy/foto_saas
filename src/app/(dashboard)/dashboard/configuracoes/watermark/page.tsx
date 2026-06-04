@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import WatermarkForm from './_components/watermark-form'
+import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 export const metadata = { title: "Marca d'água" }
 
@@ -14,7 +15,7 @@ export default async function WatermarkPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (admin as any)
     .from('users').select('tenant_id').eq('id', user.id).single()
-  if (!profile?.tenant_id) redirect('/login')
+  if (!profile?.tenant_id) redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: config } = await (admin as any)
