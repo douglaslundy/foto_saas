@@ -2,92 +2,106 @@
 
 import { useState } from 'react'
 
-type OrderRow = {
-  id: string
-  client_email: string
-  total_cents: number
-  payment_method: string
-  status: string
-  created_at: string
+export type ClientRow = {
+  email: string
+  order_count: number
+  total_spent_cents: number
+  last_order_date: string
 }
 
 interface ClientesTableProps {
-  orders: OrderRow[]
+  clients: ClientRow[]
 }
 
 const PAGE_SIZE = 20
 
-const statusLabel: Record<string, string> = {
-  paid: 'Pago',
-  pending: 'Pendente',
-  cancelled: 'Cancelado',
-  refunded: 'Reembolsado',
-}
-
-const statusClass: Record<string, string> = {
-  paid: 'text-[var(--color-success)] bg-[var(--color-success)]/10',
-  pending: 'text-amber-600 bg-amber-100',
-  cancelled: 'text-[var(--color-danger)] bg-[var(--color-danger)]/10',
-  refunded: 'text-[var(--color-ink-muted)] bg-[var(--color-surface-alt)]',
-}
-
-export function ClientesTable({ orders }: ClientesTableProps) {
+export function ClientesTable({ clients }: ClientesTableProps) {
+  const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const totalPages = Math.max(1, Math.ceil(orders.length / PAGE_SIZE))
+  const filtered = clients.filter((c) =>
+    c.email.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const start = (page - 1) * PAGE_SIZE
-  const pageItems = orders.slice(start, start + PAGE_SIZE)
+  const pageItems = filtered.slice(start, start + PAGE_SIZE)
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-muted/40">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium">E-mail</th>
-              <th className="px-4 py-2 text-left font-medium">Pedido</th>
-              <th className="px-4 py-2 text-left font-medium">Valor</th>
-              <th className="px-4 py-2 text-left font-medium">Pagamento</th>
-              <th className="px-4 py-2 text-left font-medium">Status</th>
-              <th className="px-4 py-2 text-left font-medium">Data</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {pageItems.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
-                  Nenhum pedido encontrado.
-                </td>
-              </tr>
-            ) : (
-              pageItems.map((order) => (
-                <tr key={order.id}>
-                  <td className="px-4 py-3">{order.client_email}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8)}</td>
-                  <td className="px-4 py-3 font-medium">
-                    {(order.total_cents / 100).toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </td>
-                  <td className="px-4 py-3">
-                    {order.payment_method === 'pix' ? 'PIX' : 'Cartão'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium ${statusClass[order.status] ?? 'bg-gray-100 text-gray-600'}`}
-                    >
-                      {statusLabel[order.status] ?? order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(order.created_at).toLocaleDateString('pt-BR')}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* Search */}
+      <input
+        type="search"
+        placeholder="Buscar por e-mail..."
+        value={search}
+        onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+        className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-card)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)]/40 transition-shadow"
+      />
+
+      {/* Table */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="bg-[var(--color-surface-alt)] border-b border-[var(--color-border-strong)]">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
+            <span>E-mail</span>
+            <span>Pedidos</span>
+            <span>Total gasto</span>
+            <span>Último pedido</span>
+          </div>
+        </div>
+
+        <div className="divide-y divide-[var(--color-border)]">
+          {pageItems.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <svg
+                className="mx-auto mb-4 text-[var(--color-ink-muted)]"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                opacity="0.4"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <p className="font-display text-lg font-semibold text-[var(--color-ink)]">
+                Nenhum cliente encontrado.
+              </p>
+              <p className="text-[var(--color-ink-muted)] text-sm mt-1">
+                {search
+                  ? 'Tente buscar por outro e-mail.'
+                  : 'Clientes aparecem aqui quando realizam compras.'}
+              </p>
+            </div>
+          ) : (
+            pageItems.map((client) => (
+              <div
+                key={client.email}
+                className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-[var(--color-surface)] transition-colors"
+              >
+                <p className="text-sm text-[var(--color-ink)] truncate">{client.email}</p>
+                <p className="text-sm text-[var(--color-ink-muted)]">
+                  {client.order_count} pedido{client.order_count !== 1 ? 's' : ''}
+                </p>
+                <p className="font-display text-sm font-semibold text-[var(--color-ink)]">
+                  {(client.total_spent_cents / 100).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  })}
+                </p>
+                <p className="text-sm text-[var(--color-ink-muted)]">
+                  {new Date(client.last_order_date).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {totalPages > 1 && (
@@ -99,11 +113,9 @@ export function ClientesTable({ orders }: ClientesTableProps) {
           >
             ← Anterior
           </button>
-
-          <span className="text-muted-foreground">
+          <span className="text-[var(--color-ink-muted)]">
             Página {page} de {totalPages}
           </span>
-
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
