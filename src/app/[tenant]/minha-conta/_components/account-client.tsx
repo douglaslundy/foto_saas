@@ -15,6 +15,10 @@ export function AccountClient({ tenantSlug, initialName, email }: AccountClientP
   const [name, setName] = useState(initialName)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
 
   async function handleSaveName(e: React.FormEvent) {
@@ -38,6 +42,37 @@ export function AccountClient({ tenantSlug, initialName, email }: AccountClientP
       setSaveMsg('Erro de rede. Tente novamente.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordMsg(null)
+
+    if (password.length < 6) {
+      setPasswordMsg('A senha deve ter ao menos 6 caracteres.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setPasswordMsg('As senhas não conferem.')
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) {
+        setPasswordMsg(`Erro: ${error.message}`)
+      } else {
+        setPasswordMsg('Senha alterada com sucesso.')
+        setPassword('')
+        setConfirmPassword('')
+      }
+    } catch {
+      setPasswordMsg('Erro de rede. Tente novamente.')
+    } finally {
+      setPasswordSaving(false)
     }
   }
 
@@ -97,6 +132,55 @@ export function AccountClient({ tenantSlug, initialName, email }: AccountClientP
             className="h-11 px-6 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? 'Salvando...' : 'Salvar alterações'}
+          </button>
+        </form>
+      </section>
+
+      {/* Change password */}
+      <section className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-6">
+        <h2 className="font-display text-lg font-semibold text-[var(--color-ink)] mb-5">
+          Alterar senha
+        </h2>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div>
+            <label className={labelClass}>Nova senha</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Confirmar nova senha</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className={inputClass}
+            />
+          </div>
+          {passwordMsg && (
+            <p
+              className={`text-sm ${
+                passwordMsg.startsWith('Senha') || passwordMsg.includes('sucesso')
+                  ? 'text-[var(--color-success,#16a34a)]'
+                  : 'text-[var(--color-danger)]'
+              }`}
+            >
+              {passwordMsg}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={passwordSaving}
+            className="h-11 px-6 rounded-[var(--radius-sm)] bg-[var(--color-cta)] text-[var(--color-cta-fg)] font-semibold text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {passwordSaving ? 'Alterando...' : 'Alterar senha'}
           </button>
         </form>
       </section>

@@ -30,10 +30,9 @@ export async function generateDownloadUrls(photoIds: string[]): Promise<Download
   for (const photo of photos) {
     if (!photo.original_storage_path) continue
 
-    // Use the watermarked version from photos-public if available;
-    // fall back to photos-original when the worker hasn't processed it yet.
-    const bucket = photo.public_storage_path ? 'photos-public' : 'photos-original'
-    const storagePath = photo.public_storage_path ?? photo.original_storage_path
+    // Purchases must always expose the original image, never the watermarked version.
+    const bucket = 'photos-original'
+    const storagePath = photo.original_storage_path
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: signError } = await (adminClient as any).storage

@@ -177,8 +177,8 @@ export async function GET(
 
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i] as { id: string; original_storage_path: string | null; public_storage_path: string | null }
-    const bucket = photo.public_storage_path ? 'photos-public' : 'photos-original'
-    const storagePath = photo.public_storage_path ?? photo.original_storage_path
+    const bucket = 'photos-original'
+    const storagePath = photo.original_storage_path
 
     if (!storagePath) continue
 
