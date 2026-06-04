@@ -6,20 +6,28 @@ import { useRouter } from 'next/navigation'
 import { EventStatusBadge } from './event-status-badge'
 
 type EventItem = {
-  id: string; title: string; slug: string; type: 'event' | 'session'
-  event_date: string | null; status: string; cover_image_path?: string | null
+  id: string
+  title: string
+  slug: string
+  type: 'event' | 'session'
+  event_date: string | null
+  status: string
+  cover_image_path?: string | null
+  linked_sales_count?: number
 }
 
 export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState<'publish' | 'delete' | null>(null)
   const typeLabel = event.type === 'event' ? 'Evento' : 'Ensaio'
+  const linkedSalesCount = event.linked_sales_count ?? 0
 
   async function handlePublish() {
     setLoading('publish')
     const res = await fetch(`/api/events/${event.id}/publish`, { method: 'POST' })
-    if (res.ok) { router.refresh() }
-    else {
+    if (res.ok) {
+      router.refresh()
+    } else {
       const data = (await res.json().catch(() => ({}))) as { error?: string }
       alert(data.error ?? 'Erro ao publicar evento')
     }
@@ -27,7 +35,12 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
   }
 
   async function handleDelete() {
-    if (!confirm(`Excluir "${event.title}"? Esta ação não pode ser desfeita.`)) return
+    const deleteMessage = linkedSalesCount > 0
+      ? `Excluir "${event.title}"? Este evento tem ${linkedSalesCount} venda(s) vinculada(s). Ao excluir, o evento, as fotos, os arquivos do storage e o historico dessas vendas tambem serao removidos. Esta acao nao pode ser desfeita.`
+      : `Excluir "${event.title}"? Esta acao nao pode ser desfeita.`
+
+    if (!confirm(deleteMessage)) return
+
     setLoading('delete')
     try {
       const res = await fetch(`/api/events/${event.id}`, { method: 'DELETE' })
@@ -45,8 +58,10 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
   }
 
   return (
-    <div className="bg-white border border-[#e5e7eb] rounded-lg overflow-hidden hover:shadow-md transition-shadow" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-      {/* Capa */}
+    <div
+      className="bg-white border border-[#e5e7eb] rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
       <div className="h-36 bg-[#f9fafb] relative overflow-hidden">
         {event.cover_image_path ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -58,15 +73,14 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" aria-hidden="true">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <path d="M21 15l-5-5L5 21"/>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="M21 15l-5-5L5 21" />
             </svg>
           </div>
         )}
       </div>
 
-      {/* Conteúdo */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
@@ -79,7 +93,12 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
           <EventStatusBadge status={event.status} />
         </div>
 
-        {/* Link público */}
+        {linkedSalesCount > 0 && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Este evento tem {linkedSalesCount} venda(s) vinculada(s). Ao excluir, o historico de pedidos associado tambem sera removido.
+          </div>
+        )}
+
         {tenantSlug && event.status === 'published' && (
           <p className="text-xs text-[#6b7280] truncate mb-3">
             <a
@@ -88,12 +107,11 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
               rel="noopener noreferrer"
               className="text-[#2563eb] hover:underline"
             >
-              Ver galeria pública →
+              {'Ver galeria publica ->'}
             </a>
           </p>
         )}
 
-        {/* Ações */}
         <div className="flex flex-wrap gap-1.5 mt-2">
           <Link
             href={`/dashboard/eventos/${event.id}/editar`}
@@ -130,7 +148,11 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
             disabled={loading === 'delete'}
             className="px-2.5 py-1 rounded text-xs font-medium bg-[#dc2626] text-white hover:bg-[#b91c1c] transition-colors disabled:opacity-60"
           >
-            {loading === 'delete' ? 'Excluindo...' : 'Excluir'}
+            {loading === 'delete'
+              ? 'Excluindo...'
+              : linkedSalesCount > 0
+                ? 'Excluir e remover historico'
+                : 'Excluir'}
           </button>
         </div>
       </div>

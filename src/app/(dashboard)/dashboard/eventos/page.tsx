@@ -14,6 +14,7 @@ type EventItem = {
   status: string
   cover_image_path?: string | null
   effectiveCover?: string | null
+  linked_sales_count?: number
 }
 
 export default async function EventosPage() {
@@ -68,7 +69,26 @@ export default async function EventosPage() {
   const events = (rawEvents ?? []).map(e => ({
     ...e,
     effectiveCover: e.cover_image_path || firstPhotos[e.id] || null,
+    linked_sales_count: 0,
   }))
+
+  if (events.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: orderItems } = await (adminClient as any)
+      .from('order_items')
+      .select('event_id')
+      .in('event_id', events.map(event => event.id))
+
+    const salesByEvent = new Map<string, number>()
+    orderItems?.forEach((row: { event_id: string | null }) => {
+      if (!row.event_id) return
+      salesByEvent.set(row.event_id, (salesByEvent.get(row.event_id) ?? 0) + 1)
+    })
+
+    events.forEach(event => {
+      event.linked_sales_count = salesByEvent.get(event.id) ?? 0
+    })
+  }
 
   return (
     <div>
