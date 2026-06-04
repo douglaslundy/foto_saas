@@ -133,31 +133,66 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params
   const result = await getAuthAndEvent(request, id)
   if (result instanceof NextResponse) return result
-  const { profile, event } = result
+  const { profile } = result
 
   const adminClient = createAdminClient()
+  const assertOk = (error: { message: string } | null, context: string) => {
+    if (error) {
+      console.error(context, error)
+      throw new Error(context)
+    }
+  }
 
   // Remove related cart items first so public carts do not keep stale references.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
+  let response = await (adminClient as any)
     .from('cart_items')
     .delete()
     .eq('event_id', id)
+  assertOk(response.error ?? null, '[DELETE /api/events/[id]] cart_items')
 
-  // Order history must remain intact, so detach this event from order items before deleting it.
+  // Remove derived AI/search records tied to this event.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from('order_items')
-    .update({ event_id: null })
+  response = await (adminClient as any)
+    .from('face_embeddings')
+    .delete()
     .eq('event_id', id)
+  assertOk(response.error ?? null, '[DELETE /api/events/[id]] face_embeddings')
+
+  // Delete orders that were created from this event.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: relatedOrderIds, error: relatedOrdersError } = await (adminClient as any)
+    .from('order_items')
+    .select('order_id')
+    .eq('event_id', id)
+  assertOk(relatedOrdersError ?? null, '[DELETE /api/events/[id]] order_items select')
+
+  const orderIds = Array.from(new Set((relatedOrderIds ?? []).map((row: { order_id: string }) => row.order_id)))
+  // Remove order items linked to this event before deleting the parent orders.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  response = await (adminClient as any)
+    .from('order_items')
+    .delete()
+    .eq('event_id', id)
+  assertOk(response.error ?? null, '[DELETE /api/events/[id]] order_items delete')
+
+  if (orderIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    response = await (adminClient as any)
+      .from('orders')
+      .delete()
+      .in('id', orderIds)
+    assertOk(response.error ?? null, '[DELETE /api/events/[id]] orders delete')
+  }
 
   // Fetch photo storage paths before deleting the photo rows.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: photos } = await (adminClient as any)
+  const { data: photos, error: photosError } = await (adminClient as any)
     .from('photos')
     .select('id, original_storage_path, thumbnail_path, public_storage_path')
     .eq('event_id', id)
     .eq('tenant_id', profile.tenant_id)
+  assertOk(photosError ?? null, '[DELETE /api/events/[id]] photos select')
 
   const originalPaths = (photos ?? []).map((photo: Record<string, string | null>) => photo.original_storage_path).filter(Boolean) as string[]
   const thumbnailPaths = (photos ?? []).map((photo: Record<string, string | null>) => photo.thumbnail_path).filter(Boolean) as string[]
@@ -165,27 +200,31 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   if (originalPaths.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any).storage.from('photos-original').remove(originalPaths)
+    const { error: originalRemoveError } = await (adminClient as any).storage.from('photos-original').remove(originalPaths)
+    assertOk(originalRemoveError ?? null, '[DELETE /api/events/[id]] photos-original remove')
   }
   if (thumbnailPaths.length > 0 || publicPaths.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any).storage.from('photos-public').remove([...thumbnailPaths, ...publicPaths])
+    const { error: publicRemoveError } = await (adminClient as any).storage.from('photos-public').remove([...thumbnailPaths, ...publicPaths])
+    assertOk(publicRemoveError ?? null, '[DELETE /api/events/[id]] photos-public remove')
   }
 
-  // Remove photo rows, letting order_items.photo_id fall back to NULL.
+  // Remove photo rows after the storage files are gone.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
+  response = await (adminClient as any)
     .from('photos')
     .delete()
     .eq('event_id', id)
     .eq('tenant_id', profile.tenant_id)
+  assertOk(response.error ?? null, '[DELETE /api/events/[id]] photos delete')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
+  response = await (adminClient as any)
     .from('events')
     .delete()
     .eq('id', id)
     .eq('tenant_id', profile.tenant_id)
+  assertOk(response.error ?? null, '[DELETE /api/events/[id]] events delete')
 
   return new NextResponse(null, { status: 204 })
 }
