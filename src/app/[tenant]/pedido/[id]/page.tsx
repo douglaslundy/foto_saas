@@ -40,7 +40,7 @@ export default async function PedidoPage({ params }: Props) {
   const isPaid = order.status === 'paid' || order.status === 'delivered'
   const isPending = order.status === 'pending' || order.status === 'processing'
   const isFailed = order.status === 'failed'
-  const downloadUrl = `/api/orders/${order.id}/download`
+  const downloadUrl = `/api/orders/${order.id}/download-zip`
   const checkoutHref = `/${tenantSlug}/checkout`
 
   return (

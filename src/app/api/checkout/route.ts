@@ -21,11 +21,23 @@ type PackageRow = {
   discount_percent: number
 }
 
+function getPublicBaseUrl(request: NextRequest): string {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL
+  if (envUrl) return envUrl.replace(/\/+$/, '')
+
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+  if (!host) return new URL(request.url).origin.replace(/\/+$/, '')
+  return `${proto}://${host}`.replace(/\/+$/, '')
+}
+
 export async function POST(request: NextRequest) {
   const { sessionId } = await getOrCreateCartSession()
 
   const serverSupabase = await createClient()
-  const { data: { user: loggedInUser } } = await serverSupabase.auth.getUser()
+  const {
+    data: { user: loggedInUser },
+  } = await serverSupabase.auth.getUser()
   const clientUserId = loggedInUser?.id ?? null
 
   let body: Record<string, unknown>
@@ -87,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (packages) {
       const matched = packages.find((pkg) => items.length >= pkg.min_quantity)
       if (matched) {
-        discountCents = Math.round(subtotalCents * matched.discount_percent / 100)
+        discountCents = Math.round((subtotalCents * matched.discount_percent) / 100)
         packageName = matched.name
       }
     }
@@ -144,13 +156,15 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const successUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/pedido/${order.id}`
+      const baseUrl = getPublicBaseUrl(request)
+      const successUrl = `${baseUrl}/pedido/${order.id}`
       const { checkoutUrl, preferenceId } = await createMercadoPagoCheckoutPreference({
         amountCents: totalCents,
         description: `Fotos - Pedido ${order.id}`,
         payerEmail: email,
         orderId: order.id,
         successUrl,
+        notificationUrl: `${baseUrl}/api/webhooks/mercadopago`,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,7 +178,11 @@ export async function POST(request: NextRequest) {
       console.error('[POST /api/checkout] mercadopago checkout error', err)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
-      return NextResponse.json({ error: 'Erro ao processar pagamento com cartão. Tente PIX.' }, { status: 500 })
+      const detail = err instanceof Error ? err.message : 'unknown error'
+      return NextResponse.json(
+        { error: `Erro ao processar pagamento com cartão. Tente PIX. (${detail})` },
+        { status: 500 }
+      )
     }
   }
 

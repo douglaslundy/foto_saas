@@ -53,12 +53,14 @@ export async function createMercadoPagoCheckoutPreference({
   payerEmail,
   orderId,
   successUrl,
+  notificationUrl,
 }: {
   amountCents: number
   description: string
   payerEmail: string
   orderId: string
   successUrl: string
+  notificationUrl?: string
 }): Promise<{ checkoutUrl: string; preferenceId: string }> {
   const accessToken = await getMercadoPagoAccessToken()
   if (!accessToken) {
@@ -89,13 +91,13 @@ export async function createMercadoPagoCheckoutPreference({
         failure: successUrl,
       },
       auto_return: 'approved',
-      notification_url: `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/webhooks/mercadopago`,
+      notification_url: notificationUrl ?? `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/api/webhooks/mercadopago`,
     }),
   })
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`Mercado Pago preference error: ${text}`)
+    throw new Error(`Mercado Pago preference error (${res.status}): ${text}`)
   }
 
   const data = await res.json() as { id?: string; init_point?: string; sandbox_init_point?: string }

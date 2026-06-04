@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateDownloadUrls } from '@/lib/delivery'
 import { deflateRawSync } from 'zlib'
-
-// ---------------------------------------------------------------------------
-// Minimal ZIP builder — no external dependencies, uses Node built-in zlib
-// Produces a valid ZIP file (PKZIP format) containing all provided files.
-// ---------------------------------------------------------------------------
 
 function crc32(buf: Buffer): number {
   const table = makeCrc32Table()
@@ -61,19 +55,18 @@ function buildZip(files: { name: string; data: Buffer }[]): Buffer {
     const crc = crc32(file.data)
     const compressed = deflateRawSync(file.data, { level: 6 })
 
-    // Local file header signature + fields
     const localHeader = Buffer.concat([
-      Buffer.from([0x50, 0x4b, 0x03, 0x04]), // signature
-      writeUint16LE(20),                       // version needed
-      writeUint16LE(0x800),                    // flags (UTF-8)
-      writeUint16LE(8),                        // compression method: deflate
-      writeUint16LE(0),                        // last mod time
-      writeUint16LE(0),                        // last mod date
-      writeUint32LE(crc),                      // crc-32
-      writeUint32LE(compressed.length),        // compressed size
-      writeUint32LE(file.data.length),         // uncompressed size
-      writeUint16LE(nameBytes.length),         // filename length
-      writeUint16LE(0),                        // extra field length
+      Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      writeUint16LE(20),
+      writeUint16LE(0x800),
+      writeUint16LE(8),
+      writeUint16LE(0),
+      writeUint16LE(0),
+      writeUint32LE(crc),
+      writeUint32LE(compressed.length),
+      writeUint32LE(file.data.length),
+      writeUint16LE(nameBytes.length),
+      writeUint16LE(0),
       nameBytes,
     ])
 
@@ -92,26 +85,25 @@ function buildZip(files: { name: string; data: Buffer }[]): Buffer {
   const centralDirStart = offset
   const centralHeaders: Buffer[] = []
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i]
+  for (const entry of entries) {
     const nameBytes = Buffer.from(entry.filename, 'utf8')
     const centralHeader = Buffer.concat([
-      Buffer.from([0x50, 0x4b, 0x01, 0x02]), // signature
-      writeUint16LE(20),                       // version made by
-      writeUint16LE(20),                       // version needed
-      writeUint16LE(0x800),                    // flags (UTF-8)
-      writeUint16LE(8),                        // compression method
-      writeUint16LE(0),                        // last mod time
-      writeUint16LE(0),                        // last mod date
+      Buffer.from([0x50, 0x4b, 0x01, 0x02]),
+      writeUint16LE(20),
+      writeUint16LE(20),
+      writeUint16LE(0x800),
+      writeUint16LE(8),
+      writeUint16LE(0),
+      writeUint16LE(0),
       writeUint32LE(entry.crc),
       writeUint32LE(entry.compressed.length),
       writeUint32LE(entry.data.length),
       writeUint16LE(nameBytes.length),
-      writeUint16LE(0),                        // extra field length
-      writeUint16LE(0),                        // file comment length
-      writeUint16LE(0),                        // disk number start
-      writeUint16LE(0),                        // internal attributes
-      writeUint32LE(0),                        // external attributes
+      writeUint16LE(0),
+      writeUint16LE(0),
+      writeUint16LE(0),
+      writeUint16LE(0),
+      writeUint32LE(0),
       writeUint32LE(entry.offset),
       nameBytes,
     ])
@@ -121,32 +113,18 @@ function buildZip(files: { name: string; data: Buffer }[]): Buffer {
   const centralDirSize = centralHeaders.reduce((s, b) => s + b.length, 0)
 
   const eocd = Buffer.concat([
-    Buffer.from([0x50, 0x4b, 0x05, 0x06]), // end of central dir signature
-    writeUint16LE(0),                        // disk number
-    writeUint16LE(0),                        // disk with central dir
+    Buffer.from([0x50, 0x4b, 0x05, 0x06]),
+    writeUint16LE(0),
+    writeUint16LE(0),
     writeUint16LE(entries.length),
     writeUint16LE(entries.length),
     writeUint32LE(centralDirSize),
     writeUint32LE(centralDirStart),
-    writeUint16LE(0),                        // comment length
+    writeUint16LE(0),
   ])
 
-  const parts: Buffer[] = []
-  for (let i = 0; i < entries.length; i++) {
-    parts.push(localHeaders[i])
-    parts.push(entries[i].compressed)
-  }
-  for (const ch of centralHeaders) {
-    parts.push(ch)
-  }
-  parts.push(eocd)
-
-  return Buffer.concat(parts)
+  return Buffer.concat([...localHeaders.flatMap((header, index) => [header, entries[index].compressed]), ...centralHeaders, eocd])
 }
-
-// ---------------------------------------------------------------------------
-// Route handler
-// ---------------------------------------------------------------------------
 
 export async function GET(
   _request: NextRequest,
@@ -155,7 +133,6 @@ export async function GET(
   const { id } = await params
   const adminClient = createAdminClient()
 
-  // Verify order exists and is paid
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: order, error: orderError } = await (adminClient as any)
     .from('orders')
@@ -171,7 +148,6 @@ export async function GET(
     return NextResponse.json({ error: 'Pedido não pago.' }, { status: 403 })
   }
 
-  // Fetch order items
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: orderItems, error: itemsError } = await (adminClient as any)
     .from('order_items')
@@ -183,32 +159,41 @@ export async function GET(
   }
 
   const photoIds = (orderItems ?? []).map((item: { photo_id: string }) => item.photo_id)
-  const downloadUrls = await generateDownloadUrls(photoIds)
-
-  if (downloadUrls.length === 0) {
+  if (photoIds.length === 0) {
     return NextResponse.json({ error: 'Nenhuma foto disponível.' }, { status: 404 })
   }
 
-  // Fetch all photos concurrently
-  const fetchResults = await Promise.allSettled(
-    downloadUrls.map(async ({ photoId, url }) => {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`Falha ao buscar foto ${photoId}: ${res.status}`)
-      const arrayBuffer = await res.arrayBuffer()
-      return { photoId, data: Buffer.from(arrayBuffer) }
-    })
-  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: photos, error: photosError } = await (adminClient as any)
+    .from('photos')
+    .select('id, original_storage_path, public_storage_path')
+    .in('id', photoIds)
+
+  if (photosError || !photos) {
+    return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
+  }
 
   const files: { name: string; data: Buffer }[] = []
-  let index = 1
-  for (const result of fetchResults) {
-    if (result.status === 'fulfilled') {
-      const ext = 'jpg' // photos are JPEGs
-      files.push({ name: `foto_${String(index).padStart(3, '0')}.${ext}`, data: result.value.data })
-      index++
-    } else {
-      console.error('[download-zip] fetch error:', result.reason)
+
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i] as { id: string; original_storage_path: string | null; public_storage_path: string | null }
+    const bucket = photo.public_storage_path ? 'photos-public' : 'photos-original'
+    const storagePath = photo.public_storage_path ?? photo.original_storage_path
+
+    if (!storagePath) continue
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: downloadError } = await (adminClient as any).storage
+      .from(bucket)
+      .download(storagePath)
+
+    if (downloadError || !data) {
+      console.error('[download-zip] storage download error:', photo.id, downloadError)
+      continue
     }
+
+    const buffer = Buffer.from(await data.arrayBuffer())
+    files.push({ name: `foto_${String(i + 1).padStart(3, '0')}.jpg`, data: buffer })
   }
 
   if (files.length === 0) {
