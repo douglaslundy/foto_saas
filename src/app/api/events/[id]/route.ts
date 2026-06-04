@@ -135,11 +135,44 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (result instanceof NextResponse) return result
   const { profile, event } = result
 
-  if (event.status === 'published') {
-    return NextResponse.json({ error: 'Não é possível excluir evento publicado.' }, { status: 403 })
+  const adminClient = createAdminClient()
+
+  // Remove related cart items first so public carts do not keep stale references.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('cart_items')
+    .delete()
+    .eq('event_id', id)
+
+  // Fetch photo storage paths before deleting the photo rows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: photos } = await (adminClient as any)
+    .from('photos')
+    .select('id, original_storage_path, thumbnail_path, public_storage_path')
+    .eq('event_id', id)
+    .eq('tenant_id', profile.tenant_id)
+
+  const originalPaths = (photos ?? []).map((photo: Record<string, string | null>) => photo.original_storage_path).filter(Boolean) as string[]
+  const thumbnailPaths = (photos ?? []).map((photo: Record<string, string | null>) => photo.thumbnail_path).filter(Boolean) as string[]
+  const publicPaths = (photos ?? []).map((photo: Record<string, string | null>) => photo.public_storage_path).filter(Boolean) as string[]
+
+  if (originalPaths.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).storage.from('photos-original').remove(originalPaths)
+  }
+  if (thumbnailPaths.length > 0 || publicPaths.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any).storage.from('photos-public').remove([...thumbnailPaths, ...publicPaths])
   }
 
-  const adminClient = createAdminClient()
+  // Remove photo rows, letting order_items.photo_id fall back to NULL.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from('photos')
+    .delete()
+    .eq('event_id', id)
+    .eq('tenant_id', profile.tenant_id)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (adminClient as any)
     .from('events')

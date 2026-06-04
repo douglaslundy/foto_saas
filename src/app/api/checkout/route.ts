@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getOrCreateCartSession } from '@/lib/cart-session'
 import { createStripePaymentIntent } from '@/lib/payments/stripe'
 import { createMercadoPagoPix } from '@/lib/payments/mercadopago'
+import { getMercadoPagoAccessToken } from '@/lib/payments/mercadopago-settings'
 
 type CartItem = {
   id: string
@@ -163,8 +164,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Erro ao processar pagamento com cartão. Tente PIX.' }, { status: 500 })
     }
   } else {
-    const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN ?? ''
-    if (!mpToken || mpToken.includes('placeholder') || (!mpToken.startsWith('APP_USR-') && !mpToken.startsWith('TEST-'))) {
+    const mpToken = await getMercadoPagoAccessToken()
+    if (!mpToken) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (adminClient as any).from('orders').delete().eq('id', order.id)
       return NextResponse.json(

@@ -3,6 +3,7 @@ import { verifyMercadoPagoWebhook } from '@/lib/payments/mercadopago'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { emailQueue } from '@/lib/queues/email-queue'
+import { getMercadoPagoAccessToken } from '@/lib/payments/mercadopago-settings'
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
@@ -27,7 +28,12 @@ export async function POST(request: NextRequest) {
     const paymentId = (body.data as { id?: string })?.id
     if (paymentId) {
       try {
-        const config = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN ?? '' })
+        const accessToken = await getMercadoPagoAccessToken()
+        if (!accessToken) {
+          console.warn('[MP webhook] Mercado Pago não configurado')
+          return NextResponse.json({ received: true })
+        }
+        const config = new MercadoPagoConfig({ accessToken })
         const paymentClient = new Payment(config)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payment = await paymentClient.get({ id: paymentId } as any)

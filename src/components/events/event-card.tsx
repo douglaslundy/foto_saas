@@ -111,23 +111,21 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
             </Link>
           )}
           {event.status === 'draft' && (
-            <>
-              <button
-                onClick={handlePublish}
-                disabled={loading === 'publish'}
-                className="px-2.5 py-1 rounded text-xs font-medium bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-colors disabled:opacity-60"
-              >
-                {loading === 'publish' ? 'Publicando...' : 'Publicar'}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={loading === 'delete'}
-                className="px-2.5 py-1 rounded text-xs font-medium bg-[#dc2626] text-white hover:bg-[#b91c1c] transition-colors disabled:opacity-60"
-              >
-                {loading === 'delete' ? 'Excluindo...' : 'Excluir'}
-              </button>
-            </>
+            <button
+              onClick={handlePublish}
+              disabled={loading === 'publish'}
+              className="px-2.5 py-1 rounded text-xs font-medium bg-[#2563eb] text-white hover:bg-[#1d4ed8] transition-colors disabled:opacity-60"
+            >
+              {loading === 'publish' ? 'Publicando...' : 'Publicar'}
+            </button>
           )}
+          <button
+            onClick={handleDelete}
+            disabled={loading === 'delete'}
+            className="px-2.5 py-1 rounded text-xs font-medium bg-[#dc2626] text-white hover:bg-[#b91c1c] transition-colors disabled:opacity-60"
+          >
+            {loading === 'delete' ? 'Excluindo...' : 'Excluir'}
+          </button>
         </div>
       </div>
     </div>

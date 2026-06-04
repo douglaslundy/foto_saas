@@ -195,10 +195,21 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
               )}
               {selected.size > 0 && <span className="text-xs text-[var(--color-ink-muted,#6b6b6b)]">{selected.size} selecionada{selected.size !== 1 ? 's' : ''}</span>}
               {!isManager && (
-                <button onClick={handleBulkAddToCart} disabled={selected.size === 0 || bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-40 transition-colors">
-                  <ShoppingCart className="h-3 w-3" />
-                  {bulkWorking ? 'Adicionando…' : `Adicionar (${selected.size})`}
-                </button>
+                <>
+                  <button
+                    onClick={handleBulkAddToCart}
+                    disabled={selected.size === 0 || bulkWorking}
+                    className="w-10 h-10 rounded-full bg-[var(--color-gold,#c8a96e)] text-[var(--color-ink,#0d0f14)] flex items-center justify-center text-sm font-bold shadow-sm hover:opacity-90 disabled:opacity-40 transition-colors"
+                    title="Enviar seleção ao carrinho"
+                    aria-label="Enviar seleção ao carrinho"
+                  >
+                    {bulkWorking ? <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : 'OK'}
+                  </button>
+                  <button onClick={handleBulkAddToCart} disabled={selected.size === 0 || bulkWorking} className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-40 transition-colors">
+                    <ShoppingCart className="h-3 w-3" />
+                    {bulkWorking ? 'Adicionando…' : `Adicionar (${selected.size})`}
+                  </button>
+                </>
               )}
               {isManager && (
                 <button onClick={handleBulkDelete} disabled={selected.size === 0 || bulkWorking} className="px-3 py-1.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-40 transition-colors">

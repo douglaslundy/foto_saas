@@ -1,10 +1,14 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { createHmac } from 'crypto'
+import { getMercadoPagoAccessToken } from './mercadopago-settings'
 
-function getMPConfig(): MercadoPagoConfig {
-  return new MercadoPagoConfig({
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN ?? '',
-  })
+async function getMPConfig(): Promise<MercadoPagoConfig> {
+  const accessToken = await getMercadoPagoAccessToken()
+  if (!accessToken) {
+    throw new Error('Mercado Pago não configurado.')
+  }
+
+  return new MercadoPagoConfig({ accessToken })
 }
 
 export async function createMercadoPagoPix({
@@ -18,7 +22,7 @@ export async function createMercadoPagoPix({
   payerEmail: string
   orderId: string
 }): Promise<{ pixQrCode: string; pixQrCodeBase64: string; paymentId: string }> {
-  const config = getMPConfig()
+  const config = await getMPConfig()
   const payment = new Payment(config)
 
   const result = await payment.create({

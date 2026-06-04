@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import { TenantRowActions } from './_components/tenant-row-actions'
 
 type Tenant = {
   id: string
@@ -92,14 +93,7 @@ export default async function TenantsPage() {
                 >
                   {sc?.label ?? t.status}
                 </span>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/admin/tenants/${t.id}`}
-                    className="text-xs font-medium px-2.5 py-1 rounded border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-alt)] transition-colors text-[var(--color-ink-soft)]"
-                  >
-                    Ver
-                  </Link>
-                </div>
+                <TenantRowActions tenantId={t.id} currentStatus={t.status} />
               </div>
             )
           })}
