@@ -61,13 +61,15 @@ async function buildTextSvg(
 
   if (tiled) {
     const patternW = Math.max(text.length * fontSize * 0.6, 80)
-    const patternH = fontSize * 2.5
+    const patternH = fontSize * 4
     return Buffer.from(
       `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="wm" width="${patternW}" height="${patternH}"
             patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
             <text x="10" y="${fontSize + 4}" font-family="${font}" font-size="${fontSize}px"
+              fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
+            <text x="10" y="${fontSize * 3 + 4}" font-family="${font}" font-size="${fontSize}px"
               fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
           </pattern>
         </defs>
