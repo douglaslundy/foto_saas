@@ -19,6 +19,8 @@ export async function createClient() {
           } catch {}
         },
       },
+      // See admin.ts: Next.js caches fetch() with force-cache by default, freezing query results.
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
     }
   )
 }

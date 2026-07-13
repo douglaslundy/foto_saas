@@ -10,6 +10,11 @@ export function createAdminClient() {
   return createClient<Database>(
     url,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      // Next.js patches global fetch and caches it with force-cache by default,
+      // which silently freezes PostgREST responses (e.g. tenant/event lists) for up to a year.
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
+    }
   )
 }
