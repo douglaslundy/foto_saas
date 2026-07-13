@@ -53,6 +53,15 @@ CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase_storage_admin;
 GRANT ALL    ON SCHEMA storage TO supabase_storage_admin;
 GRANT USAGE  ON SCHEMA storage TO service_role, authenticated, anon;
 
+-- storage-api (v1.0.6) connects via DATABASE_URL as `postgres` and creates its own
+-- tables (buckets/objects/migrations) on first boot owned by `postgres`, not
+-- supabase_storage_admin. Without these default privileges, anon/authenticated/
+-- service_role only have schema USAGE — every query against those tables fails
+-- with 42501 (insufficient_privilege), which storage-api reports as a misleading
+-- "row-level security policy" error.
+ALTER DEFAULT PRIVILEGES IN SCHEMA storage GRANT ALL ON TABLES    TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA storage GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
 -- Permissões padrão no schema public
 GRANT USAGE  ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL    ON ALL TABLES    IN SCHEMA public TO anon, authenticated, service_role;
