@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { FotosManager } from '@/components/photos/fotos-manager'
 import { SendToClientButton } from '@/components/essay/send-to-client-button'
+import { SendFinalDeliveryButton } from '@/components/essay/send-final-delivery-button'
 import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type Props = { params: Promise<{ id: string }> }
@@ -130,6 +131,18 @@ export default async function FotosEventoPage({ params }: Props) {
               canResend={!!review && isLinkExpired}
               reviewId={review?.id}
             />
+          )}
+          {isSession && review && ['submitted', 'in_progress', 'delivered'].includes(review.status) && (
+            <a
+              href={`/api/essay-reviews/${review.id}/download-zip`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors"
+              title="Baixar as fotos que o cliente selecionou, em um arquivo .zip"
+            >
+              ⬇ Baixar seleção ({review.selected_photo_ids?.length ?? 0})
+            </a>
+          )}
+          {isSession && review && ['submitted', 'in_progress'].includes(review.status) && (
+            <SendFinalDeliveryButton reviewId={review.id} photoCount={review.selected_photo_ids?.length ?? 0} />
           )}
           <Link
             href={`/dashboard/eventos/${id}/editar`}

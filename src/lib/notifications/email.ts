@@ -160,6 +160,44 @@ export async function sendEssaySubmitted({
   }
 }
 
+export async function sendEssayDelivered({
+  to,
+  clientName,
+  sessionTitle,
+  photoCount,
+  downloadLink,
+  studioName,
+}: {
+  to: string
+  clientName: string
+  sessionTitle: string
+  photoCount: number
+  downloadLink: string
+  studioName?: string
+}): Promise<void> {
+  try {
+    const transport = getTransport()
+    await transport.sendMail({
+      from: FROM,
+      to,
+      subject: `${studioName ?? 'FotoSaaS'} — Suas fotos do ensaio estão prontas!`,
+      html: `
+        <h2>Olá, ${clientName}!</h2>
+        <p>As fotos do seu ensaio <strong>${sessionTitle}</strong> já foram tratadas e estão prontas.</p>
+        <p>Total: <strong>${photoCount} foto${photoCount !== 1 ? 's' : ''}</strong>, compactadas em um arquivo .zip, sem perda de qualidade.</p>
+        <p style="margin: 24px 0;">
+          <a href="${downloadLink}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+            Baixar minhas fotos
+          </a>
+        </p>
+        <p style="color:#6b7280;font-size:12px;">Se o botão não funcionar, copie e cole este link: ${downloadLink}</p>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendEssayDelivered failed:', err)
+  }
+}
+
 export async function sendRegistrationNotification({
   to,
   studioName,
