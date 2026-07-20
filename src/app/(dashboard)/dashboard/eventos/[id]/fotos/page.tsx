@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { FotosManager } from '@/components/photos/fotos-manager'
 import { SendToClientButton } from '@/components/essay/send-to-client-button'
 import { SendFinalDeliveryButton } from '@/components/essay/send-final-delivery-button'
+import { ReviewPasswordCard } from '@/components/essay/review-password-card'
 import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type Props = { params: Promise<{ id: string }> }
@@ -24,6 +25,7 @@ type EssayReview = {
   magic_link_expires_at: string
   submitted_at: string | null
   selected_photo_ids: string[]
+  access_password: string | null
 }
 
 const REVIEW_STATUS_LABEL: Record<string, string> = {
@@ -77,7 +79,7 @@ export default async function FotosEventoPage({ params }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('essay_reviews')
-      .select('id, status, magic_link_expires_at, submitted_at, selected_photo_ids')
+      .select('id, status, magic_link_expires_at, submitted_at, selected_photo_ids, access_password')
       .eq('event_id', id)
       .eq('tenant_id', profile.tenant_id)
       .order('created_at', { ascending: false })
@@ -124,6 +126,13 @@ export default async function FotosEventoPage({ params }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/dashboard/eventos/${id}/visualizar`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-sm font-medium hover:bg-[var(--color-surface-alt)] transition-colors"
+            title={isSession ? 'Ver as fotos como o cliente vai ver, antes de enviar' : 'Ver as fotos como aparecem na galeria'}
+          >
+            👁 Visualizar
+          </Link>
           {isSession && (
             <SendToClientButton
               eventId={id}
@@ -152,6 +161,10 @@ export default async function FotosEventoPage({ params }: Props) {
           </Link>
         </div>
       </div>
+
+      {isSession && review && (
+        <ReviewPasswordCard reviewId={review.id} initialPassword={review.access_password} />
+      )}
 
       <FotosManager eventId={id} initialPhotos={photos} storageBase={storageBase} />
     </div>

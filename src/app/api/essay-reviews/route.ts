@@ -158,8 +158,11 @@ export async function POST(request: NextRequest) {
     clientPhone = clientData.phone
   }
 
-  // Create essay_reviews record
+  // Create essay_reviews record. Toda revisão já nasce com uma senha de acesso
+  // (6 dígitos) — o cliente pode entrar só com ela, sem precisar de conta/magic
+  // link, e o fotógrafo pode trocá-la depois na tela de fotos do ensaio.
   const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_SECONDS * 1000).toISOString()
+  const accessPassword = String(Math.floor(100000 + Math.random() * 900000))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review, error: reviewError } = await (admin as any)
     .from('essay_reviews')
@@ -168,6 +171,7 @@ export async function POST(request: NextRequest) {
       event_id,
       client_id: resolvedClientId,
       magic_link_expires_at: expiresAt,
+      access_password: accessPassword,
     })
     .select('id')
     .single() as { data: { id: string } | null; error: unknown }
@@ -192,12 +196,15 @@ export async function POST(request: NextRequest) {
   }
 
   const reviewLink = linkData.properties.action_link
+  const directLink = `${SITE_URL}/${tenant.slug}/ensaio-review/${review.id}`
 
   // Send email to client
   await sendEssayReviewLink({
     to: clientEmail,
     clientName,
     reviewLink,
+    directLink,
+    accessPassword,
     sessionTitle: event.title,
     studioName: profile.name ?? undefined,
   })
@@ -206,7 +213,7 @@ export async function POST(request: NextRequest) {
   if (clientPhone) {
     await sendWhatsAppMessage(
       clientPhone,
-      `Olá, ${clientName}! 📸\n\nSeu ensaio *${event.title}* está pronto para seleção de fotos.\n\nAcesse o link abaixo para escolher suas fotos favoritas (válido por 72 horas):\n${reviewLink}`
+      `Olá, ${clientName}! 📸\n\nSeu ensaio *${event.title}* está pronto para seleção de fotos.\n\nAcesse o link abaixo para escolher suas fotos favoritas (válido por 72 horas):\n${reviewLink}\n\nSe pedir login, use o link direto e a senha do ensaio:\n${directLink}\nSenha: ${accessPassword}`
     )
   }
 

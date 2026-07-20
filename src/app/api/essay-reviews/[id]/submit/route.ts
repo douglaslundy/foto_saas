@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEssaySubmitted } from '@/lib/notifications/email'
 import { createStripePaymentIntent } from '@/lib/payments/stripe'
 import { createMercadoPagoPix } from '@/lib/payments/mercadopago'
+import { hasEssayAccess } from '@/lib/essay-access'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -12,7 +13,6 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
   const admin = createAdminClient()
 
@@ -27,7 +27,15 @@ export async function POST(request: NextRequest, { params }: Props) {
     } | null }
 
   if (!review) return NextResponse.json({ error: 'Review não encontrado.' }, { status: 404 })
-  if (review.client_id !== user.id) return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+
+  // Autorizado se estiver logado como o cliente dono da revisão, OU se já
+  // passou pelo portão de senha do ensaio (acesso sem conta).
+  const isAuthorizedClient = !!user && review.client_id === user.id
+  const isAuthorizedByPassword = !isAuthorizedClient && await hasEssayAccess(id)
+  if (!isAuthorizedClient && !isAuthorizedByPassword) {
+    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+  }
+
   if (review.status === 'submitted') return NextResponse.json({ error: 'Seleção já enviada.' }, { status: 409 })
   if (new Date(review.magic_link_expires_at) < new Date()) {
     return NextResponse.json({ error: 'Link expirado.' }, { status: 410 })
@@ -89,7 +97,14 @@ export async function POST(request: NextRequest, { params }: Props) {
   const extraCostCents = extraCount * extraPhotoPriceCents
   const totalCents = (event.session_price_cents ?? 0) + extraCostCents
 
-  // Process payment
+  // Process payment. O comprador pode não ter uma sessão Supabase (acesso via
+  // senha do ensaio), então email/nome do cliente sempre vêm de review.client_id,
+  // nunca de `user`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: clientRow } = await (admin as any)
+    .from('users').select('email, name').eq('id', review.client_id).single() as
+    { data: { email: string; name: string | null } | null }
+
   let paymentIntentId: string | null = null
   let stripeClientSecret: string | null = null
   let pixQrCode: string | null = null
@@ -114,10 +129,6 @@ export async function POST(request: NextRequest, { params }: Props) {
       return NextResponse.json({ error: 'Erro ao processar pagamento.' }, { status: 500 })
     }
   } else if (payment_method === 'pix' && totalCents > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: clientRow } = await (admin as any)
-      .from('users').select('email').eq('id', user.id).single() as
-      { data: { email: string } | null }
     try {
       const pix = await createMercadoPagoPix({
         amountCents: totalCents,
@@ -170,14 +181,10 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   if (photographerData) {
     const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''}/dashboard/eventos/${review.event_id}/fotos`
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: clientProfile } = await (admin as any)
-      .from('users').select('name').eq('id', user.id).single() as
-      { data: { name: string } | null }
 
     await sendEssaySubmitted({
       to: photographerData.email,
-      clientName: clientProfile?.name ?? 'Cliente',
+      clientName: clientRow?.name ?? 'Cliente',
       sessionTitle: event.title,
       selectedCount: verifiedPhotoIds.length,
       dashboardUrl,

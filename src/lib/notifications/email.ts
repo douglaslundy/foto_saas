@@ -94,12 +94,16 @@ export async function sendEssayReviewLink({
   to,
   clientName,
   reviewLink,
+  directLink,
+  accessPassword,
   sessionTitle,
   studioName,
 }: {
   to: string
   clientName: string
   reviewLink: string
+  directLink?: string
+  accessPassword?: string
   sessionTitle: string
   studioName?: string
 }): Promise<void> {
@@ -120,6 +124,10 @@ export async function sendEssayReviewLink({
           </a>
         </p>
         <p style="color:#6b7280;font-size:12px;">Se o botão não funcionar, copie e cole este link: ${reviewLink}</p>
+        ${accessPassword && directLink ? `
+        <p style="color:#6b7280;font-size:12px;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:16px;">
+          Se o link acima pedir login, acesse <a href="${directLink}">${directLink}</a> e use a senha do ensaio: <strong>${accessPassword}</strong>
+        </p>` : ''}
       `,
     })
   } catch (err) {

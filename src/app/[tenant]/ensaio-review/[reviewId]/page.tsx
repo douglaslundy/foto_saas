@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { hasEssayAccess } from '@/lib/essay-access'
 import { ReviewClient } from './_components/review-client'
+import { PasswordGate } from './_components/password-gate'
 
 type Props = { params: Promise<{ tenant: string; reviewId: string }> }
 
@@ -11,29 +13,35 @@ export default async function EnsaioReviewPage({ params }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user?.id) {
-    redirect(`/${tenantSlug}/login?redirect=/${tenantSlug}/ensaio-review/${reviewId}`)
-  }
-
   const admin = createAdminClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review } = await (admin as any)
     .from('essay_reviews')
-    .select('id, event_id, client_id, tenant_id, status, selected_photo_ids, notes, magic_link_expires_at')
+    .select('id, event_id, client_id, tenant_id, status, selected_photo_ids, notes, magic_link_expires_at, access_password')
     .eq('id', reviewId)
     .single() as { data: {
       id: string; event_id: string; client_id: string; tenant_id: string;
       status: string; selected_photo_ids: string[]; notes: string | null;
-      magic_link_expires_at: string;
+      magic_link_expires_at: string; access_password: string | null;
     } | null }
 
   if (!review) notFound()
 
-  // Only the review's client can access
-  if (review.client_id !== user.id) notFound()
+  // Autorizado se logado como o cliente dono da revisão, OU se já passou
+  // pelo portão de senha do ensaio (acesso sem precisar de conta).
+  const isAuthorizedClient = !!user && review.client_id === user.id
+  const isAuthorizedByPassword = !isAuthorizedClient && await hasEssayAccess(reviewId)
 
-  // Link expired and not yet submitted
+  if (!isAuthorizedClient && !isAuthorizedByPassword) {
+    if (review.access_password) {
+      return <PasswordGate reviewId={reviewId} />
+    }
+    if (!user) redirect(`/${tenantSlug}/login?redirect=/${tenantSlug}/ensaio-review/${reviewId}`)
+    notFound()
+  }
+
+  // Link expirado e não enviado ainda
   if (new Date(review.magic_link_expires_at) < new Date() && review.status === 'pending_selection') {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
