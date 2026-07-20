@@ -266,7 +266,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="spacing_x" className={labelClass}>
-                        Dist. horizontal: <span className="text-[var(--color-ink)] font-bold">{spacingX}</span>
+                        Dist. entre colunas: <span className="text-[var(--color-ink)] font-bold">{spacingX}</span>
                       </label>
                       <input
                         id="spacing_x"
@@ -281,7 +281,7 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                     </div>
                     <div>
                       <label htmlFor="spacing_y" className={labelClass}>
-                        Dist. vertical: <span className="text-[var(--color-ink)] font-bold">{spacingY}</span>
+                        Espaço entre linhas: <span className="text-[var(--color-ink)] font-bold">{spacingY}</span>
                       </label>
                       <input
                         id="spacing_y"

@@ -73,11 +73,13 @@ export function WatermarkPreview({
   const text = textContent.trim() || 'Sua Marca Aqui'
 
   const tilePattern = useMemo(() => {
-    // Espelha a mesma fórmula usada na geração de produção (src/lib/image/watermark.ts)
-    const lineHeight = fontSize * 2
+    // Espelha a mesma fórmula usada na geração de produção (src/lib/image/watermark.ts):
+    // spacingY controla a distância entre a linha 1 e a linha 2, não o espaço entre repetições.
+    const line1Y = fontSize + 4
+    const line2Y = line1Y + spacingY
     const patternW = Math.max(text.length * fontSize * 0.78, 104) + spacingX
-    const patternH = lineHeight + spacingY
-    return { patternW, patternH }
+    const patternH = line2Y + fontSize * 0.5
+    return { patternW, patternH, line1Y, line2Y }
   }, [text, fontSize, spacingX, spacingY])
 
   const imgSize = Math.round(Math.min(PREVIEW_W, PREVIEW_H) * (imageSizePercent / 100))
@@ -123,7 +125,7 @@ export function WatermarkPreview({
                   >
                     <text
                       x={10}
-                      y={fontSize + 4}
+                      y={tilePattern.line1Y}
                       fontFamily={font}
                       fontSize={fontSize}
                       fontWeight={fontWeight}
@@ -134,7 +136,7 @@ export function WatermarkPreview({
                     </text>
                     <text
                       x={10}
-                      y={fontSize * 3 + 4}
+                      y={tilePattern.line2Y}
                       fontFamily={font}
                       fontSize={fontSize}
                       fontWeight={fontWeight}
