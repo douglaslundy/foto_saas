@@ -15,6 +15,7 @@ interface PhotoGridProps {
   storageBase: string
   onDelete: (photoId: string) => void
   onBulkDelete: (photoIds: string[]) => void
+  onBulkRotate: (photoIds: string[]) => void
   onReprocess: (photoId: string) => void
   onSetCover?: (path: string) => Promise<void>
 }
@@ -41,13 +42,14 @@ function getInitialViewMode(): ViewMode {
   try { return localStorage.getItem('fotosaas_view_mode') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
 }
 
-export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onReprocess, onSetCover }: PhotoGridProps) {
+export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onReprocess, onSetCover }: PhotoGridProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [reprocessing, setReprocessing] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkRotating, setBulkRotating] = useState(false)
   const [settingCover, setSettingCover] = useState<string | null>(null)
 
   async function handleSetCover(photoId: string, path: string) {
@@ -91,6 +93,29 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
     finally { setBulkDeleting(false) }
   }
 
+  async function handleBulkRotate(direction: 'left' | 'right') {
+    if (selected.size === 0) return
+    setBulkRotating(true)
+    const ids = Array.from(selected)
+    try {
+      const res = await fetch('/api/photos/rotate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_ids: ids, direction }),
+      })
+      if (res.ok) {
+        onBulkRotate(ids)
+        exitSelectMode()
+      } else {
+        alert('Erro ao girar fotos.')
+      }
+    } catch {
+      alert('Erro de conexão ao girar fotos.')
+    } finally {
+      setBulkRotating(false)
+    }
+  }
+
   async function handleReprocess(photoId: string) {
     setReprocessing((prev) => new Set(prev).add(photoId))
     try {
@@ -121,9 +146,11 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onRepro
           {selectMode ? (
             <>
               <button onClick={() => setSelected(new Set(photos.map((p) => p.id)))} disabled={bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">Selecionar todas</button>
-              <button onClick={() => setSelected(new Set())} disabled={bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">Limpar</button>
-              <button onClick={handleBulkDelete} disabled={selected.size === 0 || bulkDeleting} className="px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-danger)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-40">{bulkDeleting ? 'Deletando…' : `Deletar (${selected.size})`}</button>
-              <button onClick={exitSelectMode} disabled={bulkDeleting} className="px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">Cancelar</button>
+              <button onClick={() => setSelected(new Set())} disabled={bulkDeleting || bulkRotating} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">Limpar</button>
+              <button onClick={() => handleBulkRotate('left')} disabled={selected.size === 0 || bulkDeleting || bulkRotating} title="Girar 90° à esquerda" className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">↺ Girar</button>
+              <button onClick={() => handleBulkRotate('right')} disabled={selected.size === 0 || bulkDeleting || bulkRotating} title="Girar 90° à direita" className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors disabled:opacity-50">{bulkRotating ? 'Girando…' : 'Girar ↻'}</button>
+              <button onClick={handleBulkDelete} disabled={selected.size === 0 || bulkDeleting || bulkRotating} className="px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-danger)] text-white text-xs font-medium hover:opacity-90 disabled:opacity-40">{bulkDeleting ? 'Deletando…' : `Deletar (${selected.size})`}</button>
+              <button onClick={exitSelectMode} disabled={bulkDeleting || bulkRotating} className="px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">Cancelar</button>
             </>
           ) : (
             <button onClick={() => setSelectMode(true)} className="px-3 py-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] text-xs font-medium hover:bg-[var(--color-surface-alt)] transition-colors">Selecionar</button>

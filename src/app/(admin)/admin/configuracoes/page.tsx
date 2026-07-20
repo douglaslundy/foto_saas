@@ -40,6 +40,7 @@ export default async function ConfiguracoesPage() {
     auto_approve_sub_events: settingsMap['auto_approve_sub_events'] ?? 'false',
     platform_name: settingsMap['platform_name'] ?? '',
     platform_favicon_url: settingsMap['platform_favicon_url'] ?? '',
+    photo_compression_enabled: settingsMap['photo_compression_enabled'] ?? 'true',
   }
 
   return (

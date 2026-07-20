@@ -57,6 +57,7 @@ export async function PUT(request: NextRequest) {
     auto_approve_sub_events?: string
     platform_name?: string
     platform_favicon_url?: string
+    photo_compression_enabled?: string
   }
   try {
     body = await request.json()
@@ -74,6 +75,7 @@ export async function PUT(request: NextRequest) {
     'auto_approve_sub_events',
     'platform_name',
     'platform_favicon_url',
+    'photo_compression_enabled',
   ] as const
 
   for (const key of keys) {

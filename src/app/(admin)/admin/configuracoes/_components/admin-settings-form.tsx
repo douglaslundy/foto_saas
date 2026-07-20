@@ -10,6 +10,7 @@ type Settings = {
   auto_approve_sub_events: string
   platform_name: string
   platform_favicon_url: string
+  photo_compression_enabled: string
 }
 
 export function AdminSettingsForm({ initialSettings }: { initialSettings: Settings }) {
@@ -310,6 +311,47 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">
                 Quando ativado, eventos criados por sub-fotógrafos ficam como rascunho automaticamente,
                 sem necessidade de aprovação manual pelo fotógrafo.
+              </p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Seção — Fotos */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+          <h2
+            className="text-lg font-semibold text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Fotos
+          </h2>
+        </div>
+        <div className="px-6 py-5">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={values.photo_compression_enabled !== 'false'}
+              onChange={(e) =>
+                handleChange('photo_compression_enabled', e.target.checked ? 'true' : 'false')
+              }
+              className="mt-0.5 w-4 h-4 accent-[var(--color-blue)]"
+            />
+            <div>
+              <p className="text-sm font-medium text-[var(--color-ink)]">
+                Comprimir fotos de exibição/venda
+              </p>
+              <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                Quando ativado (padrão), a foto exibida/baixada pelo cliente é redimensionada e
+                comprimida com mozjpeg — reduz bastante o tamanho do arquivo sem perda visível de
+                qualidade, deixando upload e carregamento mais rápidos. Quando desativado, a foto
+                é mantida na resolução e qualidade máxima do original (recomendado para estúdios
+                que vendem arquivos em alta resolução de câmeras profissionais), gerando arquivos
+                maiores. A miniatura da galeria (thumbnail) é sempre comprimida, independente
+                desta opção.
               </p>
             </div>
           </label>

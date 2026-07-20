@@ -111,18 +111,18 @@ export async function applyWatermark(
   if (config.type === 'text') {
     const text = config.text_content ?? ''
     if (!text.trim()) {
-      return sharp(imageBuffer).jpeg({ quality: 85 }).toBuffer()
+      return sharp(imageBuffer).jpeg({ quality: 85, mozjpeg: true }).toBuffer()
     }
     const svg = await buildTextSvg(width, height, config, config.position === 'tiled')
     return sharp(imageBuffer)
       .composite([{ input: svg, top: 0, left: 0 }])
-      .jpeg({ quality: 85 })
+      .jpeg({ quality: 85, mozjpeg: true })
       .toBuffer()
   }
 
   // Image watermark
   if (!watermarkImageBuffer) {
-    return sharp(imageBuffer).jpeg({ quality: 85 }).toBuffer()
+    return sharp(imageBuffer).jpeg({ quality: 85, mozjpeg: true }).toBuffer()
   }
 
   const wmarkSize = Math.round(Math.min(width, height) * (config.image_size_percent / 100))
@@ -148,6 +148,6 @@ export async function applyWatermark(
 
   return sharp(imageBuffer)
     .composite([{ input: svgWithOpacity, gravity }])
-    .jpeg({ quality: 85 })
+    .jpeg({ quality: 85, mozjpeg: true })
     .toBuffer()
 }
