@@ -25,6 +25,9 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
   const [loading, setLoading] = useState<'publish' | 'delete' | null>(null)
   const typeLabel = event.type === 'event' ? 'Evento' : 'Ensaio'
   const linkedSalesCount = event.linked_sales_count ?? 0
+  // Ensaios (type=session) não têm galeria pública navegável — o cliente acessa
+  // via link individual de seleção (/ensaio-review/[reviewId]), não por slug.
+  const hasPublicGallery = event.type === 'event'
 
   async function handlePublish() {
     setLoading('publish')
@@ -109,7 +112,7 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
           </div>
         )}
 
-        {tenantSlug && event.status === 'published' && (
+        {tenantSlug && event.status === 'published' && hasPublicGallery && (
           <p className="text-xs text-[#6b7280] truncate mb-3">
             <a
               href={`/${tenantSlug}/evento/${event.slug}`}
@@ -135,7 +138,7 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
           >
             Fotos
           </Link>
-          {event.status === 'published' && tenantSlug && (
+          {event.status === 'published' && tenantSlug && hasPublicGallery && (
             <Link
               href={`/${tenantSlug}/evento/${event.slug}/qr`}
               target="_blank"

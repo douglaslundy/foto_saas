@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 
 type OrderItem = {
   id: string
@@ -29,7 +30,9 @@ export function OrderStatus({
   paymentMethod,
   initialItems,
 }: Props) {
+  const { toast } = useToast()
   const [status, setStatus] = useState(initialStatus)
+  const [downloading, setDownloading] = useState(false)
   const attemptsRef = useRef(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -63,6 +66,36 @@ export function OrderStatus({
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [orderId, status])
+
+  async function handleDownloadIndividual() {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/download`)
+      if (!res.ok) {
+        toast({ title: 'Erro ao gerar links de download', variant: 'destructive' })
+        return
+      }
+      const data = await res.json() as { downloads: Array<{ photoId: string; url: string }> }
+      if (!data.downloads || data.downloads.length === 0) {
+        toast({ title: 'Nenhuma foto disponível para download', variant: 'destructive' })
+        return
+      }
+      for (const item of data.downloads) {
+        const a = document.createElement('a')
+        a.href = item.url
+        a.download = ''
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        // pequeno intervalo entre cliques para o navegador não bloquear downloads múltiplos
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      }
+    } catch {
+      toast({ title: 'Erro de conexão ao baixar fotos', variant: 'destructive' })
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const isPaid = status === 'paid'
 
@@ -108,12 +141,13 @@ export function OrderStatus({
             {initialItems.length} foto(s) disponíveis para download.
           </p>
           <div className="flex flex-wrap gap-3">
-            <a
-              href={`/api/orders/${orderId}/download`}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded text-sm font-medium"
+            <button
+              onClick={handleDownloadIndividual}
+              disabled={downloading}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded text-sm font-medium disabled:opacity-60"
             >
-              Baixar Fotos
-            </a>
+              {downloading ? 'Baixando...' : 'Baixar Fotos'}
+            </button>
             <a
               href={`/api/orders/${orderId}/download-zip`}
               className="inline-flex items-center gap-2 border border-primary text-primary px-4 py-2 rounded text-sm font-medium hover:bg-primary/5"

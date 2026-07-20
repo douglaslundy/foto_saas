@@ -8,6 +8,17 @@ type DownloadUrl = {
   expiresAt: string
 }
 
+// createAdminClient() usa SUPABASE_INTERNAL_URL (rede interna do Docker) para
+// chamadas servidor-a-servidor. Signed URLs, porém, vão para o navegador do
+// cliente, que não enxerga esse host — por isso trocamos pelo host público
+// antes de devolver o link.
+function toPublicUrl(internalUrl: string): string {
+  const internalBase = process.env.SUPABASE_INTERNAL_URL
+  const publicBase = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!internalBase || !publicBase || !internalUrl.startsWith(internalBase)) return internalUrl
+  return publicBase + internalUrl.slice(internalBase.length)
+}
+
 export async function generateDownloadUrls(photoIds: string[]): Promise<DownloadUrl[]> {
   if (photoIds.length === 0) return []
 
@@ -45,7 +56,7 @@ export async function generateDownloadUrls(photoIds: string[]): Promise<Download
     }
 
     const expiresAt = new Date(Date.now() + DOWNLOAD_URL_EXPIRY_SECONDS * 1000).toISOString()
-    results.push({ photoId: photo.id, url: data.signedUrl, expiresAt })
+    results.push({ photoId: photo.id, url: toPublicUrl(data.signedUrl), expiresAt })
   }
 
   return results
