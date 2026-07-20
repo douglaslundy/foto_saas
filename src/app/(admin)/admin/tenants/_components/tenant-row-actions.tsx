@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type Props = {
   tenantId: string
@@ -11,11 +13,19 @@ type Props = {
 
 export function TenantRowActions({ tenantId, currentStatus }: Props) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState<'status' | 'delete' | null>(null)
   const isActive = currentStatus === 'active'
 
   async function handleStatusToggle() {
-    if (!confirm(isActive ? 'Inativar este tenant?' : 'Reativar este tenant?')) return
+    const ok = await confirm({
+      title: isActive ? 'Inativar tenant' : 'Reativar tenant',
+      description: isActive ? 'Inativar este tenant?' : 'Reativar este tenant?',
+      confirmLabel: isActive ? 'Inativar' : 'Reativar',
+      variant: isActive ? 'destructive' : 'default',
+    })
+    if (!ok) return
     setLoading('status')
     const res = await fetch(`/api/admin/tenants/${tenantId}/status`, {
       method: 'PATCH',
@@ -26,20 +36,26 @@ export function TenantRowActions({ tenantId, currentStatus }: Props) {
       router.refresh()
     } else {
       const data = await res.json().catch(() => ({}))
-      alert((data as { error?: string }).error ?? 'Falha ao atualizar status.')
+      toast({ title: 'Falha ao atualizar status', description: (data as { error?: string }).error, variant: 'destructive' })
     }
     setLoading(null)
   }
 
   async function handleDelete() {
-    if (!confirm('Excluir este tenant? Esta ação remove usuários, eventos, fotos e pedidos.')) return
+    const ok = await confirm({
+      title: 'Excluir tenant',
+      description: 'Excluir este tenant? Esta ação remove usuários, eventos, fotos e pedidos.',
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setLoading('delete')
     const res = await fetch(`/api/admin/tenants/${tenantId}`, { method: 'DELETE' })
     if (res.ok) {
       router.refresh()
     } else {
       const data = await res.json().catch(() => ({}))
-      alert((data as { error?: string }).error ?? 'Falha ao excluir tenant.')
+      toast({ title: 'Falha ao excluir tenant', description: (data as { error?: string }).error, variant: 'destructive' })
     }
     setLoading(null)
   }

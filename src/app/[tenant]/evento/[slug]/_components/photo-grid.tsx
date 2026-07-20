@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart } from 'lucide-react'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 export type Photo = {
   id: string
@@ -38,6 +40,8 @@ type PhotoGridProps = {
 }
 
 export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManager = false }: PhotoGridProps) {
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
@@ -115,13 +119,25 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
       if (res.ok || res.status === 409) {
         setAddedToCart((prev) => new Set(prev).add(photoId))
         if (res.ok) window.dispatchEvent(new CustomEvent('fotosaas:cart-add'))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast({
+          title: 'Não foi possível adicionar ao carrinho',
+          description: (data as { error?: string }).error ?? 'Tente novamente em instantes.',
+          variant: 'destructive',
+        })
       }
     } catch (err) {
       console.error('Failed to add to cart:', err)
+      toast({
+        title: 'Erro de conexão',
+        description: 'Não foi possível adicionar a foto ao carrinho.',
+        variant: 'destructive',
+      })
     } finally {
       setCartWorking((prev) => { const s = new Set(prev); s.delete(photoId); return s })
     }
-  }, [])
+  }, [toast])
 
   async function handleBulkAddToCart() {
     if (selected.size === 0) return
@@ -143,7 +159,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
       for (let i = 0; i < added; i++) window.dispatchEvent(new CustomEvent('fotosaas:cart-add'))
       exitSelectMode()
     } catch {
-      alert('Erro ao adicionar fotos ao carrinho.')
+      toast({ title: 'Erro ao adicionar fotos ao carrinho', variant: 'destructive' })
     } finally {
       setBulkWorking(false)
     }
@@ -151,7 +167,13 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
 
   async function handleBulkDelete() {
     if (selected.size === 0) return
-    if (!confirm(`Excluir ${selected.size} foto(s)? Esta ação não pode ser desfeita.`)) return
+    const ok = await confirm({
+      title: 'Excluir fotos',
+      description: `Excluir ${selected.size} foto(s)? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setBulkWorking(true)
     const ids = Array.from(selected)
     try {
@@ -159,7 +181,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
       setPhotos((prev) => prev.filter((p) => !selected.has(p.id)))
       exitSelectMode()
     } catch {
-      alert('Erro ao excluir fotos.')
+      toast({ title: 'Erro ao excluir fotos', variant: 'destructive' })
     } finally {
       setBulkWorking(false)
     }

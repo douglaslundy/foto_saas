@@ -2,14 +2,21 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 export function DeleteTenantButton({ tenantId }: { tenantId: string }) {
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState(false)
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      'Tem certeza? Esta ação é irreversível e remove todos os eventos, fotos e pedidos.'
-    )
+    const confirmed = await confirm({
+      title: 'Excluir tenant',
+      description: 'Tem certeza? Esta ação é irreversível e remove todos os eventos, fotos e pedidos.',
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
     if (!confirmed) return
 
     setLoading(true)
@@ -18,7 +25,7 @@ export function DeleteTenantButton({ tenantId }: { tenantId: string }) {
       window.location.href = '/admin/tenants'
     } else {
       const data = await res.json()
-      alert(data.error ?? 'Erro ao excluir tenant.')
+      toast({ title: 'Erro ao excluir tenant', description: data.error, variant: 'destructive' })
       setLoading(false)
     }
   }

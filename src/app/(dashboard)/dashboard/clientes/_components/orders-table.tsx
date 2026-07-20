@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type OrderRow = {
   id: string
@@ -43,6 +45,8 @@ const paymentLabel: Record<string, string> = {
 
 export function OrdersTable({ orders }: OrdersTableProps) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const [delivering, setDelivering] = useState<string | null>(null)
 
@@ -53,18 +57,23 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   )
 
   async function handleDeliver(orderId: string) {
-    if (!confirm('Enviar fotos por email para o cliente?')) return
+    const ok = await confirm({
+      title: 'Entregar fotos',
+      description: 'Enviar fotos por email para o cliente?',
+      confirmLabel: 'Enviar',
+    })
+    if (!ok) return
     setDelivering(orderId)
     try {
       const res = await fetch(`/api/orders/${orderId}/deliver`, { method: 'POST' })
       const data = (await res.json()) as { ok?: boolean; error?: string; message?: string }
       if (!res.ok) {
-        alert(data.error ?? 'Erro ao entregar fotos.')
+        toast({ title: 'Erro ao entregar fotos', description: data.error, variant: 'destructive' })
       } else {
         router.refresh()
       }
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setDelivering(null)
     }

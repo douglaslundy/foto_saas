@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type BannerItem = {
   id: string
@@ -19,6 +20,7 @@ interface BannerManagerProps {
 
 export function BannerManager({ initialMode }: BannerManagerProps) {
   const router = useRouter()
+  const confirm = useConfirm()
   const [mode, setMode] = useState<'static' | 'carousel'>(initialMode)
   const [banners, setBanners] = useState<BannerItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,7 +99,13 @@ export function BannerManager({ initialMode }: BannerManagerProps) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Remover esta imagem do carrossel?')) return
+    const ok = await confirm({
+      title: 'Remover imagem',
+      description: 'Remover esta imagem do carrossel?',
+      confirmLabel: 'Remover',
+      variant: 'destructive',
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/tenant/banners/${id}`, { method: 'DELETE' })
       if (res.ok) {

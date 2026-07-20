@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos, count, error } = (await (adminClient as any)
     .from('photos')
-    .select('id, public_storage_path, status', { count: 'exact' })
+    .select('id, public_storage_path, thumbnail_path, status', { count: 'exact' })
     .eq('event_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1)) as {

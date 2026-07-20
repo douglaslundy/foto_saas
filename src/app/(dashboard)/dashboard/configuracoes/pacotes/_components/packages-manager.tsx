@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 interface PhotoPackage {
   id: string
@@ -29,6 +30,7 @@ export default function PackagesManager({ initialPackages }: PackagesManagerProp
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const confirm = useConfirm()
 
   function startEdit(pkg: PhotoPackage) {
     setEditingId(pkg.id)
@@ -108,7 +110,13 @@ export default function PackagesManager({ initialPackages }: PackagesManagerProp
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Tem certeza que deseja excluir este pacote?')) return
+    const ok = await confirm({
+      title: 'Excluir pacote',
+      description: 'Tem certeza que deseja excluir este pacote?',
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/packages/${id}`, { method: 'DELETE' })
       if (res.ok) {

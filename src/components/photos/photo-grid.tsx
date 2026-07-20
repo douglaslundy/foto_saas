@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type Photo = {
   id: string
@@ -8,6 +10,7 @@ type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
+  cacheBust?: number
 }
 
 interface PhotoGridProps {
@@ -28,7 +31,8 @@ const statusLabel: Record<string, string> = {
 
 function thumbUrl(photo: Photo, storageBase: string) {
   const path = photo.thumbnail_path ?? photo.public_storage_path
-  return path ? `${storageBase}/${path}` : null
+  if (!path) return null
+  return photo.cacheBust ? `${storageBase}/${path}?v=${photo.cacheBust}` : `${storageBase}/${path}`
 }
 
 function photoName(photo: Photo) {
@@ -43,6 +47,8 @@ function getInitialViewMode(): ViewMode {
 }
 
 export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onReprocess, onSetCover }: PhotoGridProps) {
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -69,12 +75,18 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
   function exitSelectMode() { setSelectMode(false); setSelected(new Set()) }
 
   async function handleDelete(photoId: string) {
-    if (!confirm('Deletar esta foto? Esta ação não pode ser desfeita.')) return
+    const ok = await confirm({
+      title: 'Excluir foto',
+      description: 'Deletar esta foto? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setDeleting((prev) => new Set(prev).add(photoId))
     try {
       const res = await fetch(`/api/photos/${photoId}`, { method: 'DELETE' })
       if (res.ok) onDelete(photoId)
-      else alert('Erro ao deletar foto.')
+      else toast({ title: 'Erro ao deletar foto', variant: 'destructive' })
     } finally {
       setDeleting((prev) => { const s = new Set(prev); s.delete(photoId); return s })
     }
@@ -82,14 +94,20 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
 
   async function handleBulkDelete() {
     if (selected.size === 0) return
-    if (!confirm(`Deletar ${selected.size} foto(s)? Esta ação não pode ser desfeita.`)) return
+    const ok = await confirm({
+      title: 'Excluir fotos',
+      description: `Deletar ${selected.size} foto(s)? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setBulkDeleting(true)
     const ids = Array.from(selected)
     try {
       await Promise.all(ids.map((id) => fetch(`/api/photos/${id}`, { method: 'DELETE' })))
       onBulkDelete(ids)
       exitSelectMode()
-    } catch { alert('Erro ao deletar fotos.') }
+    } catch { toast({ title: 'Erro ao deletar fotos', variant: 'destructive' }) }
     finally { setBulkDeleting(false) }
   }
 
@@ -107,10 +125,15 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
         onBulkRotate(ids)
         exitSelectMode()
       } else {
-        alert('Erro ao girar fotos.')
+        const data = await res.json().catch(() => ({}))
+        toast({
+          title: 'Erro ao girar fotos',
+          description: (data as { error?: string }).error,
+          variant: 'destructive',
+        })
       }
     } catch {
-      alert('Erro de conexão ao girar fotos.')
+      toast({ title: 'Erro de conexão ao girar fotos', variant: 'destructive' })
     } finally {
       setBulkRotating(false)
     }
@@ -121,7 +144,7 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
     try {
       const res = await fetch(`/api/photos/${photoId}/reprocess`, { method: 'POST' })
       if (res.ok) onReprocess(photoId)
-      else alert('Erro ao reprocessar foto.')
+      else toast({ title: 'Erro ao reprocessar foto', variant: 'destructive' })
     } finally {
       setReprocessing((prev) => { const s = new Set(prev); s.delete(photoId); return s })
     }

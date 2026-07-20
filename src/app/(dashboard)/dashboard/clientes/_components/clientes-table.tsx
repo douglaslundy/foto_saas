@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 export type ClientRow = {
   id: string | null
@@ -36,6 +38,8 @@ const statusClass: Record<ClientRow['status'], string> = {
 
 export function ClientesTable({ clients, canManage = false }: ClientesTableProps) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [busy, setBusy] = useState<{ id: string; action: 'toggle' | 'delete' } | null>(null)
@@ -50,7 +54,13 @@ export function ClientesTable({ clients, canManage = false }: ClientesTableProps
 
   async function handleToggleStatus(client: ClientRow) {
     if (!client.id) return
-    if (!confirm(client.status === 'active' ? 'Inativar este cliente?' : 'Reativar este cliente?')) return
+    const ok = await confirm({
+      title: client.status === 'active' ? 'Inativar cliente' : 'Reativar cliente',
+      description: client.status === 'active' ? 'Inativar este cliente?' : 'Reativar este cliente?',
+      confirmLabel: client.status === 'active' ? 'Inativar' : 'Reativar',
+      variant: client.status === 'active' ? 'destructive' : 'default',
+    })
+    if (!ok) return
 
     setBusy({ id: client.id, action: 'toggle' })
     try {
@@ -62,13 +72,13 @@ export function ClientesTable({ clients, canManage = false }: ClientesTableProps
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert((data as { error?: string }).error ?? 'Falha ao atualizar status.')
+        toast({ title: 'Falha ao atualizar status', description: (data as { error?: string }).error, variant: 'destructive' })
         return
       }
 
       router.refresh()
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setBusy(null)
     }
@@ -76,20 +86,26 @@ export function ClientesTable({ clients, canManage = false }: ClientesTableProps
 
   async function handleDelete(client: ClientRow) {
     if (!client.id) return
-    if (!confirm('Excluir este cliente? A conta será removida, mas os pedidos permanecem no histórico.')) return
+    const ok = await confirm({
+      title: 'Excluir cliente',
+      description: 'Excluir este cliente? A conta será removida, mas os pedidos permanecem no histórico.',
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
 
     setBusy({ id: client.id, action: 'delete' })
     try {
       const res = await fetch(`/api/clients/${client.id}`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        alert((data as { error?: string }).error ?? 'Falha ao excluir cliente.')
+        toast({ title: 'Falha ao excluir cliente', description: (data as { error?: string }).error, variant: 'destructive' })
         return
       }
 
       router.refresh()
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setBusy(null)
     }

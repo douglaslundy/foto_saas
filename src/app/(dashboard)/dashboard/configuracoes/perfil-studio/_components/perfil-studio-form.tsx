@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 
 interface PerfilStudioFormProps {
   initial: {
@@ -22,6 +23,7 @@ const labelClass =
   'block text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)] mb-1.5'
 
 export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
+  const { toast } = useToast()
   const [name, setName] = useState(initial.name)
   const [bio, setBio] = useState(initial.bio ?? '')
   const [primaryColor, setPrimaryColor] = useState(initial.primary_color ?? '#3b82f6')
@@ -55,7 +57,7 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
       const res = await fetch('/api/tenant/logo', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) {
-        alert('Erro ao fazer upload: ' + (data.error ?? 'Falha no upload'))
+        toast({ title: 'Erro ao fazer upload', description: data.error ?? 'Falha no upload', variant: 'destructive' })
       } else {
         setLogoPreview(data.logoUrl)
         setLogoFile(null)
@@ -63,7 +65,7 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido'
-      alert('Erro ao fazer upload: ' + message)
+      toast({ title: 'Erro ao fazer upload', description: message, variant: 'destructive' })
     } finally {
       setLogoUploading(false)
     }
@@ -79,9 +81,9 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
       const res = await fetch('/api/tenant/favicon', { method: 'POST', body: formData })
       const data = await res.json()
       if (res.ok) setFaviconUrl(data.url)
-      else alert('Erro: ' + (data.error ?? 'Falha no upload'))
+      else toast({ title: 'Erro', description: data.error ?? 'Falha no upload', variant: 'destructive' })
     } catch {
-      alert('Erro de conexão.')
+      toast({ title: 'Erro de conexão', variant: 'destructive' })
     } finally {
       setFaviconUploading(false)
     }
@@ -104,12 +106,12 @@ export function PerfilStudioForm({ initial }: PerfilStudioFormProps) {
       })
       if (!res.ok) {
         const err = await res.json()
-        alert('Erro: ' + (err.error ?? 'Falha ao salvar'))
+        toast({ title: 'Erro', description: err.error ?? 'Falha ao salvar', variant: 'destructive' })
       } else {
-        alert('Perfil atualizado com sucesso!')
+        toast({ title: 'Perfil atualizado com sucesso!', variant: 'success' })
       }
     } catch {
-      alert('Erro de conexão. Tente novamente.')
+      toast({ title: 'Erro de conexão. Tente novamente.', variant: 'destructive' })
     } finally {
       setLoading(false)
     }

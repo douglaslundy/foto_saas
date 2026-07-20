@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EventStatusBadge } from './event-status-badge'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type EventItem = {
   id: string
@@ -18,6 +20,8 @@ type EventItem = {
 
 export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?: string }) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState<'publish' | 'delete' | null>(null)
   const typeLabel = event.type === 'event' ? 'Evento' : 'Ensaio'
   const linkedSalesCount = event.linked_sales_count ?? 0
@@ -29,7 +33,7 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
       router.refresh()
     } else {
       const data = (await res.json().catch(() => ({}))) as { error?: string }
-      alert(data.error ?? 'Erro ao publicar evento')
+      toast({ title: 'Erro ao publicar evento', description: data.error, variant: 'destructive' })
     }
     setLoading(null)
   }
@@ -39,7 +43,13 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
       ? `Excluir "${event.title}"? Este evento tem ${linkedSalesCount} venda(s) vinculada(s). Ao excluir, o evento, as fotos, os arquivos do storage e o historico dessas vendas tambem serao removidos. Esta acao nao pode ser desfeita.`
       : `Excluir "${event.title}"? Esta acao nao pode ser desfeita.`
 
-    if (!confirm(deleteMessage)) return
+    const ok = await confirm({
+      title: 'Excluir evento',
+      description: deleteMessage,
+      confirmLabel: 'Excluir',
+      variant: 'destructive',
+    })
+    if (!ok) return
 
     setLoading('delete')
     try {
@@ -48,10 +58,10 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
         router.refresh()
       } else {
         const data = (await res.json().catch(() => ({}))) as { error?: string }
-        alert(data.error ?? 'Erro ao excluir evento')
+        toast({ title: 'Erro ao excluir evento', description: data.error, variant: 'destructive' })
       }
     } catch {
-      alert('Erro de rede ao excluir evento.')
+      toast({ title: 'Erro de rede ao excluir evento', variant: 'destructive' })
     } finally {
       setLoading(null)
     }

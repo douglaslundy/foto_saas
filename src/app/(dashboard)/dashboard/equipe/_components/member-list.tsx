@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 type Member = {
   id: string
@@ -26,6 +28,8 @@ const roleLabel: Record<string, string> = {
 
 export function MemberList({ members, canManage, currentUserId }: MemberListProps) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [removing, setRemoving] = useState<string | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [editRole, setEditRole] = useState<Record<string, string>>({})
@@ -34,7 +38,13 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
   const [editingRate, setEditingRate] = useState<string | null>(null)
 
   async function handleRemove(memberId: string) {
-    if (!confirm('Remover este colaborador da equipe?')) return
+    const ok = await confirm({
+      title: 'Remover colaborador',
+      description: 'Remover este colaborador da equipe?',
+      confirmLabel: 'Remover',
+      variant: 'destructive',
+    })
+    if (!ok) return
     setRemoving(memberId)
     try {
       const res = await fetch(`/api/team/${memberId}`, { method: 'DELETE' })
@@ -42,10 +52,10 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error ?? 'Erro ao remover colaborador.')
+        toast({ title: 'Erro ao remover colaborador', description: data.error, variant: 'destructive' })
       }
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setRemoving(null)
     }
@@ -80,10 +90,10 @@ export function MemberList({ members, canManage, currentUserId }: MemberListProp
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error ?? 'Erro ao atualizar papel.')
+        toast({ title: 'Erro ao atualizar papel', description: data.error, variant: 'destructive' })
       }
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setSaving(null)
     }

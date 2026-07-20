@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { getPlatformConfig } from '@/lib/platform-config'
+import { Toaster } from '@/components/ui/toaster'
+import { ConfirmProvider } from '@/components/providers/confirm-provider'
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -22,7 +24,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <ConfirmProvider>
+          {children}
+          <Toaster />
+        </ConfirmProvider>
+      </body>
     </html>
   )
 }

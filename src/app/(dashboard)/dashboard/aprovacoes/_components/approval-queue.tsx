@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/use-toast'
 
 type PendingEvent = {
   id: string
@@ -14,6 +15,7 @@ type PendingEvent = {
 
 export function ApprovalQueue({ events }: { events: PendingEvent[] }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [processing, setProcessing] = useState<string | null>(null)
 
   async function handleAction(id: string, action: 'approve' | 'reject') {
@@ -26,11 +28,11 @@ export function ApprovalQueue({ events }: { events: PendingEvent[] }) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string }
-        alert(data.error ?? 'Erro ao processar aprovação.')
+        toast({ title: 'Erro ao processar aprovação', description: data.error, variant: 'destructive' })
       }
       router.refresh()
     } catch {
-      alert('Erro de rede. Tente novamente.')
+      toast({ title: 'Erro de rede. Tente novamente.', variant: 'destructive' })
     } finally {
       setProcessing(null)
     }

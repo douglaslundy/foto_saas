@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/use-toast'
+import { useConfirm } from '@/components/providers/confirm-provider'
 
 export function StatusToggleButton({
   tenantId,
@@ -11,12 +13,20 @@ export function StatusToggleButton({
   currentStatus: string
 }) {
   const router = useRouter()
+  const { toast } = useToast()
+  const confirm = useConfirm()
   const [loading, setLoading] = useState(false)
   const isActive = currentStatus === 'active'
   const nextStatus = isActive ? 'suspended' : 'active'
 
   async function handleClick() {
-    if (!confirm(isActive ? 'Suspender esta conta?' : 'Reativar esta conta?')) return
+    const ok = await confirm({
+      title: isActive ? 'Suspender conta' : 'Reativar conta',
+      description: isActive ? 'Suspender esta conta?' : 'Reativar esta conta?',
+      confirmLabel: isActive ? 'Suspender' : 'Reativar',
+      variant: isActive ? 'destructive' : 'default',
+    })
+    if (!ok) return
     setLoading(true)
     const res = await fetch(`/api/admin/tenants/${tenantId}/status`, {
       method: 'PATCH',
@@ -27,7 +37,7 @@ export function StatusToggleButton({
       router.refresh()
     } else {
       const data = await res.json()
-      alert(`Erro: ${data.error ?? 'Falha ao atualizar status.'}`)
+      toast({ title: 'Erro', description: data.error ?? 'Falha ao atualizar status.', variant: 'destructive' })
     }
     setLoading(false)
   }
