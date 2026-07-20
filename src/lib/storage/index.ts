@@ -30,6 +30,18 @@ export async function downloadOriginal(storagePath: string): Promise<Buffer> {
   return Buffer.from(await data.arrayBuffer())
 }
 
+export async function deleteOriginal(storagePath: string): Promise<void> {
+  const supabase = createAdminClient()
+  const { error } = await supabase.storage.from(BUCKETS.ORIGINAL).remove([storagePath])
+  if (error) throw new Error(`Storage delete original failed: ${error.message}`)
+}
+
+export async function deletePublic(storagePath: string): Promise<void> {
+  const supabase = createAdminClient()
+  const { error } = await supabase.storage.from(BUCKETS.PUBLIC).remove([storagePath])
+  if (error) throw new Error(`Storage delete public failed: ${error.message}`)
+}
+
 export function getPublicUrl(storagePath: string): string {
   const supabase = createAdminClient()
   const { data } = supabase.storage

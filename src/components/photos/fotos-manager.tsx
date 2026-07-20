@@ -32,10 +32,10 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
   const photosRef = useRef(photos)
   photosRef.current = photos
 
-  // Enquanto houver foto em processamento (ex: após girar ou reprocessar), consulta
-  // o status periodicamente e atualiza a miniatura em tempo real, sem precisar de F5.
-  // O intervalo roda continuamente desde a montagem (não reinicia a cada mudança de
-  // estado) para garantir uma cadência estável de verificação.
+  // Enquanto houver foto em processamento (ex: após girar, sobrescrever ou reprocessar),
+  // consulta o status periodicamente e atualiza a miniatura em tempo real, sem precisar
+  // de F5. O intervalo roda continuamente desde a montagem (não reinicia a cada mudança
+  // de estado) para garantir uma cadência estável de verificação.
   useEffect(() => {
     const interval = setInterval(async () => {
       const pendingIds = photosRef.current
@@ -102,6 +102,10 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
 
   function handleRotate(photoId: string) {
     setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, status: 'pending' } : p)))
+  }
+
+  function handleOverwrite(photoId: string) {
+    setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, status: 'processing' } : p)))
   }
 
   async function handleSetCover(publicStoragePath: string) {
@@ -192,6 +196,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
           onBulkRotate={handleBulkRotate}
           onRotate={handleRotate}
           onReprocess={handleReprocess}
+          onOverwrite={handleOverwrite}
           onSetCover={handleSetCover}
         />
       </div>

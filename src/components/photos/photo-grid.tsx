@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { useConfirm } from '@/components/providers/confirm-provider'
 
@@ -21,6 +21,7 @@ interface PhotoGridProps {
   onBulkRotate: (photoIds: string[]) => void
   onRotate: (photoId: string) => void
   onReprocess: (photoId: string) => void
+  onOverwrite: (photoId: string) => void
   onSetCover?: (path: string) => Promise<void>
 }
 
@@ -48,7 +49,7 @@ function getInitialViewMode(): ViewMode {
   try { return localStorage.getItem('fotosaas_view_mode') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
 }
 
-export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onRotate, onReprocess, onSetCover }: PhotoGridProps) {
+export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onRotate, onReprocess, onOverwrite, onSetCover }: PhotoGridProps) {
   const { toast } = useToast()
   const confirm = useConfirm()
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
@@ -57,9 +58,12 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [reprocessing, setReprocessing] = useState<Set<string>>(new Set())
   const [rotatingSingle, setRotatingSingle] = useState<Set<string>>(new Set())
+  const [overwriting, setOverwriting] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [bulkRotating, setBulkRotating] = useState(false)
   const [settingCover, setSettingCover] = useState<string | null>(null)
+  const overwriteInputRef = useRef<HTMLInputElement>(null)
+  const overwriteTargetId = useRef<string | null>(null)
 
   async function handleSingleRotate(photoId: string, direction: 'left' | 'right') {
     setRotatingSingle((prev) => new Set(prev).add(photoId))
@@ -174,6 +178,43 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
     }
   }
 
+  function handleOverwriteClick(photoId: string) {
+    overwriteTargetId.current = photoId
+    overwriteInputRef.current?.click()
+  }
+
+  async function handleOverwriteFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    const photoId = overwriteTargetId.current
+    e.target.value = ''
+    if (!file || !photoId) return
+
+    const ok = await confirm({
+      title: 'Sobrescrever foto',
+      description: 'Enviar um novo arquivo para substituir esta foto? A versão atual será apagada do sistema assim que a nova terminar de processar.',
+      confirmLabel: 'Sobrescrever',
+    })
+    if (!ok) return
+
+    setOverwriting((prev) => new Set(prev).add(photoId))
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const res = await fetch(`/api/photos/${photoId}/overwrite`, { method: 'POST', body })
+      if (res.ok) {
+        onOverwrite(photoId)
+        toast({ title: 'Nova versão enviada, processando…', variant: 'success' })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast({ title: 'Erro ao sobrescrever foto', description: (data as { error?: string }).error, variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Erro de conexão ao sobrescrever foto', variant: 'destructive' })
+    } finally {
+      setOverwriting((prev) => { const s = new Set(prev); s.delete(photoId); return s })
+    }
+  }
+
   if (photos.length === 0) {
     return (
       <div className="py-16 text-center">
@@ -187,6 +228,13 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
 
   return (
     <div className="space-y-3">
+      <input
+        ref={overwriteInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+        onChange={handleOverwriteFileChange}
+        style={{ display: 'none' }}
+      />
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -223,6 +271,8 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
           {photos.map((photo) => {
             const isDeleting = deleting.has(photo.id)
             const isSelected = selected.has(photo.id)
+            const isOverwriting = overwriting.has(photo.id)
+            const canOverwrite = photo.status === 'ready' || photo.status === 'error'
             const imgSrc = thumbUrl(photo, storageBase)
             return (
               <div key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
@@ -238,7 +288,7 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                   </div>
                 )}
                 {!selectMode && (
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 flex-wrap">
                     {onSetCover && photo.status === 'ready' && photo.public_storage_path && (
                       <button onClick={(e) => { e.stopPropagation(); handleSetCover(photo.id, photo.public_storage_path!) }} disabled={settingCover === photo.id}
                         className="px-2 py-1 rounded bg-[#2563eb] text-white text-[10px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50" title="Definir como capa do evento">
@@ -252,6 +302,11 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                     <button onClick={(e) => { e.stopPropagation(); handleSingleRotate(photo.id, 'right') }} disabled={photo.status !== 'ready' || rotatingSingle.has(photo.id)}
                       className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-colors disabled:opacity-50" title="Girar 90° à direita">
                       {rotatingSingle.has(photo.id) ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <span className="text-sm">↻</span>}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleOverwriteClick(photo.id) }} disabled={!canOverwrite || isOverwriting}
+                      className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-purple-600 hover:text-white transition-colors disabled:opacity-50" title="Sobrescrever foto (reenviar após edição externa)">
+                      {isOverwriting ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>}
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting}
                       className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-colors disabled:opacity-50" title="Excluir">
@@ -294,6 +349,8 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                 const isSelected = selected.has(photo.id)
                 const isDeleting = deleting.has(photo.id)
                 const isReprocessing = reprocessing.has(photo.id)
+                const isOverwriting = overwriting.has(photo.id)
+                const canOverwrite = photo.status === 'ready' || photo.status === 'error'
                 const imgSrc = thumbUrl(photo, storageBase)
                 return (
                   <tr key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
@@ -325,6 +382,7 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                       {!selectMode && (
                         <div className="flex items-center justify-end gap-3">
                           {photo.status === 'error' && <button onClick={(e) => { e.stopPropagation(); handleReprocess(photo.id) }} disabled={isReprocessing} className="text-xs text-blue-600 hover:underline disabled:opacity-50">{isReprocessing ? '…' : 'Reprocessar'}</button>}
+                          <button onClick={(e) => { e.stopPropagation(); handleOverwriteClick(photo.id) }} disabled={!canOverwrite || isOverwriting} className="text-xs text-purple-600 hover:underline disabled:opacity-50">{isOverwriting ? '…' : 'Sobrescrever'}</button>
                           <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting} className="text-xs text-[var(--color-danger)] hover:underline disabled:opacity-50">{isDeleting ? '…' : 'Deletar'}</button>
                         </div>
                       )}

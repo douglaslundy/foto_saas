@@ -3,13 +3,16 @@ import { Worker, Job } from 'bullmq'
 import { connection } from '../src/lib/queues/connection'
 import type { WatermarkJobData } from '../src/lib/queues/watermark-queue'
 import { faceIndexingQueue } from '../src/lib/queues/face-queue'
-import { downloadOriginal, uploadPublic } from '../src/lib/storage'
+import { downloadOriginal, uploadPublic, deleteOriginal, deletePublic } from '../src/lib/storage'
 import { applyWatermark, type WatermarkConfig } from '../src/lib/image/watermark'
 import { generateThumbnail, generatePreview, normalizeOrientation } from '../src/lib/image/resize'
 import { createAdminClient } from '../src/lib/supabase/admin'
 
 async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
-  const { photo_id, event_id, tenant_id, original_storage_path } = job.data
+  const {
+    photo_id, event_id, tenant_id, original_storage_path,
+    previous_original_storage_path, previous_thumbnail_path, previous_public_storage_path,
+  } = job.data
   const supabase = createAdminClient()
 
   try {
@@ -93,6 +96,31 @@ async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
       .eq('id', photo_id)
 
     if (updateError) throw new Error(`DB update failed: ${updateError.message}`)
+
+    // 6b. Sobrescrita: agora que a nova versão está pronta, apaga os arquivos
+    // antigos (original, miniatura e preview) para liberar armazenamento.
+    // Falha na limpeza não derruba o job — a foto nova já está no ar.
+    if (previous_original_storage_path && previous_original_storage_path !== original_storage_path) {
+      try {
+        await deleteOriginal(previous_original_storage_path)
+      } catch (cleanupErr) {
+        console.error(`[watermark-worker] failed to delete previous original for photo ${photo_id}:`, cleanupErr)
+      }
+    }
+    if (previous_thumbnail_path && previous_thumbnail_path !== thumbPath) {
+      try {
+        await deletePublic(previous_thumbnail_path)
+      } catch (cleanupErr) {
+        console.error(`[watermark-worker] failed to delete previous thumbnail for photo ${photo_id}:`, cleanupErr)
+      }
+    }
+    if (previous_public_storage_path && previous_public_storage_path !== previewPath) {
+      try {
+        await deletePublic(previous_public_storage_path)
+      } catch (cleanupErr) {
+        console.error(`[watermark-worker] failed to delete previous preview for photo ${photo_id}:`, cleanupErr)
+      }
+    }
 
     await job.updateProgress(95)
 
