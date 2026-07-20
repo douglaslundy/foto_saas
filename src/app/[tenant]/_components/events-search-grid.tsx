@@ -68,7 +68,7 @@ export function EventsSearchGrid({
                 style={{ boxShadow: 'var(--shadow-sm)' }}
               >
                 {/* Cover */}
-                <div className="aspect-video bg-[var(--color-surface-alt)] overflow-hidden flex items-center justify-center">
+                <div className="aspect-[4/5] bg-[var(--color-surface-alt)] overflow-hidden flex items-center justify-center">
                   {event.cover_image_path ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img

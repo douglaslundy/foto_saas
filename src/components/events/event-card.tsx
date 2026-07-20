@@ -72,7 +72,7 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
       className="bg-white border border-[#e5e7eb] rounded-lg overflow-hidden hover:shadow-md transition-shadow"
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
     >
-      <div className="h-36 bg-[#f9fafb] relative overflow-hidden">
+      <div className="aspect-[4/5] bg-[#f9fafb] relative overflow-hidden">
         {event.cover_image_path ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
