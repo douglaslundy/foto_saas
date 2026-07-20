@@ -61,13 +61,13 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
   const [bulkRotating, setBulkRotating] = useState(false)
   const [settingCover, setSettingCover] = useState<string | null>(null)
 
-  async function handleSingleRotate(photoId: string) {
+  async function handleSingleRotate(photoId: string, direction: 'left' | 'right') {
     setRotatingSingle((prev) => new Set(prev).add(photoId))
     try {
       const res = await fetch('/api/photos/rotate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photo_ids: [photoId], direction: 'right' }),
+        body: JSON.stringify({ photo_ids: [photoId], direction }),
       })
       if (res.ok) {
         onRotate(photoId)
@@ -245,12 +245,14 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                         {settingCover === photo.id ? '…' : 'Capa'}
                       </button>
                     )}
-                    {photo.status === 'ready' && (
-                      <button onClick={(e) => { e.stopPropagation(); handleSingleRotate(photo.id) }} disabled={rotatingSingle.has(photo.id)}
-                        className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-colors disabled:opacity-50" title="Girar 90°">
-                        {rotatingSingle.has(photo.id) ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <span className="text-sm">↻</span>}
-                      </button>
-                    )}
+                    <button onClick={(e) => { e.stopPropagation(); handleSingleRotate(photo.id, 'left') }} disabled={photo.status !== 'ready' || rotatingSingle.has(photo.id)}
+                      className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-colors disabled:opacity-50" title="Girar 90° à esquerda">
+                      {rotatingSingle.has(photo.id) ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <span className="text-sm">↺</span>}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleSingleRotate(photo.id, 'right') }} disabled={photo.status !== 'ready' || rotatingSingle.has(photo.id)}
+                      className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-colors disabled:opacity-50" title="Girar 90° à direita">
+                      {rotatingSingle.has(photo.id) ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <span className="text-sm">↻</span>}
+                    </button>
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting}
                       className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[var(--color-danger)] hover:text-white transition-colors disabled:opacity-50" title="Excluir">
                       {isDeleting ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />

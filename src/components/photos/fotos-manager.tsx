@@ -34,11 +34,13 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
 
   // Enquanto houver foto em processamento (ex: após girar ou reprocessar), consulta
   // o status periodicamente e atualiza a miniatura em tempo real, sem precisar de F5.
+  // O intervalo roda continuamente desde a montagem (não reinicia a cada mudança de
+  // estado) para garantir uma cadência estável de verificação.
   useEffect(() => {
-    const hasPending = photos.some((p) => p.status === 'pending' || p.status === 'processing')
-    if (!hasPending) return
-
     const interval = setInterval(async () => {
+      const hasPending = photosRef.current.some((p) => p.status === 'pending' || p.status === 'processing')
+      if (!hasPending) return
+
       try {
         const res = await fetch(`/api/events/${eventId}/photos?limit=200`)
         if (!res.ok) return
@@ -49,7 +51,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
           let changed = false
           const next = prev.map((p) => {
             const updated = data.photos.find((d) => d.id === p.id)
-            if (updated && updated.status !== p.status) {
+            if (updated && (updated.status !== p.status || updated.updated_at !== p.updated_at)) {
               changed = true
               return {
                 ...p,
@@ -69,7 +71,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
     }, POLL_INTERVAL_MS)
 
     return () => clearInterval(interval)
-  }, [photos, eventId])
+  }, [eventId])
 
   function handlePhotoReady(photo: Photo) {
     setPhotos((prev) => {

@@ -50,6 +50,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erro ao buscar fotos.' }, { status: 500 })
   }
 
+  if (photos.length === 0) {
+    return NextResponse.json(
+      { error: 'Foto ainda em processamento ou não encontrada. Aguarde e tente novamente.' },
+      { status: 409 }
+    )
+  }
+
   const delta = direction === 'right' ? 90 : -90
 
   await Promise.all(
