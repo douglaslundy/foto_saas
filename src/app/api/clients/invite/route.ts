@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { emailQueue } from '@/lib/queues/email-queue'
+import { sendWhatsAppMessage } from '@/lib/notifications/whatsapp'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -20,14 +21,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
 
-  let body: { email?: string; name?: string }
+  let body: { email?: string; name?: string; phone?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
-  const { email, name } = body
+  const { email, name, phone } = body
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
   }
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
     role: 'client',
     tenant_id: profile.tenant_id,
     name: name ?? null,
+    phone: phone ?? null,
   }, { onConflict: 'id' })
 
   // Enfileirar email de convite via BullMQ
@@ -108,6 +110,13 @@ export async function POST(request: NextRequest) {
     })
   } catch (emailErr) {
     console.error('[invite client] email queue error:', emailErr)
+  }
+
+  if (phone) {
+    await sendWhatsAppMessage(
+      phone,
+      `Olá${name ? `, ${name}` : ''}! 📸\n\n${tenant?.name ?? 'Seu fotógrafo'} criou um acesso para você no portal de fotos.\n\nE-mail: ${email}\nSenha temporária: ${tempPassword}\n\nAcesse: ${loginUrl}`
+    )
   }
 
   return NextResponse.json({

@@ -49,6 +49,7 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
   const [mode, setMode] = useState<'manual' | 'invite'>('invite')
   const [inviteName, setInviteName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
+  const [invitePhone, setInvitePhone] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteMessage, setInviteMessage] = useState<string | null>(null)
 
@@ -60,6 +61,7 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
     setError(null)
     setInviteName('')
     setInviteEmail('')
+    setInvitePhone('')
     setInviteMessage(null)
   }
 
@@ -108,13 +110,14 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
       const res = await fetch('/api/clients/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, name: inviteName || undefined }),
+        body: JSON.stringify({ email: inviteEmail, name: inviteName || undefined, phone: invitePhone || undefined }),
       })
       const data = await res.json() as { message?: string; error?: string }
       if (res.ok) {
         setInviteMessage(`✅ ${data.message}`)
         setInviteEmail('')
         setInviteName('')
+        setInvitePhone('')
       } else {
         setInviteMessage(data.error ?? 'Erro ao enviar convite.')
       }
@@ -171,6 +174,16 @@ export function AddClientDialog({ events }: AddClientDialogProps) {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="cliente@email.com"
                 required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="invite-phone">WhatsApp</Label>
+              <Input
+                id="invite-phone"
+                type="tel"
+                value={invitePhone}
+                onChange={(e) => setInvitePhone(e.target.value)}
+                placeholder="(35) 99999-9999 (opcional)"
               />
             </div>
             {inviteMessage && (

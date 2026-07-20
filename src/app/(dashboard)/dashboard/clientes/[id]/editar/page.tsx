@@ -41,7 +41,7 @@ export default async function EditClientPage({ params }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: client } = await (adminClient as any)
     .from('users')
-    .select('id, name, email, role')
+    .select('id, name, email, phone, cpf, role')
     .eq('id', id)
     .single()
 
@@ -62,6 +62,8 @@ export default async function EditClientPage({ params }: Props) {
         clientId={client.id}
         initialName={client.name ?? ''}
         initialEmail={client.email}
+        initialPhone={client.phone ?? ''}
+        initialCpf={client.cpf ?? ''}
         initialActive={client.role === 'client'}
       />
 

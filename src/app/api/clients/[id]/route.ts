@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!auth) return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
 
   const { id } = await params
-  let body: { name?: string; email?: string; status?: 'active' | 'inactive' }
+  let body: { name?: string; email?: string; phone?: string; cpf?: string; status?: 'active' | 'inactive' }
 
   try {
     body = await request.json()
@@ -61,6 +61,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
     }
     updates.email = nextEmail
+  }
+
+  if (typeof body.phone === 'string') {
+    updates.phone = body.phone.trim()
+  }
+
+  if (typeof body.cpf === 'string') {
+    updates.cpf = body.cpf.trim()
   }
 
   if (typeof body.status === 'string') {

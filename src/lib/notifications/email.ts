@@ -204,6 +204,43 @@ export async function sendEssayDelivered({
   }
 }
 
+export async function sendPasswordReset({
+  to,
+  name,
+  tempPassword,
+  loginUrl,
+  studioName,
+}: {
+  to: string
+  name?: string
+  tempPassword: string
+  loginUrl: string
+  studioName?: string
+}): Promise<void> {
+  try {
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendPasswordReset'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
+      to,
+      subject: `${studioName ?? 'FotoSaaS'} — Sua senha foi redefinida`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+          <h2 style="font-size:22px;margin-bottom:8px;">Olá${name ? `, ${name}` : ''}!</h2>
+          <p style="color:#666;margin-bottom:24px;">Sua senha de acesso ao portal de fotos foi redefinida.</p>
+          <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin-bottom:24px;">
+            <p style="margin:0 0 8px 0;"><strong>E-mail:</strong> ${to}</p>
+            <p style="margin:0;"><strong>Nova senha temporária:</strong> <code style="background:#e0e0e0;padding:2px 8px;border-radius:4px;">${tempPassword}</code></p>
+          </div>
+          <a href="${loginUrl}" style="display:inline-block;background:#0d0f14;color:white;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:600;">Acessar portal →</a>
+        </div>
+      `,
+    })
+  } catch (err) {
+    console.error('[email] sendPasswordReset failed:', err)
+  }
+}
+
 export async function sendRegistrationNotification({
   to,
   studioName,
