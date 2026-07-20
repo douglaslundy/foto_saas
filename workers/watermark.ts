@@ -5,7 +5,7 @@ import type { WatermarkJobData } from '../src/lib/queues/watermark-queue'
 import { faceIndexingQueue } from '../src/lib/queues/face-queue'
 import { downloadOriginal, uploadPublic } from '../src/lib/storage'
 import { applyWatermark, type WatermarkConfig } from '../src/lib/image/watermark'
-import { generateThumbnail, generatePreview } from '../src/lib/image/resize'
+import { generateThumbnail, generatePreview, normalizeOrientation } from '../src/lib/image/resize'
 import { createAdminClient } from '../src/lib/supabase/admin'
 
 async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
@@ -15,18 +15,36 @@ async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
   try {
     await job.updateProgress(10)
 
-    // 1. Load watermark config for the tenant
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: wmConfig } = await (supabase as any)
-      .from('watermark_configs')
-      .select('type, text_content, font, font_size, color, opacity, position, image_storage_path, image_size_percent')
-      .eq('tenant_id', tenant_id)
-      .single()
+    // 1. Load watermark config, rotação manual da foto e configuração global de compressão
+    const [{ data: wmConfig }, { data: photoRow }, { data: compressionSetting }] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('watermark_configs')
+        .select('type, text_content, font, font_size, color, opacity, position, image_storage_path, image_size_percent')
+        .eq('tenant_id', tenant_id)
+        .single(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('photos')
+        .select('rotation_degrees')
+        .eq('id', photo_id)
+        .single(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'photo_compression_enabled')
+        .single(),
+    ])
+
+    const rotationDegrees = (photoRow?.rotation_degrees as number | undefined) ?? 0
+    const compressionEnabled = (compressionSetting?.value as string | undefined ?? 'true') !== 'false'
 
     await job.updateProgress(20)
 
-    // 2. Download original photo from private bucket
-    const originalBuffer = await downloadOriginal(original_storage_path)
+    // 2. Download original photo from private bucket e corrige orientação (EXIF + rotação manual)
+    const rawBuffer = await downloadOriginal(original_storage_path)
+    const originalBuffer = await normalizeOrientation(rawBuffer, rotationDegrees)
 
     await job.updateProgress(40)
 
@@ -45,7 +63,7 @@ async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
     // 4. Generate thumbnail (400px) and preview (1200px) with watermark applied
     const [thumbnailBuffer, previewBuffer] = await Promise.all([
       generateThumbnail(processedBuffer),
-      generatePreview(processedBuffer),
+      generatePreview(processedBuffer, compressionEnabled),
     ])
 
     await job.updateProgress(75)
@@ -99,7 +117,7 @@ async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
 
 const worker = new Worker<WatermarkJobData>('watermark', processWatermarkJob, {
   connection,
-  concurrency: 3,
+  concurrency: 4,
 })
 
 worker.on('completed', (job) => {

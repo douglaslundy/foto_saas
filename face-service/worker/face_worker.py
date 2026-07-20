@@ -55,7 +55,7 @@ async def main():
     worker = Worker(
         "face-indexing",
         process_face_indexing_job,
-        {"connection": settings.REDIS_URL},
+        {"connection": settings.REDIS_URL, "concurrency": 2},
     )
     print(f"[face-worker] Listening on queue 'face-indexing' (Redis: {settings.REDIS_URL})...")
     await asyncio.Event().wait()
