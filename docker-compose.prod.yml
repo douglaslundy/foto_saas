@@ -27,7 +27,7 @@ services:
     volumes:
       - fotosaas-db-data:/var/lib/postgresql/data
       - ./docker/db/00-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
-      - ./docker/db/00-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./docker/db/01-full-schema.sql:/docker-entrypoint-initdb.d/01-full-schema.sql:ro
     networks:
       - fotosaas-net
 
