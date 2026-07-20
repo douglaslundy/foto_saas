@@ -108,7 +108,7 @@ export default async function EventoPage({ params }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos, count } = (await (adminClient as any)
     .from('photos')
-    .select('id, public_storage_path, status', { count: 'exact' })
+    .select('id, public_storage_path, status, updated_at', { count: 'exact' })
     .eq('event_id', event.id)
     .eq('status', 'ready')
     .order('created_at', { ascending: true })

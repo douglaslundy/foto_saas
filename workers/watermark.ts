@@ -88,6 +88,7 @@ async function processWatermarkJob(job: Job<WatermarkJobData>): Promise<void> {
         status: 'ready',
         thumbnail_path: thumbPath,
         public_storage_path: previewPath,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', photo_id)
 

@@ -12,7 +12,7 @@ export type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
-  cacheBust?: number
+  updated_at: string
 }
 
 interface FotosManagerProps {
@@ -43,7 +43,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
         const res = await fetch(`/api/events/${eventId}/photos?limit=200`)
         if (!res.ok) return
         const data = await res.json() as {
-          photos: { id: string; status: string; thumbnail_path: string | null; public_storage_path: string | null }[]
+          photos: { id: string; status: string; thumbnail_path: string | null; public_storage_path: string | null; updated_at: string }[]
         }
         setPhotos((prev) => {
           let changed = false
@@ -56,7 +56,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
                 status: updated.status,
                 thumbnail_path: updated.thumbnail_path,
                 public_storage_path: updated.public_storage_path,
-                cacheBust: Date.now(),
+                updated_at: updated.updated_at,
               }
             }
             return p
@@ -91,6 +91,10 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
   function handleBulkRotate(photoIds: string[]) {
     const idSet = new Set(photoIds)
     setPhotos((prev) => prev.map((p) => (idSet.has(p.id) ? { ...p, status: 'pending' } : p)))
+  }
+
+  function handleRotate(photoId: string) {
+    setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, status: 'pending' } : p)))
   }
 
   async function handleSetCover(publicStoragePath: string) {
@@ -179,6 +183,7 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
           onDelete={handleDelete}
           onBulkDelete={handleBulkDelete}
           onBulkRotate={handleBulkRotate}
+          onRotate={handleRotate}
           onReprocess={handleReprocess}
           onSetCover={handleSetCover}
         />

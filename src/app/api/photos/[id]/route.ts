@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photo } = await (admin as any)
     .from('photos')
-    .select('id, status, thumbnail_path, public_storage_path, created_at')
+    .select('id, status, thumbnail_path, public_storage_path, created_at, updated_at')
     .eq('id', id)
     .eq('tenant_id', profile.tenant_id)
     .single() as {
@@ -43,6 +43,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         thumbnail_path: string | null
         public_storage_path: string | null
         created_at: string
+        updated_at: string
       } | null
     }
 

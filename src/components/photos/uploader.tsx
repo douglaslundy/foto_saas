@@ -17,6 +17,7 @@ type PhotoData = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
+  updated_at: string
 }
 
 type PhotoUploaderProps = {
@@ -96,6 +97,7 @@ export function PhotoUploader({ eventId, onUploadComplete, onPhotoReady }: Photo
         thumbnail_path: null,
         public_storage_path: null,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       pollStatus(photo_id, index) // updates to 'ready' when worker finishes
       return photo_id as string

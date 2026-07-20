@@ -10,14 +10,16 @@ export type Photo = {
   id: string
   public_storage_path: string | null
   status: string
+  updated_at?: string
 }
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos-public`
 
-function getPhotoUrl(path: string | null): string | null {
+function getPhotoUrl(path: string | null, updatedAt?: string): string | null {
   if (!path) return null
   if (path.startsWith('http')) return path
-  return `${STORAGE_URL}/${path}`
+  const v = updatedAt ? new Date(updatedAt).getTime() : ''
+  return `${STORAGE_URL}/${path}?v=${v}`
 }
 
 type ViewMode = 'grid' | 'list'
@@ -276,7 +278,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
               >
                 {photo.status === 'ready' && photo.public_storage_path ? (
                   <>
-                    <img src={getPhotoUrl(photo.public_storage_path) ?? ''} alt="" className="w-full h-full object-cover hover:opacity-90 transition-opacity" draggable="false" onContextMenu={(e) => e.preventDefault()} />
+                    <img src={getPhotoUrl(photo.public_storage_path, photo.updated_at) ?? ''} alt="" className="w-full h-full object-cover hover:opacity-90 transition-opacity" draggable="false" onContextMenu={(e) => e.preventDefault()} />
                     {!isManager && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setSelectMode(true); toggleSelect(photo.id) }}
@@ -335,7 +337,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
                 )}
                 <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-muted">
                   {photo.status === 'ready' && photo.public_storage_path ? (
-                    <img src={getPhotoUrl(photo.public_storage_path) ?? ''} alt="" className="w-full h-full object-cover" draggable="false" onContextMenu={(e) => e.preventDefault()} />
+                    <img src={getPhotoUrl(photo.public_storage_path, photo.updated_at) ?? ''} alt="" className="w-full h-full object-cover" draggable="false" onContextMenu={(e) => e.preventDefault()} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><span className="text-[10px] text-muted-foreground">…</span></div>
                   )}
@@ -401,7 +403,7 @@ export function PhotoGrid({ initialPhotos, eventId, total, filteredIds, isManage
             </button>
 
             <img
-              src={getPhotoUrl(lightboxPhoto.public_storage_path) ?? ''}
+              src={getPhotoUrl(lightboxPhoto.public_storage_path, lightboxPhoto.updated_at) ?? ''}
               alt=""
               className="max-w-full max-h-full object-contain select-none"
               draggable="false"

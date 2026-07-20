@@ -10,7 +10,7 @@ type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
-  cacheBust?: number
+  updated_at: string
 }
 
 interface PhotoGridProps {
@@ -19,6 +19,7 @@ interface PhotoGridProps {
   onDelete: (photoId: string) => void
   onBulkDelete: (photoIds: string[]) => void
   onBulkRotate: (photoIds: string[]) => void
+  onRotate: (photoId: string) => void
   onReprocess: (photoId: string) => void
   onSetCover?: (path: string) => Promise<void>
 }
@@ -32,7 +33,8 @@ const statusLabel: Record<string, string> = {
 function thumbUrl(photo: Photo, storageBase: string) {
   const path = photo.thumbnail_path ?? photo.public_storage_path
   if (!path) return null
-  return photo.cacheBust ? `${storageBase}/${path}?v=${photo.cacheBust}` : `${storageBase}/${path}`
+  const v = photo.updated_at ? new Date(photo.updated_at).getTime() : ''
+  return `${storageBase}/${path}?v=${v}`
 }
 
 function photoName(photo: Photo) {
@@ -46,7 +48,7 @@ function getInitialViewMode(): ViewMode {
   try { return localStorage.getItem('fotosaas_view_mode') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
 }
 
-export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onReprocess, onSetCover }: PhotoGridProps) {
+export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkRotate, onRotate, onReprocess, onSetCover }: PhotoGridProps) {
   const { toast } = useToast()
   const confirm = useConfirm()
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
@@ -54,9 +56,31 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
   const [reprocessing, setReprocessing] = useState<Set<string>>(new Set())
+  const [rotatingSingle, setRotatingSingle] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [bulkRotating, setBulkRotating] = useState(false)
   const [settingCover, setSettingCover] = useState<string | null>(null)
+
+  async function handleSingleRotate(photoId: string) {
+    setRotatingSingle((prev) => new Set(prev).add(photoId))
+    try {
+      const res = await fetch('/api/photos/rotate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_ids: [photoId], direction: 'right' }),
+      })
+      if (res.ok) {
+        onRotate(photoId)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast({ title: 'Erro ao girar foto', description: (data as { error?: string }).error, variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Erro de conexão ao girar foto', variant: 'destructive' })
+    } finally {
+      setRotatingSingle((prev) => { const s = new Set(prev); s.delete(photoId); return s })
+    }
+  }
 
   async function handleSetCover(photoId: string, path: string) {
     if (!onSetCover) return
@@ -219,6 +243,12 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                       <button onClick={(e) => { e.stopPropagation(); handleSetCover(photo.id, photo.public_storage_path!) }} disabled={settingCover === photo.id}
                         className="px-2 py-1 rounded bg-[#2563eb] text-white text-[10px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50" title="Definir como capa do evento">
                         {settingCover === photo.id ? '…' : 'Capa'}
+                      </button>
+                    )}
+                    {photo.status === 'ready' && (
+                      <button onClick={(e) => { e.stopPropagation(); handleSingleRotate(photo.id) }} disabled={rotatingSingle.has(photo.id)}
+                        className="w-9 h-9 rounded-full bg-[var(--color-card)]/90 text-[var(--color-ink)] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-colors disabled:opacity-50" title="Girar 90°">
+                        {rotatingSingle.has(photo.id) ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <span className="text-sm">↻</span>}
                       </button>
                     )}
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(photo.id) }} disabled={isDeleting}

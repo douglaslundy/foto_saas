@@ -14,6 +14,7 @@ type Photo = {
   thumbnail_path: string | null
   public_storage_path: string | null
   created_at: string
+  updated_at: string
 }
 
 type EssayReview = {
@@ -68,7 +69,7 @@ export default async function FotosEventoPage({ params }: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('photos')
-      .select('id, status, thumbnail_path, public_storage_path, created_at')
+      .select('id, status, thumbnail_path, public_storage_path, created_at, updated_at')
       .eq('event_id', id)
       .eq('tenant_id', profile.tenant_id)
       .order('created_at', { ascending: false }) as Promise<{ data: Photo[] | null }>,
