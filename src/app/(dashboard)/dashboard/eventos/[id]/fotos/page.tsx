@@ -6,6 +6,7 @@ import { FotosManager } from '@/components/photos/fotos-manager'
 import { SendToClientButton } from '@/components/essay/send-to-client-button'
 import { SendFinalDeliveryButton } from '@/components/essay/send-final-delivery-button'
 import { ReviewPasswordCard } from '@/components/essay/review-password-card'
+import { CopyReviewLinkButton } from '@/components/essay/copy-review-link-button'
 import { getDashboardFallbackPath } from '@/lib/dashboard-access'
 
 type Props = { params: Promise<{ id: string }> }
@@ -61,7 +62,7 @@ export default async function FotosEventoPage({ params }: Props) {
     redirect(getDashboardFallbackPath(profile as { role?: string | null; tenant_id?: string | null } | null))
   }
 
-  const [eventResult, photosResult, reviewResult] = await Promise.all([
+  const [eventResult, photosResult, reviewResult, tenantResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (adminClient as any)
       .from('events')
@@ -85,11 +86,18 @@ export default async function FotosEventoPage({ params }: Props) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle() as Promise<{ data: EssayReview | null }>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (adminClient as any)
+      .from('tenants')
+      .select('slug')
+      .eq('id', profile.tenant_id)
+      .single() as Promise<{ data: { slug: string } | null }>,
   ])
 
   const event = eventResult.data
   const photos = photosResult.data ?? []
   const review = reviewResult.data
+  const tenantSlug = tenantResult.data?.slug ?? ''
   if (!event) notFound()
 
   const isSession = event.type === 'session'
@@ -140,6 +148,9 @@ export default async function FotosEventoPage({ params }: Props) {
               canResend={!!review && isLinkExpired}
               reviewId={review?.id}
             />
+          )}
+          {isSession && review && (
+            <CopyReviewLinkButton reviewId={review.id} tenantSlug={tenantSlug} />
           )}
           {isSession && review && ['submitted', 'in_progress', 'delivered'].includes(review.status) && (
             <a
