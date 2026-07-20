@@ -38,11 +38,16 @@ export function FotosManager({ eventId, initialPhotos, storageBase }: FotosManag
   // estado) para garantir uma cadência estável de verificação.
   useEffect(() => {
     const interval = setInterval(async () => {
-      const hasPending = photosRef.current.some((p) => p.status === 'pending' || p.status === 'processing')
-      if (!hasPending) return
+      const pendingIds = photosRef.current
+        .filter((p) => p.status === 'pending' || p.status === 'processing')
+        .map((p) => p.id)
+      if (pendingIds.length === 0) return
 
       try {
-        const res = await fetch(`/api/events/${eventId}/photos?limit=200`)
+        // Busca exatamente as fotos pendentes por id — eventos com muitas fotos
+        // (200+) tinham a foto girada fora do corte de paginação usado antes
+        // (limit=200 ordenado por data de criação), então o polling nunca a via.
+        const res = await fetch(`/api/events/${eventId}/photos?ids=${pendingIds.join(',')}`)
         if (!res.ok) return
         const data = await res.json() as {
           photos: { id: string; status: string; thumbnail_path: string | null; public_storage_path: string | null; updated_at: string }[]

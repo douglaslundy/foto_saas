@@ -74,12 +74,12 @@ export function WatermarkPreview({
 
   const tilePattern = useMemo(() => {
     // Espelha a mesma fórmula usada na geração de produção (src/lib/image/watermark.ts):
-    // spacingY controla a distância entre a linha 1 e a linha 2, não o espaço entre repetições.
-    const line1Y = fontSize + 4
-    const line2Y = line1Y + spacingY
+    // uma única linha por bloco do padrão, repetindo a cada (fontSize + spacingY) —
+    // assim toda linha fica igualmente espaçada, sem pares colados.
+    const lineY = fontSize
     const patternW = Math.max(text.length * fontSize * 0.78, 104) + spacingX
-    const patternH = line2Y + fontSize * 0.5
-    return { patternW, patternH, line1Y, line2Y }
+    const patternH = fontSize + spacingY
+    return { patternW, patternH, lineY }
   }, [text, fontSize, spacingX, spacingY])
 
   const imgSize = Math.round(Math.min(PREVIEW_W, PREVIEW_H) * (imageSizePercent / 100))
@@ -125,18 +125,7 @@ export function WatermarkPreview({
                   >
                     <text
                       x={10}
-                      y={tilePattern.line1Y}
-                      fontFamily={font}
-                      fontSize={fontSize}
-                      fontWeight={fontWeight}
-                      fill={color}
-                      opacity={opacity}
-                    >
-                      {text}
-                    </text>
-                    <text
-                      x={10}
-                      y={tilePattern.line2Y}
+                      y={tilePattern.lineY}
                       fontFamily={font}
                       fontSize={fontSize}
                       fontWeight={fontWeight}

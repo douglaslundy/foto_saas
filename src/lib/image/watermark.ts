@@ -73,20 +73,20 @@ async function buildTextSvg(
   const spacingY = (config.spacing_y ?? 80) * scale
 
   if (tiled) {
-    // spacingY controla diretamente a distância entre a linha 1 e a linha 2
-    // dentro de cada repetição da marca d'água (não o espaço entre repetições).
-    const line1Y = fontSize + 4
-    const line2Y = line1Y + spacingY
+    // Uma única linha por bloco do padrão — o próprio patternH (fontSize + spacingY)
+    // é o que se repete verticalmente, então TODAS as linhas ficam igualmente
+    // espaçadas por spacingY. (Antes havia 2 linhas por bloco: a distância dentro do
+    // bloco respeitava spacingY, mas a distância ENTRE blocos era outra conta fixa e
+    // menor, criando pares de linhas coladas em vez de espaçamento uniforme.)
+    const lineY = fontSize
     const patternW = Math.max(text.length * fontSize * 0.78, 104) + spacingX
-    const patternH = line2Y + fontSize * 0.5
+    const patternH = fontSize + spacingY
     return Buffer.from(
       `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="wm" width="${patternW}" height="${patternH}"
             patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
-            <text x="10" y="${line1Y}" font-family="${font}" font-size="${fontSize}px"
-              font-weight="${fontWeight}" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
-            <text x="10" y="${line2Y}" font-family="${font}" font-size="${fontSize}px"
+            <text x="10" y="${lineY}" font-family="${font}" font-size="${fontSize}px"
               font-weight="${fontWeight}" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
           </pattern>
         </defs>
