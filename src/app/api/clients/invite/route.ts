@@ -47,6 +47,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Este e-mail já é cliente cadastrado.' }, { status: 409 })
   }
 
+  // Esse e-mail pode já pertencer a outra conta na plataforma (fotógrafo,
+  // admin, sub-fotógrafo, ou cliente de OUTRO estúdio). Nunca sobrescrever o
+  // role/tenant/senha dela — já aconteceu de derrubar o acesso de um admin.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: anyExisting } = await (admin as any)
+    .from('users')
+    .select('role')
+    .eq('email', email)
+    .maybeSingle()
+  if (anyExisting && !['client', 'client_inactive'].includes(anyExisting.role)) {
+    return NextResponse.json({
+      error: 'Este e-mail já pertence a uma conta existente na plataforma (não é um cliente) e não pode ser convidado.',
+    }, { status: 409 })
+  }
+
   // Gerar senha temporária
   const tempPassword = Math.random().toString(36).slice(-8) + 'A1!'
 

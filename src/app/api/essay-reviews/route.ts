@@ -117,12 +117,20 @@ export async function POST(request: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existingUsers } = await (admin as any)
         .from('users')
-        .select('id')
+        .select('id, role')
         .eq('email', newClient.email)
         .limit(1)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const existing = (existingUsers as any[] | null)?.[0]
       if (!existing) return NextResponse.json({ error: 'Erro ao criar conta do cliente.' }, { status: 500 })
+      // Esse e-mail já é usado por outra conta na plataforma (fotógrafo, admin,
+      // sub-fotógrafo). Nunca sobrescrever o role/tenant dela — isso já
+      // aconteceu uma vez e derrubou o acesso de um admin sem querer.
+      if (!['client', 'client_inactive'].includes(existing.role)) {
+        return NextResponse.json({
+          error: 'Este e-mail já pertence a uma conta existente na plataforma (não é um cliente) e não pode ser usado para um novo cliente.',
+        }, { status: 409 })
+      }
       resolvedClientId = existing.id
     } else {
       resolvedClientId = created.user.id
