@@ -47,10 +47,13 @@ const IMAGE_POSITIONS: Record<Exclude<Position, 'tiled'>, { x: string; y: string
   'bottom-right': { x: '96%', y: '96%' },
 }
 
-// Frame de amostra fixo (px) — só define a proporção/escala do preview,
-// a marca d'água real é gerada no mesmo tamanho da foto de produção.
-const PREVIEW_W = 480
-const PREVIEW_H = 320
+// viewBox usa a MESMA largura de referência da geração em produção
+// (WATERMARK_REFERENCE_WIDTH em src/lib/image/watermark.ts) — assim o
+// tamanho de fonte/espaçamento aparece com a proporção real, sem precisar
+// de nenhuma conta de escala aqui: o navegador já escala o viewBox pro
+// tamanho do frame automaticamente.
+const PREVIEW_W = 1000
+const PREVIEW_H = 667
 
 export function WatermarkPreview({
   type,

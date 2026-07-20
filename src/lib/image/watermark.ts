@@ -50,20 +50,27 @@ function escapeXml(unsafe: string): string {
   })
 }
 
+// Os campos de tamanho/espaçamento são pensados para uma foto de referência
+// de 1000px de largura (mesma referência usada no preview da tela de
+// configurações) e escalados proporcionalmente para a largura real da foto —
+// sem isso, um valor "bom" no preview fica minúsculo numa foto de 3000-5000px.
+export const WATERMARK_REFERENCE_WIDTH = 1000
+
 async function buildTextSvg(
   width: number,
   height: number,
   config: WatermarkConfig,
   tiled = false
 ): Promise<Buffer> {
+  const scale = width / WATERMARK_REFERENCE_WIDTH
   const text = config.text_content ?? ''
-  const fontSize = config.font_size ?? 36
+  const fontSize = (config.font_size ?? 36) * scale
   const font = config.font ?? 'DejaVu Sans'
   const color = config.color
   const opacity = config.opacity
   const fontWeight = config.font_weight ?? 700
-  const spacingX = config.spacing_x ?? 40
-  const spacingY = config.spacing_y ?? 80
+  const spacingX = (config.spacing_x ?? 40) * scale
+  const spacingY = (config.spacing_y ?? 80) * scale
 
   if (tiled) {
     const lineHeight = fontSize * 2
