@@ -24,6 +24,7 @@ export function SendToClientModal({ eventId, onClose, onSent }: Props) {
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newCpf, setNewCpf] = useState('')
+  const [newPhone, setNewPhone] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -60,7 +61,7 @@ export function SendToClientModal({ eventId, onClose, onSent }: Props) {
         ? { event_id: eventId, client_id: selectedClient.id }
         : {
             event_id: eventId,
-            client: { name: newName.trim(), email: newEmail.trim(), cpf: newCpf.trim() },
+            client: { name: newName.trim(), email: newEmail.trim(), cpf: newCpf.trim(), phone: newPhone.trim() || undefined },
           }
 
       const res = await fetch('/api/essay-reviews', {
@@ -165,6 +166,16 @@ export function SendToClientModal({ eventId, onClose, onSent }: Props) {
               placeholder="CPF (000.000.000-00)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <input
+              type="text"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              placeholder="WhatsApp (DDD + número, opcional)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-[11px] text-gray-400">
+              Informando o WhatsApp, o link de seleção também é enviado por lá, além do e-mail.
+            </p>
           </div>
         )}
 

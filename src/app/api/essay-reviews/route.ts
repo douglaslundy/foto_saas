@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEssayReviewLink } from '@/lib/notifications/email'
+import { sendWhatsAppMessage } from '@/lib/notifications/whatsapp'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 const MAGIC_LINK_TTL_SECONDS = 72 * 60 * 60 // 72h
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
   let body: {
     event_id?: string
     client_id?: string
-    client?: { name: string; email: string; cpf: string }
+    client?: { name: string; email: string; cpf: string; phone?: string }
   }
   try {
     body = await request.json()
@@ -97,12 +98,18 @@ export async function POST(request: NextRequest) {
   let resolvedClientId = client_id
   let clientEmail = ''
   let clientName = ''
+  let clientPhone: string | null = null
 
   if (newClient) {
+    // Senha temporária forte — o cliente normalmente entra pelo magic link
+    // enviado por e-mail/WhatsApp, mas a conta precisa de uma senha real
+    // (não previsível) para permitir login manual em /login também.
+    const tempPassword = Math.random().toString(36).slice(-8) + 'A1!'
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: created, error: createError } = await (admin as any).auth.admin.createUser({
       email: newClient.email,
-      password: '123456',
+      password: tempPassword,
       email_confirm: true,
     })
     if (createError) {
@@ -128,24 +135,27 @@ export async function POST(request: NextRequest) {
       email: newClient.email,
       name: newClient.name,
       cpf: newClient.cpf,
+      phone: newClient.phone ?? null,
       role: 'client',
     }, { onConflict: 'id' })
 
     clientEmail = newClient.email
     clientName = newClient.name
+    clientPhone = newClient.phone ?? null
   } else {
-    // Fetch existing client's email and name
+    // Fetch existing client's email, name and phone
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: clientData } = await (admin as any)
       .from('users')
-      .select('email, name')
+      .select('email, name, phone')
       .eq('id', resolvedClientId)
       .eq('tenant_id', profile.tenant_id)
-      .single() as { data: { email: string; name: string } | null }
+      .single() as { data: { email: string; name: string; phone: string | null } | null }
 
     if (!clientData) return NextResponse.json({ error: 'Cliente não encontrado.' }, { status: 404 })
     clientEmail = clientData.email
     clientName = clientData.name
+    clientPhone = clientData.phone
   }
 
   // Create essay_reviews record
@@ -181,14 +191,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro ao gerar link.' }, { status: 500 })
   }
 
+  const reviewLink = linkData.properties.action_link
+
   // Send email to client
   await sendEssayReviewLink({
     to: clientEmail,
     clientName,
-    reviewLink: linkData.properties.action_link,
+    reviewLink,
     sessionTitle: event.title,
     studioName: profile.name ?? undefined,
   })
+
+  // Send WhatsApp message to client (se telefone cadastrado e Evolution API configurada)
+  if (clientPhone) {
+    await sendWhatsAppMessage(
+      clientPhone,
+      `Olá, ${clientName}! 📸\n\nSeu ensaio *${event.title}* está pronto para seleção de fotos.\n\nAcesse o link abaixo para escolher suas fotos favoritas (válido por 72 horas):\n${reviewLink}`
+    )
+  }
 
   return NextResponse.json({ review_id: review.id }, { status: 201 })
 }
