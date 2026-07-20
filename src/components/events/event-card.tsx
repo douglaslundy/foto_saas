@@ -125,6 +125,17 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
           </p>
         )}
 
+        {event.status === 'published' && !hasPublicGallery && (
+          <p className="text-xs text-[#6b7280] truncate mb-3">
+            <Link
+              href={`/dashboard/eventos/${event.id}/fotos`}
+              className="text-[#2563eb] hover:underline"
+            >
+              {'Ver fotos ->'}
+            </Link>
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-1.5 mt-2">
           <Link
             href={`/dashboard/eventos/${event.id}/editar`}
