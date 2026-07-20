@@ -41,6 +41,11 @@ export default async function ConfiguracoesPage() {
     platform_name: settingsMap['platform_name'] ?? '',
     platform_favicon_url: settingsMap['platform_favicon_url'] ?? '',
     photo_compression_enabled: settingsMap['photo_compression_enabled'] ?? 'true',
+    smtp_host: settingsMap['smtp_host'] ?? '',
+    smtp_port: settingsMap['smtp_port'] ?? '587',
+    smtp_user: settingsMap['smtp_user'] ?? '',
+    smtp_pass: settingsMap['smtp_pass'] ?? '',
+    smtp_from: settingsMap['smtp_from'] ?? '',
   }
 
   return (
@@ -53,7 +58,7 @@ export default async function ConfiguracoesPage() {
           Configurações
         </h1>
         <p className="text-[var(--color-ink-muted)] text-sm mt-1">
-          Gerencie comissões globais e credenciais de pagamento da plataforma.
+          Gerencie comissões globais, credenciais de pagamento e envio de e-mail da plataforma.
         </p>
       </div>
 

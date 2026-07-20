@@ -58,6 +58,11 @@ export async function PUT(request: NextRequest) {
     platform_name?: string
     platform_favicon_url?: string
     photo_compression_enabled?: string
+    smtp_host?: string
+    smtp_port?: string
+    smtp_user?: string
+    smtp_pass?: string
+    smtp_from?: string
   }
   try {
     body = await request.json()
@@ -76,6 +81,11 @@ export async function PUT(request: NextRequest) {
     'platform_name',
     'platform_favicon_url',
     'photo_compression_enabled',
+    'smtp_host',
+    'smtp_port',
+    'smtp_user',
+    'smtp_pass',
+    'smtp_from',
   ] as const
 
   for (const key of keys) {

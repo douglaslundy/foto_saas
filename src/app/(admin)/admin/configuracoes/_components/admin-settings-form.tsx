@@ -11,6 +11,11 @@ type Settings = {
   platform_name: string
   platform_favicon_url: string
   photo_compression_enabled: string
+  smtp_host: string
+  smtp_port: string
+  smtp_user: string
+  smtp_pass: string
+  smtp_from: string
 }
 
 export function AdminSettingsForm({ initialSettings }: { initialSettings: Settings }) {
@@ -277,6 +282,110 @@ export function AdminSettingsForm({ initialSettings }: { initialSettings: Settin
               placeholder="APP_USR-..."
               className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3 — E-mail (SMTP) */}
+      <div
+        className="rounded-[var(--radius)] border border-[var(--color-border-strong)] bg-[var(--color-card)] overflow-hidden"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+      >
+        <div className="px-6 py-4 border-b border-[var(--color-border-strong)]">
+          <h2
+            className="text-lg font-semibold text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            E-mail (SMTP)
+          </h2>
+        </div>
+        <div className="px-6 py-5 space-y-5">
+          <p className="text-xs text-[var(--color-ink-muted)]">
+            Usado para confirmação de pedido, aviso de venda ao fotógrafo, entrega de ensaios e
+            convites de clientes. Sem isso configurado, nenhum e-mail é enviado.
+          </p>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label htmlFor="smtp_host" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+                Host SMTP
+              </label>
+              <input
+                id="smtp_host"
+                type="text"
+                autoComplete="off"
+                value={values.smtp_host}
+                onChange={(e) => handleChange('smtp_host', e.target.value)}
+                placeholder="smtp.gmail.com"
+                className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
+              />
+            </div>
+            <div className="w-28">
+              <label htmlFor="smtp_port" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+                Porta
+              </label>
+              <input
+                id="smtp_port"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={values.smtp_port}
+                onChange={(e) => handleChange('smtp_port', e.target.value)}
+                placeholder="587"
+                className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="smtp_user" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+              Usuário SMTP
+            </label>
+            <input
+              id="smtp_user"
+              type="text"
+              autoComplete="off"
+              value={values.smtp_user}
+              onChange={(e) => handleChange('smtp_user', e.target.value)}
+              placeholder="contato@seudominio.com"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="smtp_pass" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+              Senha SMTP
+            </label>
+            <input
+              id="smtp_pass"
+              type="password"
+              autoComplete="off"
+              value={values.smtp_pass}
+              onChange={(e) => handleChange('smtp_pass', e.target.value)}
+              placeholder="••••••••"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
+            />
+            <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
+              Para Gmail, use uma senha de app (não a senha normal da conta).
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="smtp_from" className="block text-sm font-medium text-[var(--color-ink)] mb-1.5">
+              E-mail remetente (opcional)
+            </label>
+            <input
+              id="smtp_from"
+              type="text"
+              autoComplete="off"
+              value={values.smtp_from}
+              onChange={(e) => handleChange('smtp_from', e.target.value)}
+              placeholder="noreply@seudominio.com"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent font-mono"
+            />
+            <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
+              Se vazio, usa o usuário SMTP como remetente.
+            </p>
           </div>
         </div>
       </div>

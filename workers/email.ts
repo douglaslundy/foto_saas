@@ -3,26 +3,26 @@ import nodemailer from 'nodemailer'
 import { Worker, Job } from 'bullmq'
 import { connection } from '../src/lib/queues/connection'
 import type { EmailJobData } from '../src/lib/queues/email-queue'
-
-function createTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
-}
-
-const FROM = process.env.SMTP_FROM ?? 'noreply@fotosaas.com'
+import { getSmtpConfig } from '../src/lib/notifications/smtp-settings'
 
 function formatBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
-  const transport = createTransport()
+  const config = await getSmtpConfig()
+  if (!config) {
+    // SMTP ainda não foi configurado (nem via .env, nem via /admin/configuracoes).
+    // Falha o job em vez de fingir sucesso — fica visível nos logs e no BullMQ.
+    throw new Error('SMTP não configurado — configure em /admin/configuracoes')
+  }
+
+  const transport = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    auth: { user: config.user, pass: config.pass },
+  })
+  const FROM = config.from
   const { data } = job
 
   if (data.type === 'order_confirmation') {

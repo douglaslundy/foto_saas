@@ -1,17 +1,18 @@
 import nodemailer from 'nodemailer'
+import { getSmtpConfig } from './smtp-settings'
 
-function getTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
+async function getTransport() {
+  const config = await getSmtpConfig()
+  if (!config) return null
+  return {
+    transport: nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      auth: { user: config.user, pass: config.pass },
+    }),
+    from: config.from,
+  }
 }
-
-const FROM = process.env.SMTP_FROM ?? 'noreply@fotosaas.com'
 
 export async function sendOrderConfirmation({
   to,
@@ -27,9 +28,10 @@ export async function sendOrderConfirmation({
   studioName?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendOrderConfirmation'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `Pedido confirmado — ${studioName ?? 'FotoSaaS'} #${orderId.slice(0, 8)}`,
       html: `
@@ -64,9 +66,10 @@ export async function sendSaleNotification({
   studioName?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendSaleNotification'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `Nova venda — ${(totalCents / 100).toLocaleString('pt-BR', {
         style: 'currency',
@@ -101,9 +104,10 @@ export async function sendEssayReviewLink({
   studioName?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendEssayReviewLink'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `${studioName ?? 'FotoSaaS'} — Selecione suas fotos do ensaio`,
       html: `
@@ -139,9 +143,10 @@ export async function sendEssaySubmitted({
   studioName?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendEssaySubmitted'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `${clientName} selecionou fotos — ${sessionTitle}`,
       html: `
@@ -176,9 +181,10 @@ export async function sendEssayDelivered({
   studioName?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendEssayDelivered'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `${studioName ?? 'FotoSaaS'} — Suas fotos do ensaio estão prontas!`,
       html: `
@@ -216,9 +222,10 @@ export async function sendRegistrationNotification({
   cpfCnpj: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendRegistrationNotification'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: `Novo pedido de cadastro — ${studioName}`,
       html: `
@@ -252,9 +259,10 @@ export async function sendRegistrationApproved({
   loginUrl: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendRegistrationApproved'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: 'Seu cadastro foi aprovado!',
       html: `
@@ -283,9 +291,10 @@ export async function sendRegistrationRejected({
   notes?: string
 }): Promise<void> {
   try {
-    const transport = getTransport()
-    await transport.sendMail({
-      from: FROM,
+    const mailer = await getTransport()
+    if (!mailer) { console.warn('[email] SMTP não configurado — pulando sendRegistrationRejected'); return }
+    await mailer.transport.sendMail({
+      from: mailer.from,
       to,
       subject: 'Atualização sobre seu cadastro',
       html: `
