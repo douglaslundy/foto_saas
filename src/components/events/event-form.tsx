@@ -16,6 +16,9 @@ type EventFormValues = {
   price_cents?: number
   facial_recognition_enabled?: boolean
   cover_image_path?: string | null
+  session_price_cents?: number
+  included_photo_count?: number
+  extra_photo_price_cents?: number
 }
 
 const inputClass =
@@ -45,6 +48,15 @@ export function EventForm({
   const [facialEnabled, setFacialEnabled] = useState(
     defaultValues?.facial_recognition_enabled ?? false
   )
+  const [sessionPriceDisplay, setSessionPriceDisplay] = useState(
+    ((defaultValues?.session_price_cents ?? 0) / 100).toFixed(2)
+  )
+  const [includedPhotoCount, setIncludedPhotoCount] = useState(
+    String(defaultValues?.included_photo_count ?? 0)
+  )
+  const [extraPhotoPriceDisplay, setExtraPhotoPriceDisplay] = useState(
+    ((defaultValues?.extra_photo_price_cents ?? 0) / 100).toFixed(2)
+  )
   const [slugManual, setSlugManual] = useState(mode === 'edit')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -70,9 +82,12 @@ export function EventForm({
       title,
       slug,
       type,
-      price_cents: Math.round(parseFloat(priceDisplay) * 100) || 0,
+      price_cents: type === 'event' ? (Math.round(parseFloat(priceDisplay) * 100) || 0) : 0,
       is_public: type === 'event' ? isPublic : false,
       facial_recognition_enabled: type === 'event' ? facialEnabled : false,
+      session_price_cents: type === 'session' ? (Math.round(parseFloat(sessionPriceDisplay) * 100) || 0) : 0,
+      included_photo_count: type === 'session' ? (parseInt(includedPhotoCount, 10) || 0) : 0,
+      extra_photo_price_cents: type === 'session' ? (Math.round(parseFloat(extraPhotoPriceDisplay) * 100) || 0) : 0,
     }
     if (eventDate) body.event_date = eventDate
     if (description) body.description = description
@@ -225,24 +240,89 @@ export function EventForm({
               />
             </div>
 
-            {/* Price */}
-            <div>
-              <label htmlFor="price" className={labelClass}>
-                Preço (R$)
-              </label>
-              <input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                className={inputClass}
-                value={priceDisplay}
-                onChange={(e) => setPriceDisplay(e.target.value)}
-              />
-            </div>
+            {/* Price (evento: preço por foto) */}
+            {type === 'event' && (
+              <div>
+                <label htmlFor="price" className={labelClass}>
+                  Preço por foto (R$)
+                </label>
+                <input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={inputClass}
+                  value={priceDisplay}
+                  onChange={(e) => setPriceDisplay(e.target.value)}
+                />
+              </div>
+            )}
 
-            {/* Local */}
-            {/* (placeholder for future local field — not in current schema) */}
+            {/* Session-only pricing */}
+            {type === 'session' && (
+              <div
+                className="rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] p-4 space-y-4"
+                style={{ background: 'var(--color-surface-alt)' }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.05em] text-[var(--color-ink-soft)]">
+                  Preço do ensaio
+                </p>
+
+                <div>
+                  <label htmlFor="session_price" className={labelClass}>
+                    Valor do ensaio (R$)
+                  </label>
+                  <input
+                    id="session_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className={inputClass}
+                    value={sessionPriceDisplay}
+                    onChange={(e) => setSessionPriceDisplay(e.target.value)}
+                  />
+                  <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+                    Deixe 0 para ensaio gratuito — o cliente não precisará pagar.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="included_photo_count" className={labelClass}>
+                    Fotos incluídas no valor do ensaio
+                  </label>
+                  <input
+                    id="included_photo_count"
+                    type="number"
+                    step="1"
+                    min="0"
+                    className={inputClass}
+                    value={includedPhotoCount}
+                    onChange={(e) => setIncludedPhotoCount(e.target.value)}
+                  />
+                  <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+                    Deixe 0 para o cliente poder escolher todas as fotos do ensaio, sem limite.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="extra_photo_price" className={labelClass}>
+                    Valor por foto extra (R$)
+                  </label>
+                  <input
+                    id="extra_photo_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className={inputClass}
+                    value={extraPhotoPriceDisplay}
+                    onChange={(e) => setExtraPhotoPriceDisplay(e.target.value)}
+                  />
+                  <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
+                    Cobrado por cada foto selecionada além das incluídas acima.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Event-only settings */}
             {type === 'event' && (

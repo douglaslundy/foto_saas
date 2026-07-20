@@ -30,7 +30,7 @@ export default async function EditarEventoPage({ params }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: event } = (await (adminClient as any)
     .from('events')
-    .select('id, title, slug, type, event_date, description, is_public, price_cents, facial_recognition_enabled')
+    .select('id, title, slug, type, event_date, description, is_public, price_cents, facial_recognition_enabled, session_price_cents, included_photo_count, extra_photo_price_cents')
     .eq('id', id)
     .eq('tenant_id', profile.tenant_id)
     .single()) as {
@@ -44,6 +44,9 @@ export default async function EditarEventoPage({ params }: Props) {
       is_public: boolean
       price_cents: number
       facial_recognition_enabled: boolean
+      session_price_cents: number
+      included_photo_count: number
+      extra_photo_price_cents: number
     } | null
   }
 
@@ -71,6 +74,9 @@ export default async function EditarEventoPage({ params }: Props) {
           is_public: event.is_public,
           price_cents: event.price_cents,
           facial_recognition_enabled: event.facial_recognition_enabled,
+          session_price_cents: event.session_price_cents,
+          included_photo_count: event.included_photo_count,
+          extra_photo_price_cents: event.extra_photo_price_cents,
         }}
       />
     </div>

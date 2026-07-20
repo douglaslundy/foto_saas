@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   let query = (adminClient as any)
     .from('events')
     .select(
-      'id, title, slug, type, event_date, status, price_cents, facial_recognition_enabled, is_public, created_at',
+      'id, title, slug, type, event_date, status, price_cents, facial_recognition_enabled, is_public, created_at, session_price_cents, included_photo_count, extra_photo_price_cents',
       { count: 'exact' }
     )
     .eq('tenant_id', profile.tenant_id)
@@ -83,18 +83,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Corpo da requisição inválido.' }, { status: 400 })
   }
 
-  const { title, slug, type, event_date, description, is_public, password, price_cents, facial_recognition_enabled } =
-    body as {
-      title?: string
-      slug?: string
-      type?: string
-      event_date?: string
-      description?: string
-      is_public?: boolean
-      password?: string
-      price_cents?: number
-      facial_recognition_enabled?: boolean
-    }
+  const {
+    title, slug, type, event_date, description, is_public, password, price_cents,
+    facial_recognition_enabled, session_price_cents, included_photo_count, extra_photo_price_cents,
+  } = body as {
+    title?: string
+    slug?: string
+    type?: string
+    event_date?: string
+    description?: string
+    is_public?: boolean
+    password?: string
+    price_cents?: number
+    facial_recognition_enabled?: boolean
+    session_price_cents?: number
+    included_photo_count?: number
+    extra_photo_price_cents?: number
+  }
 
   if (!title || !slug || !type) {
     return NextResponse.json({ error: 'Campos obrigatórios: title, slug, type.' }, { status: 400 })
@@ -160,8 +165,11 @@ export async function POST(request: NextRequest) {
     type,
     status: initialStatus,
     is_public: type === 'event' ? (is_public ?? true) : false,
-    price_cents: price_cents ?? 0,
+    price_cents: type === 'event' ? (price_cents ?? 0) : 0,
     facial_recognition_enabled: type === 'event' ? (facial_recognition_enabled ?? false) : false,
+    session_price_cents: type === 'session' ? (session_price_cents ?? 0) : 0,
+    included_photo_count: type === 'session' ? (included_photo_count ?? 0) : 0,
+    extra_photo_price_cents: type === 'session' ? (extra_photo_price_cents ?? 0) : 0,
   }
   if (event_date) insertData.event_date = event_date
   if (description) insertData.description = description

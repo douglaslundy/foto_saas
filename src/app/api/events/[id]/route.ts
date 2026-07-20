@@ -36,7 +36,7 @@ async function getAuthAndEvent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: event } = (await (adminClient as any)
     .from('events')
-    .select('id, title, slug, type, event_date, description, status, is_public, password_hash, price_cents, facial_recognition_enabled, tenant_id')
+    .select('id, title, slug, type, event_date, description, status, is_public, password_hash, price_cents, facial_recognition_enabled, tenant_id, session_price_cents, included_photo_count, extra_photo_price_cents')
     .eq('id', id)
     .eq('tenant_id', profile.tenant_id)
     .single()) as { data: Record<string, unknown> | null }
@@ -66,19 +66,24 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
   }
 
-  const { title, slug, type, event_date, description, is_public, password, price_cents, facial_recognition_enabled, cover_image_path } =
-    body as {
-      title?: string
-      slug?: string
-      type?: string
-      event_date?: string
-      description?: string
-      is_public?: boolean
-      password?: string
-      price_cents?: number
-      facial_recognition_enabled?: boolean
-      cover_image_path?: string | null
-    }
+  const {
+    title, slug, type, event_date, description, is_public, password, price_cents,
+    facial_recognition_enabled, cover_image_path, session_price_cents, included_photo_count, extra_photo_price_cents,
+  } = body as {
+    title?: string
+    slug?: string
+    type?: string
+    event_date?: string
+    description?: string
+    is_public?: boolean
+    password?: string
+    price_cents?: number
+    facial_recognition_enabled?: boolean
+    cover_image_path?: string | null
+    session_price_cents?: number
+    included_photo_count?: number
+    extra_photo_price_cents?: number
+  }
 
   // If slug is changing, check uniqueness
   if (slug) {
@@ -108,6 +113,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (is_public !== undefined) updateData.is_public = is_public
   if (price_cents !== undefined) updateData.price_cents = price_cents
   if (facial_recognition_enabled !== undefined) updateData.facial_recognition_enabled = facial_recognition_enabled
+  if (session_price_cents !== undefined) updateData.session_price_cents = session_price_cents
+  if (included_photo_count !== undefined) updateData.included_photo_count = included_photo_count
+  if (extra_photo_price_cents !== undefined) updateData.extra_photo_price_cents = extra_photo_price_cents
   if (password) updateData.password_hash = await hash(password, 10)
   if (cover_image_path !== undefined) updateData.cover_image_path = cover_image_path
 
