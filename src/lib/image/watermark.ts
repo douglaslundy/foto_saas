@@ -11,6 +11,9 @@ export type WatermarkConfig = {
   text_content?: string | null
   font?: string | null
   font_size?: number | null
+  font_weight?: number | null
+  spacing_x?: number | null
+  spacing_y?: number | null
   color: string
   opacity: number
   position: WatermarkPosition
@@ -58,20 +61,23 @@ async function buildTextSvg(
   const font = config.font ?? 'DejaVu Sans'
   const color = config.color
   const opacity = config.opacity
+  const fontWeight = config.font_weight ?? 700
+  const spacingX = config.spacing_x ?? 40
+  const spacingY = config.spacing_y ?? 80
 
   if (tiled) {
-    // patternW * 1.3 and patternH * (6.5/4 ≈ 1.625) → ~40% fewer tiles vs previous
-    const patternW = Math.max(text.length * fontSize * 0.78, 104)
-    const patternH = fontSize * 16.25
+    const lineHeight = fontSize * 2
+    const patternW = Math.max(text.length * fontSize * 0.78, 104) + spacingX
+    const patternH = lineHeight + spacingY
     return Buffer.from(
       `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="wm" width="${patternW}" height="${patternH}"
             patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
             <text x="10" y="${fontSize + 4}" font-family="${font}" font-size="${fontSize}px"
-              font-weight="bold" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
+              font-weight="${fontWeight}" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
             <text x="10" y="${fontSize * 3 + 4}" font-family="${font}" font-size="${fontSize}px"
-              font-weight="bold" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
+              font-weight="${fontWeight}" fill="${color}" opacity="${opacity}">${escapeXml(text)}</text>
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#wm)"/>
@@ -96,7 +102,7 @@ async function buildTextSvg(
   return Buffer.from(
     `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <text x="${pos.x}" y="${pos.y}" font-family="${font}" font-size="${fontSize}px"
-        font-weight="bold" fill="${color}" opacity="${opacity}" text-anchor="${pos.anchor}">${escapeXml(text)}</text>
+        font-weight="${fontWeight}" fill="${color}" opacity="${opacity}" text-anchor="${pos.anchor}">${escapeXml(text)}</text>
     </svg>`
   )
 }

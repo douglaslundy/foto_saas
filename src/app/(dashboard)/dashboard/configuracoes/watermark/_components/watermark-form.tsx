@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { WatermarkPreview } from './watermark-preview'
 
 interface WatermarkConfig {
   id?: string
@@ -9,6 +10,9 @@ interface WatermarkConfig {
   text_content?: string | null
   font?: string
   font_size?: number
+  font_weight?: number
+  spacing_x?: number
+  spacing_y?: number
   color?: string
   opacity: number
   position: string
@@ -41,6 +45,9 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
   const [textContent, setTextContent] = useState(initial?.text_content ?? '')
   const [font] = useState(initial?.font ?? 'sans-serif')
   const [fontSize, setFontSize] = useState(initial?.font_size ?? 24)
+  const [fontWeight, setFontWeight] = useState(initial?.font_weight ?? 700)
+  const [spacingX, setSpacingX] = useState(initial?.spacing_x ?? 40)
+  const [spacingY, setSpacingY] = useState(initial?.spacing_y ?? 80)
   const [color, setColor] = useState(initial?.color ?? '#ffffff')
   const [opacity, setOpacity] = useState(initial?.opacity ?? 0.6)
   const [position, setPosition] = useState(initial?.position ?? 'tiled')
@@ -104,6 +111,9 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
           payload.text_content = textContent
           payload.font = font
           payload.font_size = fontSize
+          payload.font_weight = fontWeight
+          payload.spacing_x = spacingX
+          payload.spacing_y = spacingY
           payload.color = color
         } else {
           // image type, no new file — preserve existing path
@@ -142,6 +152,25 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
 
       <form onSubmit={handleSubmit}>
         <div className="p-6 space-y-6">
+          {/* Live preview */}
+          <div>
+            <label className={labelClass}>Pré-visualização</label>
+            <WatermarkPreview
+              type={type as 'text' | 'image'}
+              textContent={textContent}
+              font={font}
+              fontSize={fontSize}
+              fontWeight={fontWeight}
+              color={color}
+              opacity={opacity}
+              position={position as 'tiled' | 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'}
+              spacingX={spacingX}
+              spacingY={spacingY}
+              imageUrl={currentImageUrl}
+              imageSizePercent={imageSizePercent}
+            />
+          </div>
+
           {/* Type */}
           <div>
             <label className={labelClass}>Tipo de marca d&apos;água</label>
@@ -200,6 +229,64 @@ export default function WatermarkForm({ initial }: WatermarkFormProps) {
                   className="h-11 px-4 w-32 rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] text-sm transition-all duration-200 focus:outline-none focus:border-[var(--color-blue)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
                 />
               </div>
+
+              <div>
+                <label htmlFor="font_weight" className={labelClass}>
+                  Espessura da fonte: <span className="text-[var(--color-ink)] font-bold">{fontWeight}</span>
+                </label>
+                <input
+                  id="font_weight"
+                  type="range"
+                  min={100}
+                  max={900}
+                  step={100}
+                  value={fontWeight}
+                  onChange={e => setFontWeight(Number(e.target.value))}
+                  className="w-full accent-[var(--color-blue)] mt-1"
+                />
+                <div className="flex justify-between text-xs text-[var(--color-ink-muted)] mt-1">
+                  <span>100 (fina)</span>
+                  <span>900 (bem grossa)</span>
+                </div>
+              </div>
+
+              {position === 'tiled' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="spacing_x" className={labelClass}>
+                      Distância horizontal: <span className="text-[var(--color-ink)] font-bold">{spacingX}px</span>
+                    </label>
+                    <input
+                      id="spacing_x"
+                      type="range"
+                      min={0}
+                      max={300}
+                      step={10}
+                      value={spacingX}
+                      onChange={e => setSpacingX(Number(e.target.value))}
+                      className="w-full accent-[var(--color-blue)] mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="spacing_y" className={labelClass}>
+                      Distância vertical: <span className="text-[var(--color-ink)] font-bold">{spacingY}px</span>
+                    </label>
+                    <input
+                      id="spacing_y"
+                      type="range"
+                      min={0}
+                      max={300}
+                      step={10}
+                      value={spacingY}
+                      onChange={e => setSpacingY(Number(e.target.value))}
+                      className="w-full accent-[var(--color-blue)] mt-1"
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-[var(--color-ink-muted)] -mt-2">
+                    Distância entre uma repetição da marca d&apos;água e outra (modo &quot;todas as partes&quot;).
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="color" className={labelClass}>Cor do texto</label>
