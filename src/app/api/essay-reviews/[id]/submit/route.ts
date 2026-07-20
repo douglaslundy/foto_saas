@@ -53,9 +53,12 @@ export async function POST(request: NextRequest, { params }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: event } = await (admin as any)
     .from('events')
-    .select('id, title, price_cents, tenant_id')
+    .select('id, title, tenant_id, session_price_cents, included_photo_count, extra_photo_price_cents')
     .eq('id', review.event_id)
-    .single() as { data: { id: string; title: string; price_cents: number; tenant_id: string } | null }
+    .single() as { data: {
+      id: string; title: string; tenant_id: string
+      session_price_cents: number; included_photo_count: number; extra_photo_price_cents: number
+    } | null }
 
   if (!event) return NextResponse.json({ error: 'Evento não encontrado.' }, { status: 404 })
 
@@ -78,20 +81,13 @@ export async function POST(request: NextRequest, { params }: Props) {
   // Use verified IDs for price calculation and storage
   const verifiedPhotoIds = verifiedIds
 
-  // Calculate total with package discount
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: packages } = await (admin as any)
-    .from('photo_packages')
-    .select('name, min_quantity, discount_percent')
-    .eq('tenant_id', review.tenant_id)
-    .eq('active', true)
-    .order('min_quantity', { ascending: false }) as
-    { data: { name: string; min_quantity: number; discount_percent: number }[] | null }
-
-  const subtotal = (event.price_cents ?? 0) * verifiedPhotoIds.length
-  const matchedPackage = (packages ?? []).find((p) => verifiedPhotoIds.length >= p.min_quantity)
-  const discountCents = matchedPackage ? Math.round(subtotal * matchedPackage.discount_percent / 100) : 0
-  const totalCents = subtotal - discountCents
+  // Calcula o total no novo modelo: valor fixo do ensaio + fotos além das
+  // incluídas. included_photo_count=0 => sem limite, nunca há foto extra.
+  const includedPhotoCount = event.included_photo_count ?? 0
+  const extraPhotoPriceCents = event.extra_photo_price_cents ?? 0
+  const extraCount = includedPhotoCount === 0 ? 0 : Math.max(0, verifiedPhotoIds.length - includedPhotoCount)
+  const extraCostCents = extraCount * extraPhotoPriceCents
+  const totalCents = (event.session_price_cents ?? 0) + extraCostCents
 
   // Process payment
   let paymentIntentId: string | null = null
@@ -100,7 +96,11 @@ export async function POST(request: NextRequest, { params }: Props) {
   let pixQrCodeBase64: string | null = null
   let resolvedPaymentStatus = 'pending'
 
-  if (payment_method === 'stripe' && totalCents > 0) {
+  // Ensaio gratuito (total 0): nunca aciona provedor de pagamento, mesmo que
+  // o cliente tenha enviado um payment_method de pagamento por engano.
+  if (totalCents === 0) {
+    resolvedPaymentStatus = 'manual'
+  } else if (payment_method === 'stripe' && totalCents > 0) {
     try {
       const intent = await createStripePaymentIntent({
         amountCents: totalCents,

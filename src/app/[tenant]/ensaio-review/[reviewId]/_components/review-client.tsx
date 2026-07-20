@@ -9,17 +9,12 @@ type Photo = {
   status: string
 }
 
-type Package = {
-  name: string
-  min_quantity: number
-  discount_percent: number
-}
-
 type Props = {
   reviewId: string
   photos: Photo[]
-  pricePerPhotoCents: number
-  packages: Package[]
+  sessionPriceCents: number
+  includedPhotoCount: number
+  extraPhotoPriceCents: number
   tenantSlug: string
 }
 
@@ -31,16 +26,18 @@ function getPhotoUrl(path: string | null): string | null {
   return `${STORAGE_URL}/${path}`
 }
 
-function calcTotal(count: number, pricePerPhotoCents: number, packages: Package[]) {
-  const subtotal = pricePerPhotoCents * count
-  const matched = packages.find((p) => count >= p.min_quantity)
-  const discount = matched ? Math.round(subtotal * matched.discount_percent / 100) : 0
-  return { subtotal, discount, total: subtotal - discount, pkg: matched ?? null }
+// included=0 significa "sem limite": todas as fotos selecionadas ficam
+// dentro do valor fixo do ensaio, sem cobrança extra.
+function calcTotal(count: number, sessionPriceCents: number, includedPhotoCount: number, extraPhotoPriceCents: number) {
+  const extraCount = includedPhotoCount === 0 ? 0 : Math.max(0, count - includedPhotoCount)
+  const extraCost = extraCount * extraPhotoPriceCents
+  const total = sessionPriceCents + extraCost
+  return { extraCount, extraCost, total }
 }
 
 type Step = 'select' | 'confirm' | 'payment' | 'done'
 
-export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, tenantSlug }: Props) {
+export function ReviewClient({ reviewId, photos, sessionPriceCents, includedPhotoCount, extraPhotoPriceCents, tenantSlug }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [notes, setNotes] = useState('')
   const [step, setStep] = useState<Step>('select')
@@ -62,7 +59,8 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
     })
   }
 
-  const { subtotal, discount, total, pkg } = calcTotal(selected.size, pricePerPhotoCents, packages)
+  const { extraCount, extraCost, total } = calcTotal(selected.size, sessionPriceCents, includedPhotoCount, extraPhotoPriceCents)
+  const isFree = total === 0
 
   async function handleSubmit(paymentMethod: 'stripe' | 'pix' | 'manual') {
     setSubmitting(true)
@@ -101,7 +99,11 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
       <div>
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Selecione suas fotos</h1>
-          <p className="text-sm text-gray-500">Clique nas fotos que deseja. Você pode selecionar quantas quiser.</p>
+          <p className="text-sm text-gray-500">
+            {includedPhotoCount > 0
+              ? `Escolha até ${includedPhotoCount} foto${includedPhotoCount !== 1 ? 's' : ''} sem custo extra. Fotos além disso custam R$ ${(extraPhotoPriceCents / 100).toFixed(2).replace('.', ',')} cada.`
+              : 'Você pode selecionar quantas fotos quiser, sem custo extra.'}
+          </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-6">
@@ -157,13 +159,16 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
               <span className="text-sm font-medium text-gray-900">
                 {selected.size} foto{selected.size !== 1 ? 's' : ''} selecionada{selected.size !== 1 ? 's' : ''}
               </span>
-              {pricePerPhotoCents > 0 && selected.size > 0 && (
+              {!isFree && selected.size > 0 && (
                 <div className="text-xs text-gray-500 mt-0.5">
-                  {pkg && (
-                    <span className="text-green-600 mr-2">Pacote {pkg.name} ({pkg.discount_percent}% off)</span>
+                  {extraCount > 0 && (
+                    <span className="text-amber-600 mr-2">{extraCount} extra{extraCount !== 1 ? 's' : ''}</span>
                   )}
                   Total: R$ {(total / 100).toFixed(2).replace('.', ',')}
                 </div>
+              )}
+              {isFree && selected.size > 0 && (
+                <div className="text-xs text-green-600 mt-0.5">Ensaio gratuito</div>
               )}
             </div>
             <button
@@ -190,16 +195,18 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
             <span className="text-gray-600">Fotos selecionadas</span>
             <span className="font-medium">{selected.size}</span>
           </div>
-          {pricePerPhotoCents > 0 && (
+          {!isFree && (
             <>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
-                <span>R$ {(subtotal / 100).toFixed(2).replace('.', ',')}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Desconto ({pkg?.name})</span>
-                  <span>-R$ {(discount / 100).toFixed(2).replace('.', ',')}</span>
+              {sessionPriceCents > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Valor do ensaio</span>
+                  <span>R$ {(sessionPriceCents / 100).toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+              {extraCount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{extraCount} foto{extraCount !== 1 ? 's' : ''} extra{extraCount !== 1 ? 's' : ''}</span>
+                  <span>R$ {(extraCost / 100).toFixed(2).replace('.', ',')}</span>
                 </div>
               )}
               <div className="flex justify-between font-semibold border-t border-gray-100 pt-2">
@@ -207,6 +214,9 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
                 <span>R$ {(total / 100).toFixed(2).replace('.', ',')}</span>
               </div>
             </>
+          )}
+          {isFree && (
+            <p className="text-sm font-medium text-green-600">Ensaio gratuito — sem cobrança.</p>
           )}
           {notes && (
             <div className="border-t border-gray-100 pt-2">
@@ -217,7 +227,7 @@ export function ReviewClient({ reviewId, photos, pricePerPhotoCents, packages, t
 
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-        {pricePerPhotoCents > 0 && total > 0 ? (
+        {!isFree ? (
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700 mb-2">Forma de pagamento:</p>
             <button

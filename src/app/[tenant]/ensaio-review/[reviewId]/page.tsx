@@ -45,25 +45,55 @@ export default async function EnsaioReviewPage({ params }: Props) {
     )
   }
 
-  // Already submitted
-  if (review.status === 'submitted') {
+  // Já enviou a seleção, fotógrafo ainda tratando
+  if (review.status === 'submitted' || review.status === 'in_progress') {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Seleção enviada!</h1>
-          <p className="text-gray-600 text-sm">Você já enviou sua seleção. O fotógrafo entrará em contato em breve.</p>
+          <p className="text-gray-600 text-sm">
+            {review.status === 'in_progress'
+              ? 'O fotógrafo já está tratando suas fotos. Você receberá um e-mail assim que estiverem prontas.'
+              : 'Você já enviou sua seleção. O fotógrafo entrará em contato em breve.'}
+          </p>
         </div>
       </div>
     )
   }
 
-  // Fetch event + photos + packages + tenant name
+  // Entrega final pronta para download
+  if (review.status === 'delivered') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-sm text-center">
+          <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-green-600 text-2xl">✓</span>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Suas fotos estão prontas!</h1>
+          <p className="text-gray-600 text-sm mb-6">
+            {review.selected_photo_ids?.length ?? 0} foto{(review.selected_photo_ids?.length ?? 0) !== 1 ? 's' : ''} tratada{(review.selected_photo_ids?.length ?? 0) !== 1 ? 's' : ''}, prontas para baixar.
+          </p>
+          <a
+            href={`/api/essay-reviews/${review.id}/download-final`}
+            className="inline-block w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Baixar minhas fotos
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  // Fetch event + photos + tenant name
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: event } = await (admin as any)
     .from('events')
-    .select('id, title, slug, price_cents, tenant_id')
+    .select('id, title, slug, session_price_cents, included_photo_count, extra_photo_price_cents, tenant_id')
     .eq('id', review.event_id)
-    .single() as { data: { id: string; title: string; slug: string; price_cents: number; tenant_id: string } | null }
+    .single() as { data: {
+      id: string; title: string; slug: string; tenant_id: string
+      session_price_cents: number; included_photo_count: number; extra_photo_price_cents: number
+    } | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos } = await (admin as any)
@@ -73,15 +103,6 @@ export default async function EnsaioReviewPage({ params }: Props) {
     .eq('status', 'ready')
     .order('created_at', { ascending: true }) as
     { data: { id: string; public_storage_path: string | null; status: string }[] | null }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: packages } = await (admin as any)
-    .from('photo_packages')
-    .select('name, min_quantity, discount_percent')
-    .eq('tenant_id', review.tenant_id)
-    .eq('active', true)
-    .order('min_quantity', { ascending: false }) as
-    { data: { name: string; min_quantity: number; discount_percent: number }[] | null }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenant } = await (admin as any)
@@ -101,8 +122,9 @@ export default async function EnsaioReviewPage({ params }: Props) {
         <ReviewClient
           reviewId={review.id}
           photos={photos ?? []}
-          pricePerPhotoCents={event?.price_cents ?? 0}
-          packages={packages ?? []}
+          sessionPriceCents={event?.session_price_cents ?? 0}
+          includedPhotoCount={event?.included_photo_count ?? 0}
+          extraPhotoPriceCents={event?.extra_photo_price_cents ?? 0}
           tenantSlug={tenantSlug}
         />
       </div>
