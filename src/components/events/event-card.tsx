@@ -128,7 +128,7 @@ export function EventCard({ event, tenantSlug }: { event: EventItem; tenantSlug?
         {event.status === 'published' && !hasPublicGallery && (
           <p className="text-xs text-[#6b7280] truncate mb-3">
             <Link
-              href={`/dashboard/eventos/${event.id}/fotos`}
+              href={`/dashboard/eventos/${event.id}/visualizar`}
               className="text-[#2563eb] hover:underline"
             >
               {'Ver fotos ->'}
