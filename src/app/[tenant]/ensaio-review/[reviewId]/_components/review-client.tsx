@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { StripeCardForm } from '@/components/checkout/stripe-card-form'
 
 type Photo = {
@@ -51,6 +51,8 @@ export function ReviewClient({ reviewId, photos, sessionPriceCents, includedPhot
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
   function togglePhoto(id: string) {
     setSelected((prev) => {
       const next = new Set(prev)
@@ -58,6 +60,31 @@ export function ReviewClient({ reviewId, photos, sessionPriceCents, includedPhot
       return next
     })
   }
+
+  function openLightbox(idx: number) {
+    if (photos[idx]?.public_storage_path) setLightboxIndex(idx)
+  }
+  function closeLightbox() { setLightboxIndex(null) }
+  function prevPhoto() {
+    setLightboxIndex((i) => (i !== null ? (i > 0 ? i - 1 : photos.length - 1) : null))
+  }
+  function nextPhoto() {
+    setLightboxIndex((i) => (i !== null ? (i < photos.length - 1 ? i + 1 : 0) : null))
+  }
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') prevPhoto()
+      else if (e.key === 'ArrowRight') nextPhoto()
+      else if (e.key === 'Escape') closeLightbox()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxIndex, photos.length])
+
+  const lightboxPhoto = lightboxIndex !== null ? photos[lightboxIndex] ?? null : null
 
   const { extraCount, extraCost, total } = calcTotal(selected.size, sessionPriceCents, includedPhotoCount, extraPhotoPriceCents)
   const isFree = total === 0
@@ -107,15 +134,15 @@ export function ReviewClient({ reviewId, photos, sessionPriceCents, includedPhot
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-6">
-          {photos.map((photo) => {
+          {photos.map((photo, idx) => {
             const isSelected = selected.has(photo.id)
             return (
               <div
                 key={photo.id}
-                className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                className={`group relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
                   isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent hover:border-gray-300'
                 }`}
-                onClick={() => togglePhoto(photo.id)}
+                onClick={() => openLightbox(idx)}
               >
                 {photo.public_storage_path ? (
                   <img
@@ -130,15 +157,82 @@ export function ReviewClient({ reviewId, photos, sessionPriceCents, includedPhot
                     <span className="text-xs text-gray-400">Processando…</span>
                   </div>
                 )}
-                {isSelected && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">✓</span>
-                  </div>
-                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); togglePhoto(photo.id) }}
+                  className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-opacity ${
+                    isSelected ? 'opacity-100 bg-blue-500' : 'opacity-0 group-hover:opacity-100 bg-white/80'
+                  }`}
+                  aria-label="Selecionar foto"
+                >
+                  {isSelected
+                    ? <span className="text-white text-xs font-bold">✓</span>
+                    : <span className="text-gray-500 text-xs font-bold">○</span>}
+                </button>
               </div>
             )
           })}
         </div>
+
+        {/* ── Lightbox ─────────────────────────────────────── */}
+        {lightboxPhoto && lightboxIndex !== null && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col" onClick={closeLightbox}>
+            <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <span className="text-white/60 text-sm tabular-nums">
+                {lightboxIndex + 1} / {photos.length}
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => togglePhoto(lightboxPhoto.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selected.has(lightboxPhoto.id) ? 'bg-green-600 text-white' : 'bg-blue-500 text-white hover:opacity-90'
+                  }`}
+                >
+                  {selected.has(lightboxPhoto.id) ? 'Selecionada ✓' : 'Selecionar esta foto'}
+                </button>
+                <button onClick={closeLightbox} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition-colors" aria-label="Fechar">×</button>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center relative min-h-0 px-16" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={prevPhoto}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white text-xl transition-colors z-10"
+                aria-label="Foto anterior"
+              >
+                ‹
+              </button>
+
+              <img
+                src={getPhotoUrl(lightboxPhoto.public_storage_path) ?? ''}
+                alt=""
+                className="max-w-full max-h-full object-contain select-none"
+                draggable="false"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+
+              <button
+                onClick={nextPhoto}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white text-xl transition-colors z-10"
+                aria-label="Próxima foto"
+              >
+                ›
+              </button>
+            </div>
+
+            {photos.length > 1 && photos.length <= 20 && (
+              <div className="flex items-center justify-center gap-1.5 py-4 shrink-0 flex-wrap px-4" onClick={(e) => e.stopPropagation()}>
+                {photos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLightboxIndex(i)}
+                    className={`rounded-full transition-all ${i === lightboxIndex ? 'w-4 h-2 bg-blue-500' : 'w-2 h-2 bg-white/30 hover:bg-white/60'}`}
+                    aria-label={`Foto ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">

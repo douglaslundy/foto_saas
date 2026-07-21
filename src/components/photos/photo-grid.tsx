@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { useConfirm } from '@/components/providers/confirm-provider'
 
@@ -38,6 +38,13 @@ function thumbUrl(photo: Photo, storageBase: string) {
   return `${storageBase}/${path}?v=${v}`
 }
 
+function fullUrl(photo: Photo, storageBase: string) {
+  const path = photo.public_storage_path ?? photo.thumbnail_path
+  if (!path) return null
+  const v = photo.updated_at ? new Date(photo.updated_at).getTime() : ''
+  return `${storageBase}/${path}?v=${v}`
+}
+
 function photoName(photo: Photo) {
   const path = photo.thumbnail_path ?? photo.public_storage_path ?? ''
   const parts = path.split('/')
@@ -64,6 +71,32 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
   const [settingCover, setSettingCover] = useState<string | null>(null)
   const overwriteInputRef = useRef<HTMLInputElement>(null)
   const overwriteTargetId = useRef<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  function openLightbox(idx: number) {
+    if (photos[idx]?.status === 'ready') setLightboxIndex(idx)
+  }
+  function closeLightbox() { setLightboxIndex(null) }
+  function prevPhoto() {
+    setLightboxIndex((i) => (i !== null ? (i > 0 ? i - 1 : photos.length - 1) : null))
+  }
+  function nextPhoto() {
+    setLightboxIndex((i) => (i !== null ? (i < photos.length - 1 ? i + 1 : 0) : null))
+  }
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') prevPhoto()
+      else if (e.key === 'ArrowRight') nextPhoto()
+      else if (e.key === 'Escape') closeLightbox()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxIndex, photos.length])
+
+  const lightboxPhoto = lightboxIndex !== null ? photos[lightboxIndex] ?? null : null
 
   async function handleSingleRotate(photoId: string, direction: 'left' | 'right') {
     setRotatingSingle((prev) => new Set(prev).add(photoId))
@@ -268,15 +301,15 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
       {/* Grade */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          {photos.map((photo) => {
+          {photos.map((photo, idx) => {
             const isDeleting = deleting.has(photo.id)
             const isSelected = selected.has(photo.id)
             const isOverwriting = overwriting.has(photo.id)
             const canOverwrite = photo.status === 'ready' || photo.status === 'error'
             const imgSrc = thumbUrl(photo, storageBase)
             return (
-              <div key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
-                className={`relative group aspect-square rounded-[var(--radius-sm)] overflow-hidden border bg-[var(--color-surface-alt)] transition-all ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'border-[var(--color-gold)] ring-2 ring-[var(--color-gold)] ring-offset-1' : 'border-[var(--color-border)]'}`}>
+              <div key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : (photo.status === 'ready' ? () => openLightbox(idx) : undefined)}
+                className={`relative group aspect-square rounded-[var(--radius-sm)] overflow-hidden border bg-[var(--color-surface-alt)] transition-all ${selectMode || photo.status === 'ready' ? 'cursor-pointer' : ''} ${isSelected ? 'border-[var(--color-gold)] ring-2 ring-[var(--color-gold)] ring-offset-1' : 'border-[var(--color-border)]'}`}>
                 {imgSrc
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={imgSrc} alt="" className="w-full h-full object-cover" />
@@ -345,7 +378,7 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {photos.map((photo) => {
+              {photos.map((photo, idx) => {
                 const isSelected = selected.has(photo.id)
                 const isDeleting = deleting.has(photo.id)
                 const isReprocessing = reprocessing.has(photo.id)
@@ -353,8 +386,8 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
                 const canOverwrite = photo.status === 'ready' || photo.status === 'error'
                 const imgSrc = thumbUrl(photo, storageBase)
                 return (
-                  <tr key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : undefined}
-                    className={`hover:bg-[var(--color-surface-alt)] transition-colors ${selectMode ? 'cursor-pointer' : ''} ${isSelected ? 'bg-[var(--color-gold-light)]' : ''}`}>
+                  <tr key={photo.id} onClick={selectMode ? () => toggleSelect(photo.id) : (photo.status === 'ready' ? () => openLightbox(idx) : undefined)}
+                    className={`hover:bg-[var(--color-surface-alt)] transition-colors ${selectMode || photo.status === 'ready' ? 'cursor-pointer' : ''} ${isSelected ? 'bg-[var(--color-gold-light)]' : ''}`}>
                     {selectMode && (
                       <td className="px-3 py-2">
                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-[var(--color-gold)] border-[var(--color-gold)] text-white' : 'border-[var(--color-border-strong)]'}`}>
@@ -392,6 +425,57 @@ export function PhotoGrid({ photos, storageBase, onDelete, onBulkDelete, onBulkR
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Lightbox ─────────────────────────────────────── */}
+      {lightboxPhoto && lightboxIndex !== null && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col" onClick={closeLightbox}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <span className="text-white/60 text-sm tabular-nums">
+              {lightboxIndex + 1} / {photos.length}
+            </span>
+            <button onClick={closeLightbox} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition-colors" aria-label="Fechar">×</button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center relative min-h-0 px-16" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={prevPhoto}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white text-xl transition-colors z-10"
+              aria-label="Foto anterior"
+            >
+              ‹
+            </button>
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={fullUrl(lightboxPhoto, storageBase) ?? ''}
+              alt=""
+              className="max-w-full max-h-full object-contain select-none"
+              draggable="false"
+            />
+
+            <button
+              onClick={nextPhoto}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white text-xl transition-colors z-10"
+              aria-label="Próxima foto"
+            >
+              ›
+            </button>
+          </div>
+
+          {photos.length > 1 && photos.length <= 30 && (
+            <div className="flex items-center justify-center gap-1.5 py-4 shrink-0 flex-wrap px-4" onClick={(e) => e.stopPropagation()}>
+              {photos.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => setLightboxIndex(i)}
+                  className={`rounded-full transition-all ${i === lightboxIndex ? 'w-4 h-2 bg-[var(--color-gold)]' : 'w-2 h-2 bg-white/30 hover:bg-white/60'}`}
+                  aria-label={`Foto ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
